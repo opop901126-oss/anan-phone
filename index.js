@@ -1,4 +1,4 @@
-// 安安的小手機 v0.2：鎖定畫面（照安安自己說的規則排版）
+// 安安的小手機 v0.4：鎖定畫面＋每 N 則自動更新（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -46,6 +46,7 @@
     if (!s.carrier) s.carrier = '中華電信';
     if (s.fab == null) s.fab = true;
     if (s.fabY == null) s.fabY = 42;
+    if (!s.auto) s.auto = { on: true, owner: '', n: 30, last: 0 };
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -233,6 +234,136 @@
     });
   }
 
+
+  // ===== 每 N 則自動更新（清爽版：只帶角色卡＋最近劇情＋手機現在的內容，另外問 AI，不會出現在聊天裡）=====
+  const MKEY = 'anan_phone_last'; // 這個聊天上次更新時的訊息數，存在聊天自己的資料裡
+  let busy = false, stEl = null;
+  const curChar = () => { const c = ctx(); return c.groupId ? null : c.characters?.[c.characterId] || null; };
+  const isOwner = () => { const a = S().auto, ch = curChar(); return !!(a.owner && ch && ch.name === a.owner); };
+  const msgCount = () => (ctx().chat || []).filter((m) => m && !m.is_system).length;
+  const saveMeta = () => { const c = ctx(); (c.saveMetadata || c.saveMetadataDebounced)?.call(c); };
+  function lastAt() {
+    const md = ctx().chatMetadata;
+    if (!md) return null;
+    if (typeof md[MKEY] !== 'number' || md[MKEY] > msgCount()) { md[MKEY] = msgCount(); saveMeta(); } // 第一次進這個聊天：從現在開始數
+    return md[MKEY];
+  }
+  const left = () => { const l = lastAt(); return l == null ? null : Math.max(0, S().auto.n - (msgCount() - l)); };
+  const hhmm = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+
+  function status(msg) {
+    if (!stEl) return;
+    if (msg) { stEl.textContent = msg; return; }
+    if (busy) { stEl.textContent = '他拿起手機中……'; return; }
+    const a = S().auto;
+    const tail = a.last ? `上次 ${hhmm(a.last)}` : '還沒更新過';
+    if (!a.owner) stEl.textContent = '先按「設成現在的角色」';
+    else if (!isOwner()) stEl.textContent = `現在不是 ${a.owner} 的聊天　·　${tail}`;
+    else if (!a.on) stEl.textContent = `自動更新關著　·　${tail}`;
+    else { const n = left(); stEl.textContent = (n == null ? '' : `還差 ${n} 則　·　`) + tail; }
+  }
+
+  const clean = (t, max) => String(t ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+
+  function buildPrompt() {
+    const c = ctx(), ch = curChar(), s = S(), L = s.lock;
+    const me = c.name1 || '使用者', him = ch.name;
+    const card = [ch.description, ch.personality, ch.scenario].filter(Boolean).join('\n').slice(0, 6000);
+    const recent = (c.chat || []).filter((m) => m && !m.is_system).slice(-Math.max(10, Math.min(60, s.auto.n)))
+      .map((m) => `${m.is_user ? me : (m.name || him)}：${clean(m.mes, 2500)}`).join('\n\n');
+    const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes };
+    const sys = `你負責替角色「${him}」更新他手機鎖定畫面上的內容。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const prompt = `【${him} 的角色設定】
+${card}
+
+【最近的劇情】
+${recent}
+
+【他手機現在的內容】
+${JSON.stringify(now)}
+
+【請依照最近的劇情，更新他的手機】
+規則：
+1. weather：兩個地點。沿用現在的兩個地點，除非劇情裡有人到了別的城市或區域，才換成新地點。temp 寫像「18°」，符合季節；extra 寫降雨機率，像「雨10%」，沒有就空字串。
+2. next：他行事曆上最近的下一件事。when 很短，像「明天 15:00」「週二 15:00」；what 10 字以內；跟 ${me} 有關 mine 就是 true。
+3. battery：phone 和 buds 是 0～100 的整數，合理就好；他不喜歡電量低於 50，除非劇情裡他忙了一整天。
+4. quote：今日摘句，由他自己決定換不換。不換就回傳原本那句，一字不改；要換的話，是他親手打的一句話，30 字以內，用他的語氣。
+5. notes：3～6 則通知。app 只能是 line、cal、memo、web 其中一個；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 像「現在」「五分鐘前」「一小時前」；跟 ${me} 有關的 mine 是 true。內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
+6. 全部用繁體中文、台灣用語。
+
+只輸出這個格式：
+{"weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}]}`;
+    return { sys, prompt };
+  }
+
+  async function askAI(sys, prompt) {
+    const fn = ctx().generateRaw;
+    if (typeof fn !== 'function') throw new Error('這個酒館版本找不到 generateRaw');
+    let out = null;
+    try { out = await fn({ prompt, systemPrompt: sys }); } catch (e) { console.warn('[anan_phone] 新寫法失敗，改用舊寫法', e); }
+    if (!out || typeof out !== 'string') out = await fn(prompt, null, false, false, sys); // 舊版酒館的寫法
+    return String(out || '');
+  }
+
+  function parse(txt) {
+    const m = txt.replace(/```(json)?/gi, '').match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('AI 沒有回 JSON');
+    return JSON.parse(m[0]);
+  }
+
+  // 只收合格的欄位，不合格的保留原本內容（不會把手機弄壞）
+  function apply(o) {
+    const s = S(), L = s.lock;
+    const W = Array.isArray(o.weather) ? o.weather.filter((w) => w && w.place).slice(0, 2) : [];
+    if (W.length === 2) L.weather = W.map((w) => ({ place: clean(w.place, 8), temp: clean(w.temp, 6), extra: clean(w.extra, 8) }));
+    if (o.next && o.next.what) L.next = { when: clean(o.next.when, 10), what: clean(o.next.what, 14), mine: !!o.next.mine };
+    const pct = (v, old) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.max(1, Math.min(100, n)) : old; };
+    if (o.battery) L.battery = { phone: pct(o.battery.phone, L.battery?.phone ?? 76), buds: pct(o.battery.buds, L.battery?.buds ?? 88) };
+    if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
+    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && APP[x.app] && x.text).slice(0, 6) : [];
+    if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: clean(x.when, 8), mine: !!x.mine }));
+    s.unseen = true;
+    s.unseenMine = s.notes.some((x) => x.mine) || !!L.next?.mine;
+  }
+
+  async function runUpdate(manual) {
+    if (busy) return;
+    if (!isOwner()) { if (manual) status(S().auto.owner ? `現在不是 ${S().auto.owner} 的聊天，不能更新` : '先按「設成現在的角色」'); return; }
+    busy = true; status();
+    try {
+      const { sys, prompt } = buildPrompt();
+      apply(parse(await askAI(sys, prompt)));
+      const s = S(); s.auto.last = Date.now(); save();
+      const md = ctx().chatMetadata; if (md) { md[MKEY] = msgCount(); saveMeta(); }
+      badge();
+      if (!root.hidden) paint();
+      if (manual) window.toastr?.success('小手機更新好了');
+      busy = false; status();
+    } catch (e) {
+      console.warn('[anan_phone] 更新失敗', e);
+      busy = false; status('這次沒成功，下一輪再試');
+      if (manual) window.toastr?.warning('這次沒成功，等一下再按一次看看');
+      // 自動更新失敗：計數退回「還差 5 則」，過幾則再試，不用等滿一整輪
+      const md = ctx().chatMetadata;
+      if (!manual && md) { md[MKEY] = Math.max(0, msgCount() - Math.max(0, S().auto.n - 5)); saveMeta(); }
+    }
+  }
+
+  function onMessage() {
+    setTimeout(() => {
+      status();
+      const a = S().auto;
+      if (a.on && isOwner() && left() === 0) runUpdate(false);
+    }, 1200);
+  }
+
+  function hookEvents() {
+    const c = ctx(), E = c.event_types, es = c.eventSource;
+    if (!es || !E) return;
+    es.on(E.MESSAGE_RECEIVED, onMessage);
+    [E.MESSAGE_SENT, E.MESSAGE_DELETED, E.CHAT_CHANGED].forEach((t) => t && es.on(t, () => setTimeout(() => status(), 300)));
+  }
+
   function settingsPanel() {
     const box = document.createElement('div');
     box.className = 'ap-settings';
@@ -253,6 +384,12 @@
             <div class="menu_button ap-open">打開小手機</div>
             <div class="menu_button ap-test">試試紅點</div>
           </div>
+          <div class="ap-sep">自動更新</div>
+          <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
+          <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
+          <div class="ap-row">每 <input type="number" class="text_pole ap-n" min="5" max="200" step="1"> 則更新一次</div>
+          <div class="ap-row ap-st"></div>
+          <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>
         </div>
       </div>`;
     const target = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -280,7 +417,23 @@
     box.querySelector('.ap-del').addEventListener('click', () => { const s = S(); delete s.lockWall; s.wallZ = 100; s.wallY = 0; s.wallX = 0; save(); show(); });
     box.querySelector('.ap-open').addEventListener('click', open);
     box.querySelector('.ap-test').addEventListener('click', () => { const s = S(); s.unseen = true; s.unseenMine = true; save(); badge(); });
+
+    // 自動更新的設定
+    stEl = box.querySelector('.ap-st');
+    const ownEl = box.querySelector('.ap-owner'), nEl = box.querySelector('.ap-n'), autoChk = box.querySelector('.ap-autochk');
+    const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; status(); };
+    showAuto();
+    autoChk.addEventListener('change', () => { S().auto.on = autoChk.checked; save(); status(); });
+    box.querySelector('.ap-own').addEventListener('click', () => {
+      const ch = curChar();
+      if (!ch) { status('先打開一個角色的聊天，再按一次'); return; }
+      S().auto.owner = ch.name; save();
+      const md = ctx().chatMetadata; if (md) { md[MKEY] = msgCount(); saveMeta(); } // 從現在開始數
+      showAuto();
+    });
+    nEl.addEventListener('change', () => { const v = Math.round(Number(nEl.value)); S().auto.n = Math.max(5, Math.min(200, Number.isFinite(v) ? v : 30)); save(); showAuto(); });
+    box.querySelector('.ap-now').addEventListener('click', () => runUpdate(true));
   }
 
-  jQuery(() => { build(); settingsPanel(); badge(); });
+  jQuery(() => { build(); settingsPanel(); badge(); hookEvents(); });
 })();

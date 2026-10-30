@@ -84,3 +84,6 @@
 .ap-settings .ap-sl{display:flex;align-items:center;gap:8px;margin:4px 0}
 .ap-settings .ap-sl span{flex:none;width:2.5em}
 .ap-settings .ap-sl input{flex:1}
+.ap-settings .ap-sep{margin:14px 0 6px;padding-top:10px;border-top:1px solid rgba(128,128,128,.35);font-weight:bold}
+.ap-settings .ap-n{width:4.5em;display:inline-block;margin:0 4px}
+.ap-settings .ap-st{font-size:.9em;opacity:.8}
