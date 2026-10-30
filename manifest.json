@@ -1,0 +1,11 @@
+{
+  "display_name": "安安的小手機",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "果果",
+  "version": "0.2.0",
+  "homePage": ""
+}

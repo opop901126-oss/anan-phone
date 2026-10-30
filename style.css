@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&display=swap');
+/* 安安的小手機：全部用 ap- 開頭，避免跟酒館或其他擴充打架 */
+#ap-fab{position:fixed;right:8px;top:42%;z-index:9990;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(43,52,64,.85);color:#F6F3EC;display:flex;align-items:center;justify-content:center;cursor:grab;box-shadow:0 2px 10px rgba(0,0,0,.3);touch-action:none;padding:0}
+#ap-fab[hidden]{display:none}
+.ap-badge{position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:#D9534F;border:2px solid #2b3440}
+.ap-badge.ap-mine{background:#F7DFA8;box-shadow:0 0 8px rgba(247,223,168,.9)}
+.ap-badge[hidden]{display:none}
+
+#ap-root{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;color:#F6F3EC}
+#ap-root[hidden]{display:none}
+#ap-root [hidden]{display:none!important}
+#ap-root button{font:inherit;color:inherit}
+.ap-dim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+/* 電腦：有機身 */
+.ap-phone{position:relative;height:min(88vh,820px);aspect-ratio:9/19.5;max-width:94vw;background:#3a3d42;border-radius:46px;padding:9px;box-sizing:border-box;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.ap-screen{position:relative;height:100%;border-radius:38px;overflow:hidden;background:#3e342c center/cover no-repeat;touch-action:none;user-select:none}
+/* 手機：滿版 */
+@media (max-width:600px){
+  .ap-phone{width:100vw;height:100dvh;max-width:none;aspect-ratio:auto;border-radius:0;padding:0;box-shadow:none}
+  .ap-screen{border-radius:0}
+}
+.ap-screen.ap-nowall{background-image:radial-gradient(ellipse at 45% 55%,#e9d9c0 0%,#c9ad8a 32%,#7d6650 68%,#3e342c 100%)}
+.ap-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(22,26,32,.6) 0%,rgba(22,26,32,.1) 34%,rgba(22,26,32,0) 60%,rgba(22,26,32,.55) 100%)}
+.ap-glass{background:rgba(255,255,255,.15);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.22)}
+
+.ap-top{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:12px;font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;z-index:3}
+.ap-notch{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:96px;height:25px;border-radius:14px;background:#111}
+.ap-right{display:inline-flex;align-items:center;gap:5px}
+.ap-x{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-left:8px;cursor:pointer;padding:0}
+
+.ap-lock,.ap-home{position:absolute;inset:0;z-index:2}
+.ap-date{position:absolute;top:62px;width:100%;text-align:center;font-size:14px;letter-spacing:3px;opacity:.92}
+.ap-time{position:absolute;top:78px;width:100%;text-align:center;font-size:clamp(64px,20vw,84px);font-weight:400;line-height:1.1;letter-spacing:2px;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+.ap-wg{position:absolute;top:184px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.ap-sq{width:96px;height:68px;border-radius:15px;padding:7px 9px;box-sizing:border-box;font-size:11px;line-height:1.45;overflow:hidden}
+.ap-sq b{font-weight:500;font-size:13px}
+.ap-lb{font-size:9px;letter-spacing:1.5px;opacity:.7;font-family:system-ui,"Noto Sans TC",sans-serif}
+.ap-dot{color:#F7DFA8;font-size:9px}
+.ap-rings{display:flex;justify-content:space-around;align-items:center}
+.ap-ring{width:32px;height:32px;border-radius:50%;position:relative}
+.ap-ring span{position:absolute;inset:3px;border-radius:50%;background:rgba(60,66,74,.85);display:flex;align-items:center;justify-content:center}
+
+.ap-notes{position:absolute;top:268px;left:14px;right:14px;display:flex;flex-direction:column;align-items:center}
+.ap-pill{border-radius:20px;padding:7px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;font-family:system-ui,"Noto Sans TC",sans-serif;cursor:pointer}
+.ap-pill svg{transition:transform .2s}
+.ap-open .ap-pill svg{transform:rotate(180deg)}
+.ap-ad{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
+.ap-me{width:8px;height:8px;border-radius:50%;background:#F7DFA8;box-shadow:0 0 0 3px rgba(247,223,168,.28),0 0 8px rgba(247,223,168,.8);display:inline-block;flex:none}
+.ap-list{display:none;width:100%;margin-top:8px;flex-direction:column;gap:8px;max-height:calc(100dvh - 470px);overflow-y:auto;scrollbar-width:none}
+.ap-list::-webkit-scrollbar{display:none}
+.ap-open .ap-list{display:flex}
+.ap-note{border-radius:18px;padding:10px 12px;cursor:pointer;flex:none}
+.ap-hd{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:1.5px;font-family:system-ui,"Noto Sans TC",sans-serif}
+.ap-ic{width:22px;height:22px;border-radius:7px;background:#FBFAF6;color:#2F5D50;display:flex;align-items:center;justify-content:center}
+.ap-when{margin-left:auto;opacity:.7}
+.ap-tt{font-size:14.5px;margin-top:5px;letter-spacing:1px}
+.ap-tx{font-size:13px;opacity:.9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ap-btm{position:absolute;bottom:46px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ap-cb{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.ap-quote{flex:1;text-align:center;font-size:13px;line-height:1.65;letter-spacing:1.5px;font-weight:300}
+.ap-quote small{display:block;font-size:9px;letter-spacing:3px;opacity:.6;font-family:system-ui,"Noto Sans TC",sans-serif}
+.ap-hint{position:absolute;bottom:24px;width:100%;text-align:center;font-size:9.5px;letter-spacing:3px;opacity:.55;font-family:system-ui,"Noto Sans TC",sans-serif}
+.ap-bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.85);z-index:3}
+
+.ap-home{background:rgba(43,52,64,.55);display:flex;align-items:center;justify-content:center}
+.ap-wip{text-align:center;font-size:18px;line-height:1.8}
+.ap-wip small{display:block;font-size:12px;opacity:.75}
+.ap-settings .ap-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.ap-settings .ap-prev{max-width:120px;border-radius:10px;display:block;margin:4px 0}
