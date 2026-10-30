@@ -87,3 +87,4 @@
 .ap-settings .ap-sep{margin:14px 0 6px;padding-top:10px;border-top:1px solid rgba(128,128,128,.35);font-weight:bold}
 .ap-settings .ap-n{width:4.5em;display:inline-block;margin:0 4px}
 .ap-settings .ap-st{font-size:.9em;opacity:.8}
+.ap-settings .ap-memo{width:100%;box-sizing:border-box;resize:vertical;min-height:7em}

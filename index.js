@@ -47,6 +47,7 @@
     if (s.fab == null) s.fab = true;
     if (s.fabY == null) s.fabY = 42;
     if (!s.auto) s.auto = { on: true, owner: '', n: 30, last: 0 };
+    if (s.auto.memo == null) s.auto.memo = '';
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -263,6 +264,17 @@
     else { const n = left(); stEl.textContent = (n == null ? '' : `還差 ${n} 則　·　`) + tail; }
   }
 
+  const CNUM = { 零: 0, 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  const cnToNum = (t) => { const i = t.indexOf('十'); if (i < 0) return CNUM[t] ?? t; return (i === 0 ? 1 : CNUM[t[0]]) * 10 + (t[i + 1] ? CNUM[t[i + 1]] : 0); };
+  const numWhen = (t) => t.replace(/([零一二兩三四五六七八九十]{1,3})\s*(?=(分鐘|小時|天|週|個月))/g, (m) => String(cnToNum(m.trim())));
+  // 劇情日期 2026-02-15 → 二月十五日・週日
+  function storyDate(t) {
+    const m = String(t || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if (!m) return '';
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    if (isNaN(d)) return '';
+    return `${cn(d.getMonth() + 1)}月${cn(d.getDate())}日・週${'日一二三四五六'[d.getDay()]}`;
+  }
   const clean = (t, max) => String(t ?? '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 
   function buildPrompt() {
@@ -272,10 +284,11 @@
     const recent = (c.chat || []).filter((m) => m && !m.is_system).slice(-Math.max(10, Math.min(60, s.auto.n)))
       .map((m) => `${m.is_user ? me : (m.name || him)}：${clean(m.mes, 2500)}`).join('\n\n');
     const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes };
+    const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const sys = `你負責替角色「${him}」更新他手機鎖定畫面上的內容。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
-
+${memo ? `\n【他手機的小抄（聯絡人、App 的真實設定，一定要照這個寫）】\n${memo}\n` : ''}
 【最近的劇情】
 ${recent}
 
@@ -284,15 +297,16 @@ ${JSON.stringify(now)}
 
 【請依照最近的劇情，更新他的手機】
 規則：
+0. date、time：劇情裡「最新」那一刻的日期和時間（看最近劇情的狀態欄或敘述）。date 寫成「2026-02-15」，time 寫成「15:45」；看不出來就空字串。下面通知的「幾分鐘前」都以這個時間來算。
 1. weather：兩個地點。沿用現在的兩個地點，除非劇情裡有人到了別的城市或區域，才換成新地點。temp 寫像「18°」，符合季節；extra 寫降雨機率，像「雨10%」，沒有就空字串。
 2. next：他行事曆上最近的下一件事。when 很短，像「明天 15:00」「週二 15:00」；what 10 字以內；跟 ${me} 有關 mine 就是 true。
 3. battery：phone 和 buds 是 0～100 的整數，合理就好；他不喜歡電量低於 50，除非劇情裡他忙了一整天。
 4. quote：今日摘句，由他自己決定換不換。不換就回傳原本那句，一字不改；要換的話，是他親手打的一句話，30 字以內，用他的語氣。
-5. notes：3～6 則通知。app 只能是 line、cal、memo、web 其中一個；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 像「現在」「五分鐘前」「一小時前」；跟 ${me} 有關的 mine 是 true。內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
+5. notes：3～6 則通知。app 只能是 line、cal、memo、web 其中一個；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；跟 ${me} 有關的 mine 是 true。聯絡人名字要照小抄裡存的名字寫。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
 6. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}]}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}]}`;
     return { sys, prompt };
   }
 
@@ -321,7 +335,10 @@ ${JSON.stringify(now)}
     if (o.battery) L.battery = { phone: pct(o.battery.phone, L.battery?.phone ?? 76), buds: pct(o.battery.buds, L.battery?.buds ?? 88) };
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
     const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && APP[x.app] && x.text).slice(0, 6) : [];
-    if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: clean(x.when, 8), mine: !!x.mine }));
+    if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
+    // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
+    const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
+    if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || !!L.next?.mine;
   }
@@ -388,6 +405,8 @@ ${JSON.stringify(now)}
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
           <div class="ap-row">每 <input type="number" class="text_pole ap-n" min="5" max="200" step="1"> 則更新一次</div>
+          <div class="ap-row">他手機的小抄（給 AI 看：聯絡人、App 的設定）</div>
+          <textarea class="text_pole ap-memo" rows="6" maxlength="4000" placeholder="例：LINE 置頂只有……"></textarea>
           <div class="ap-row ap-st"></div>
           <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>
         </div>
@@ -421,7 +440,9 @@ ${JSON.stringify(now)}
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');
     const ownEl = box.querySelector('.ap-owner'), nEl = box.querySelector('.ap-n'), autoChk = box.querySelector('.ap-autochk');
-    const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; status(); };
+    const memoEl = box.querySelector('.ap-memo');
+    const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; memoEl.value = a.memo || ''; status(); };
+    memoEl.addEventListener('input', () => { S().auto.memo = memoEl.value; save(); });
     showAuto();
     autoChk.addEventListener('change', () => { S().auto.on = autoChk.checked; save(); status(); });
     box.querySelector('.ap-own').addEventListener('click', () => {
