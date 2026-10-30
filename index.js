@@ -63,6 +63,7 @@
       <div class="ap-dim"></div>
       <div class="ap-phone">
         <div class="ap-screen">
+          <div class="ap-blur"></div><div class="ap-wall"></div>
           <div class="ap-shade"></div>
           <div class="ap-top"><span class="ap-carrier"></span><span class="ap-notch"></span>
             <span class="ap-right">${ic('wifi', 15)}<span class="ap-pct"></span><button class="ap-x" type="button" aria-label="關掉小手機">${ic('x', 16)}</button></span></div>
@@ -75,8 +76,8 @@
               <div class="ap-sq ap-glass ap-rings"></div>
             </div>
             <div class="ap-notes">
-              <button class="ap-pill ap-glass" type="button"></button>
               <div class="ap-list"></div>
+              <button class="ap-pill ap-glass" type="button"></button>
             </div>
             <div class="ap-btm">
               <div class="ap-cb ap-glass">${ic('light', 20)}</div>
@@ -117,15 +118,25 @@
     fab.innerHTML = ic('mob', 20) + '<span class="ap-badge"></span>';
     document.documentElement.appendChild(fab);
     let drag = null;
-    fab.addEventListener('pointerdown', (e) => { drag = { y: e.clientY, moved: false }; fab.setPointerCapture(e.pointerId); });
+    fab.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: false }; fab.setPointerCapture(e.pointerId); });
     fab.addEventListener('pointermove', (e) => {
       if (!drag) return;
-      if (Math.abs(e.clientY - drag.y) > 6) drag.moved = true;
-      if (drag.moved) fab.style.top = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100)) + 'vh';
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6) drag.moved = true;
+      if (!drag.moved) return;
+      fab.classList.add('ap-dragging');
+      fab.style.left = Math.min(innerWidth - 46, Math.max(4, e.clientX - 21)) + 'px';
+      fab.style.right = 'auto';
+      fab.style.top = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100)) + 'vh';
     });
     fab.addEventListener('pointerup', (e) => {
       if (!drag) return;
-      if (drag.moved) { S().fabY = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100)); save(); } else open();
+      fab.classList.remove('ap-dragging');
+      if (drag.moved) { // 放開時吸到最近的左邊或右邊
+        const s = S();
+        s.fabY = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100));
+        s.fabSide = e.clientX < innerWidth / 2 ? 'left' : 'right';
+        save(); badge();
+      } else open();
       drag = null;
     });
   }
@@ -149,14 +160,15 @@
   function paint() {
     const s = S(), L = s.lock;
     const scr = root.querySelector('.ap-screen');
-    scr.style.backgroundImage = s.lockWall ? `url("${s.lockWall}")` : '';
     scr.classList.toggle('ap-nowall', !s.lockWall);
+    wallTo(root, s);
     root.querySelector('.ap-carrier').textContent = s.carrier;
     root.querySelector('.ap-pct').textContent = (L.battery?.phone ?? 76) + '%';
-    root.querySelector('.ap-weather').innerHTML = '<div class="ap-lb">天 氣</div>' + (L.weather || []).slice(0, 2)
-      .map((w) => `<div>${esc(w.place)} <b>${esc(w.temp)}</b>${w.extra ? '・' + esc(w.extra) : ''}</div>`).join('');
+    const W = (L.weather || []).slice(0, 2);
+    root.querySelector('.ap-weather').innerHTML = '<div class="ap-lb">天 氣</div>'
+      + W.map((w, i) => `<div class="${i ? 'ap-sm' : ''}">${esc(w.place)} <b>${esc(w.temp)}</b>${w.extra ? ' ' + esc(w.extra) : ''}</div>`).join('');
     const n = L.next || {};
-    root.querySelector('.ap-next').innerHTML = `<div class="ap-lb">下 一 件 事</div><div><b>${esc(n.when)}</b></div><div>${esc(n.what)}${n.mine ? ' <span class="ap-dot">●</span>' : ''}</div>`;
+    root.querySelector('.ap-next').innerHTML = `<div class="ap-lb">下 一 件 事</div><div><b>${esc(n.when)}</b></div><div class="ap-sm">${esc(n.what)}${n.mine ? ' <span class="ap-dot">●</span>' : ''}</div>`;
     root.querySelector('.ap-rings').innerHTML = ring(L.battery?.phone, 'mob') + ring(L.battery?.buds, 'buds');
     root.querySelector('.ap-quote span').textContent = L.quote || '';
 
@@ -178,10 +190,21 @@
     tick();
   }
 
+  // 桌布：上層照片可以放大、上下左右移（用螢幕的 %，不受照片大小影響）；移開露出的地方用模糊的同一張照片墊底
+  function wallTo(box, s) {
+    const url = s.lockWall ? `url("${s.lockWall}")` : '';
+    box.querySelector('.ap-blur').style.backgroundImage = url;
+    const w = box.querySelector('.ap-wall');
+    w.style.backgroundImage = url;
+    w.style.transform = `translate(${s.wallX || 0}%, ${s.wallY || 0}%) scale(${(s.wallZ || 100) / 100})`;
+  }
+
   function badge() {
     const s = S();
     fab.hidden = !s.fab;
     fab.style.top = s.fabY + 'vh';
+    fab.style.left = s.fabSide === 'left' ? '8px' : 'auto';
+    fab.style.right = s.fabSide === 'left' ? 'auto' : '8px';
     const b = fab.querySelector('.ap-badge');
     b.hidden = !s.unseen;
     b.classList.toggle('ap-mine', !!s.unseenMine);
@@ -219,7 +242,11 @@
         <div class="inline-drawer-content">
           <label class="checkbox_label"><input type="checkbox" class="ap-fabchk"> 顯示小手機懸浮球</label>
           <div class="ap-row">鎖定畫面桌布</div>
-          <img class="ap-prev" alt="桌布預覽">
+          <div class="ap-mini"><div class="ap-blur"></div><div class="ap-wall"></div><div class="ap-mini-guide"><span>時間＋小工具</span><span>摘句</span></div></div>
+          <div class="ap-sl"><span>大小</span><input type="range" class="ap-z" min="100" max="220" step="1"></div>
+          <div class="ap-sl"><span>上下</span><input type="range" class="ap-y" min="-35" max="35" step="0.5"></div>
+          <div class="ap-sl"><span>左右</span><input type="range" class="ap-xx" min="-35" max="35" step="0.5"></div>
+          <div class="ap-row"><div class="menu_button ap-reset">位置歸零</div></div>
           <div class="ap-row">
             <label class="menu_button ap-pick">選擇照片<input type="file" accept="image/*" hidden></label>
             <div class="menu_button ap-del">移除</div>
@@ -230,9 +257,18 @@
       </div>`;
     const target = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
     if (target) target.appendChild(box);
-    const prev = box.querySelector('.ap-prev');
-    const show = () => { prev.src = S().lockWall || ''; prev.hidden = !S().lockWall; };
+    const mini = box.querySelector('.ap-mini');
+    const zr = box.querySelector('.ap-z'), yr = box.querySelector('.ap-y'), xr = box.querySelector('.ap-xx');
+    const show = () => {
+      const s = S();
+      mini.hidden = !s.lockWall;
+      zr.value = s.wallZ || 100; yr.value = s.wallY || 0; xr.value = s.wallX || 0;
+      wallTo(mini, s);
+    };
     show();
+    const onSlide = () => { const s = S(); s.wallZ = +zr.value; s.wallY = +yr.value; s.wallX = +xr.value; wallTo(mini, s); save(); };
+    [zr, yr, xr].forEach((el) => el.addEventListener('input', onSlide));
+    box.querySelector('.ap-reset').addEventListener('click', () => { const s = S(); s.wallZ = 100; s.wallY = 0; s.wallX = 0; save(); show(); });
     const chk = box.querySelector('.ap-fabchk');
     chk.checked = S().fab;
     chk.addEventListener('change', () => { S().fab = chk.checked; save(); badge(); });
@@ -241,7 +277,7 @@
       try { S().lockWall = await shrink(f); save(); show(); } catch (err) { alert('照片讀不進來，換一張試試'); }
       e.target.value = '';
     });
-    box.querySelector('.ap-del').addEventListener('click', () => { delete S().lockWall; save(); show(); });
+    box.querySelector('.ap-del').addEventListener('click', () => { const s = S(); delete s.lockWall; s.wallZ = 100; s.wallY = 0; s.wallX = 0; save(); show(); });
     box.querySelector('.ap-open').addEventListener('click', open);
     box.querySelector('.ap-test').addEventListener('click', () => { const s = S(); s.unseen = true; s.unseenMine = true; save(); badge(); });
   }
