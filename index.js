@@ -89,7 +89,7 @@
           <div class="ap-bar"></div>
         </div>
       </div>`;
-    document.body.appendChild(root);
+    document.documentElement.appendChild(root); // 掛在最外層，不受酒館主題的版面影響
 
     root.querySelector('.ap-dim').addEventListener('click', close);
     root.querySelector('.ap-x').addEventListener('click', close);
@@ -115,13 +115,13 @@
     fab.type = 'button';
     fab.setAttribute('aria-label', '安安的小手機');
     fab.innerHTML = ic('mob', 20) + '<span class="ap-badge"></span>';
-    document.body.appendChild(fab);
+    document.documentElement.appendChild(fab);
     let drag = null;
     fab.addEventListener('pointerdown', (e) => { drag = { y: e.clientY, moved: false }; fab.setPointerCapture(e.pointerId); });
     fab.addEventListener('pointermove', (e) => {
       if (!drag) return;
       if (Math.abs(e.clientY - drag.y) > 6) drag.moved = true;
-      if (drag.moved) fab.style.top = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100)) + '%';
+      if (drag.moved) fab.style.top = Math.min(92, Math.max(6, (e.clientY / innerHeight) * 100)) + 'vh';
     });
     fab.addEventListener('pointerup', (e) => {
       if (!drag) return;
@@ -181,7 +181,7 @@
   function badge() {
     const s = S();
     fab.hidden = !s.fab;
-    fab.style.top = s.fabY + '%';
+    fab.style.top = s.fabY + 'vh';
     const b = fab.querySelector('.ap-badge');
     b.hidden = !s.unseen;
     b.classList.toggle('ap-mine', !!s.unseenMine);
