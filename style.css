@@ -82,7 +82,7 @@
 @keyframes ap-boing{0%{transform:scale(1)}35%{transform:scale(.86)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
 /* 第一頁：工作區，深藍灰線；資料夾是毛玻璃盒子 */
 .ap-p1{--c:#3F5570}
-.ap-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));row-gap:18px}
+.ap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:18px}
 .ap-tile.ap-fold{background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.4);display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;box-sizing:border-box;box-shadow:none}
 .ap-fold i{background:#EDE9E1;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#3F5570}
 /* 第二頁：三個淡色毛玻璃方框，線條跟著框的顏色 */

@@ -32,8 +32,8 @@
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
   const APP = { line: ['LINE', '#8FC4AE'], cal: ['行事曆', '#9DB4D3'], memo: ['備忘錄', '#D9D6CF'], web: ['瀏覽器', '#C9B9D6'] };
 
-  // 綠色小圖釘：圖釘頭是綠色、針跟著框的顏色
-  const PIN = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z" stroke="#4F8A5E" fill="rgba(79,138,94,.15)"/></svg>';
+  // 綠色小圖釘：整根都是綠色（安安說的）
+  const PIN = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4F8A5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z" stroke="#4F8A5E" fill="rgba(79,138,94,.15)"/></svg>';
 
   // 主畫面（照安安說的排；名字是中性的，真正的名字在設定裡填，存在酒館）
   const HOME = {
