@@ -1,4 +1,4 @@
-// 安安的小手機 v0.4：鎖定畫面＋每 N 則自動更新（照安安自己說的規則排版）
+// 安安的小手機 v0.5：鎖定畫面＋主畫面三頁＋每 N 則自動更新（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -17,9 +17,38 @@
     cal: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/>',
     memo: '<path d="M6 3.5h9l3 3V20.5H6z"/><path d="M9 10h6M9 13.5h6M9 17h4"/>',
     web: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 2.5 14.5 0 17M12 3.5c-2.5 2.5-2.5 14.5 0 17"/>',
+    phone: '<path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2C11 19.5 4.5 13 4.5 5.5a2 2 0 0 1 2-2z"/>',
+    cart: '<path d="M3.5 4.5h2.2l2 10.5h9.8l2-7.5H6.8"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/>',
+    photo: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
+    music: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    threads: '<circle cx="12" cy="12" r="3.5"/><path d="M15.5 12v1.5a2.5 2.5 0 0 0 5 0V12a8.5 8.5 0 1 0-3.5 6.9"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
+    book: '<path d="M6 4h11a1 1 0 0 1 1 1v15H7a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1z"/><path d="M5 18a2 2 0 0 1 2-2h11"/>',
+    wheat: '<path d="M12 21V7"/><path d="M12 7c-1.6-.8-2.4-2.2-2.4-3.6 1.6.8 2.4 2.2 2.4 3.6zm0 0c1.6-.8 2.4-2.2 2.4-3.6-1.6.8-2.4 2.2-2.4 3.6zM12 12c-1.8-.8-2.8-2.4-2.8-4 1.8.8 2.8 2.4 2.8 4zm0 0c1.8-.8 2.8-2.4 2.8-4-1.8.8-2.8 2.4-2.8 4zM12 17c-1.8-.8-2.8-2.4-2.8-4 1.8.8 2.8 2.4 2.8 4zm0 0c1.8-.8 2.8-2.4 2.8-4-1.8.8-2.8 2.4-2.8 4z"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    cloud: '<path d="M7 18.5a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.5 1.5 3.75 3.75 0 0 1-.5 7.5z"/>',
+    pen: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
   };
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
   const APP = { line: ['LINE', '#8FC4AE'], cal: ['行事曆', '#9DB4D3'], memo: ['備忘錄', '#D9D6CF'], web: ['瀏覽器', '#C9B9D6'] };
+
+  // 綠色小圖釘：圖釘頭是綠色、針跟著框的顏色
+  const PIN = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z" stroke="#4F8A5E" fill="rgba(79,138,94,.15)"/></svg>';
+
+  // 主畫面（照安安說的排；名字是中性的，真正的名字在設定裡填，存在酒館）
+  const HOME = {
+    dock: [{ k: 'phone', n: '電話' }, { k: 'line', n: 'LINE' }, { k: 'cal', n: '行事曆' }, { k: 'cam', n: '相機' }],
+    folders: [{ n: '字裡行間', mini: ['check', 'cloud', 'book', 'pen'] }, { n: '日常庶務', mini: ['cal', 'memo', 'web', 'mob'] }],
+    p1: [{ id: 'trivia', k: 'wheat', n: '拾穗小集' }],
+    boxes: [
+      { tone: 'oat', apps: [{ id: 'shop', k: 'cart', n: '日常物事' }, { id: 'food', k: 'pin', n: '餵食指南' }, { id: 'album', k: 'photo', n: '相簿' }] },
+      { tone: 'sage', apps: [{ id: 'web', k: 'web', n: '瀏覽器' }, { id: 'memo', k: 'memo', n: '備忘錄' }, { id: 'music', k: 'music', n: '音樂' }] },
+      { tone: 'honey', apps: [{ id: 'threads', k: 'threads', n: 'Threads' }, { id: 'secret', k: 'lock', n: '2026機密企劃' }] },
+    ],
+  };
+  const RENAME = [['trivia', '拾穗小集'], ['food', '餵食指南']]; // 設定裡可以改名字的 App
+  // 兩張桌布各自的存放位置（鎖定畫面沿用舊的名字，原本調好的不會跑掉）
+  const WK = { lock: { img: 'lockWall', z: 'wallZ', x: 'wallX', y: 'wallY' }, home: { img: 'homeWall', z: 'homeZ', x: 'homeX', y: 'homeY' } };
 
   // 示範內容（中性字，真正的內容之後由角色自己寫，存在酒館設定裡）
   const DEMO = {
@@ -48,6 +77,7 @@
     if (s.fabY == null) s.fabY = 42;
     if (!s.auto) s.auto = { on: true, owner: '', n: 30, last: 0 };
     if (s.auto.memo == null) s.auto.memo = '';
+    if (!s.names) s.names = {};
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -55,7 +85,7 @@
   const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
   const cn = (n) => (n <= 10 ? CN[n] : n < 20 ? '十' + CN[n - 10] : CN[Math.floor(n / 10)] + '十' + CN[n % 10]);
 
-  let root, fab, timer;
+  let root, fab, timer, page = 0, swiped = 0;
 
   function build() {
     root = document.createElement('div');
@@ -65,7 +95,7 @@
       <div class="ap-dim"></div>
       <div class="ap-phone">
         <div class="ap-screen">
-          <div class="ap-blur"></div><div class="ap-wall"></div>
+          <div class="ap-blur" data-w="lock"></div><div class="ap-wall" data-w="lock"></div>
           <div class="ap-shade"></div>
           <div class="ap-top"><span class="ap-carrier"></span><span class="ap-notch"></span>
             <span class="ap-right">${ic('wifi', 15)}<span class="ap-pct"></span><button class="ap-x" type="button" aria-label="關掉小手機">${ic('x', 16)}</button></span></div>
@@ -88,7 +118,16 @@
             </div>
             <div class="ap-hint">向 上 翻 開</div>
           </div>
-          <div class="ap-home" hidden><div class="ap-wip">主畫面施工中 🚧<small>往下滑回到鎖定畫面</small></div></div>
+          <div class="ap-home" hidden>
+            <div class="ap-blur" data-w="home"></div><div class="ap-wall" data-w="home"></div><div class="ap-hshade"></div>
+            <div class="ap-pages"><div class="ap-track">
+              <section class="ap-page ap-p1"></section>
+              <section class="ap-page ap-p2"></section>
+              <section class="ap-page ap-p3"></section>
+            </div></div>
+            <div class="ap-dots"><button type="button" data-i="0" aria-label="第一頁"></button><button type="button" data-i="1" aria-label="第二頁"></button><button type="button" data-i="2" aria-label="第三頁"></button></div>
+            <div class="ap-dock ap-glass"></div>
+          </div>
           <div class="ap-bar"></div>
         </div>
       </div>`;
@@ -99,16 +138,40 @@
     root.querySelector('.ap-pill').addEventListener('click', () => root.querySelector('.ap-notes').classList.toggle('ap-open'));
     root.querySelector('.ap-list').addEventListener('click', (e) => { if (e.target.closest('.ap-note')) unlock(); });
 
-    // 往上滑翻開、往下滑回鎖定（在通知清單裡滑不算）
+    // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
     const scr = root.querySelector('.ap-screen');
-    let y0 = null;
-    scr.addEventListener('pointerdown', (e) => { y0 = e.target.closest('.ap-list') ? null : e.clientY; });
-    scr.addEventListener('pointerup', (e) => {
-      if (y0 == null) return;
-      const d = y0 - e.clientY;
-      if (d > 60 && isLocked()) unlock(); else if (d < -60 && !isLocked()) lock();
-      y0 = null;
+    const track = root.querySelector('.ap-track');
+    let g = null;
+    scr.addEventListener('pointerdown', (e) => { g = e.target.closest('.ap-list') ? null : { x: e.clientX, y: e.clientY, dir: null }; });
+    scr.addEventListener('pointermove', (e) => {
+      if (!g || isLocked()) return;
+      const dx = e.clientX - g.x, dy = e.clientY - g.y;
+      if (!g.dir && Math.hypot(dx, dy) > 8) g.dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      if (g.dir !== 'h') return;
+      const d = (page === 0 && dx > 0) || (page === 2 && dx < 0) ? dx / 3 : dx; // 最前面和最後面滑不過去，只會輕輕拉一下
+      track.style.transition = 'none';
+      track.style.transform = `translateX(calc(${-page * 100}% + ${d}px))`;
     });
+    scr.addEventListener('pointerup', (e) => {
+      if (!g) return;
+      const dx = e.clientX - g.x, dy = e.clientY - g.y;
+      if (isLocked()) { if (-dy > 60) unlock(); }
+      else if (g.dir === 'h') { swiped = Date.now(); goPage(dx < -50 ? page + 1 : dx > 50 ? page - 1 : page); }
+      else if (dy > 60) lock();
+      g = null;
+    });
+    scr.addEventListener('pointercancel', () => { if (g && !isLocked()) goPage(page); g = null; });
+
+    // 主畫面：App 還沒做好，點了輕輕彈一下；小圓點可以直接跳頁
+    const home = root.querySelector('.ap-home');
+    home.addEventListener('click', (e) => {
+      const dot = e.target.closest('.ap-dots button');
+      if (dot) { goPage(+dot.dataset.i); return; }
+      const b = e.target.closest('.ap-app');
+      if (!b || Date.now() - swiped < 350) return;
+      b.classList.remove('ap-boing'); void b.offsetWidth; b.classList.add('ap-boing');
+    });
+    home.addEventListener('animationend', (e) => e.target.classList.remove('ap-boing'));
     ['touchstart', 'touchmove', 'touchend', 'pointerdown', 'pointerup', 'click'].forEach((t) => root.addEventListener(t, (e) => e.stopPropagation(), { passive: true }));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.hidden) close(); });
 
@@ -145,7 +208,30 @@
 
   const isLocked = () => !root.querySelector('.ap-lock').hidden;
   function lock() { root.querySelector('.ap-lock').hidden = false; root.querySelector('.ap-home').hidden = true; }
-  function unlock() { root.querySelector('.ap-lock').hidden = true; root.querySelector('.ap-home').hidden = false; }
+  function unlock() { root.querySelector('.ap-lock').hidden = true; root.querySelector('.ap-home').hidden = false; goPage(0, true); }
+  function goPage(i, now) {
+    page = Math.max(0, Math.min(2, i));
+    const t = root.querySelector('.ap-track');
+    t.style.transition = now ? 'none' : '';
+    t.style.transform = `translateX(${-page * 100}%)`;
+    root.querySelectorAll('.ap-dots button').forEach((d, j) => d.classList.toggle('ap-on', j === page));
+  }
+
+  // ===== 主畫面 =====
+  const nm = (a, s) => (s.names[a.id] || '').trim() || a.n;
+  const tile = (a) => (a.k === 'pin' ? PIN : ic(a.k, 26));
+  const appBtn = (a, s) => `<button class="ap-app" type="button"><span class="ap-tile">${tile(a)}</span><span class="ap-name">${esc(nm(a, s))}</span></button>`;
+  function paintHome() {
+    const s = S();
+    root.querySelector('.ap-p1').innerHTML = '<div class="ap-grid">'
+      + HOME.folders.map((f) => `<button class="ap-app" type="button"><span class="ap-tile ap-fold">${f.mini.map((k) => `<i>${ic(k, 11)}</i>`).join('')}</span><span class="ap-name">${esc(f.n)}</span></button>`).join('')
+      + HOME.p1.map((a) => appBtn(a, s)).join('') + '</div>';
+    root.querySelector('.ap-p2').innerHTML = HOME.boxes.map((b) => `<div class="ap-box ap-glass ap-${b.tone}">${b.apps.map((a) => appBtn(a, s)).join('')}</div>`).join('');
+    root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button"><span class="ap-book">${ic('book', 24)}</span><span class="ap-name">拾光手記</span></button>`;
+    root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}</span></button>`).join('');
+    root.querySelector('.ap-home').classList.toggle('ap-nowall', !s.homeWall);
+    wallTo(root, s, 'home');
+  }
 
   function tick() {
     const L = S().lock;
@@ -163,7 +249,8 @@
     const s = S(), L = s.lock;
     const scr = root.querySelector('.ap-screen');
     scr.classList.toggle('ap-nowall', !s.lockWall);
-    wallTo(root, s);
+    wallTo(root, s, 'lock');
+    paintHome();
     root.querySelector('.ap-carrier').textContent = s.carrier;
     root.querySelector('.ap-pct').textContent = (L.battery?.phone ?? 76) + '%';
     const W = (L.weather || []).slice(0, 2);
@@ -193,12 +280,14 @@
   }
 
   // 桌布：上層照片可以放大、上下左右移（用螢幕的 %，不受照片大小影響）；移開露出的地方用模糊的同一張照片墊底
-  function wallTo(box, s) {
-    const url = s.lockWall ? `url("${s.lockWall}")` : '';
-    box.querySelector('.ap-blur').style.backgroundImage = url;
-    const w = box.querySelector('.ap-wall');
+  function wallTo(box, s, kind) {
+    const k = WK[kind];
+    const url = s[k.img] ? `url("${s[k.img]}")` : '';
+    const b = box.querySelector(`.ap-blur[data-w="${kind}"]`), w = box.querySelector(`.ap-wall[data-w="${kind}"]`);
+    if (!b || !w) return;
+    b.style.backgroundImage = url;
     w.style.backgroundImage = url;
-    w.style.transform = `translate(${s.wallX || 0}%, ${s.wallY || 0}%) scale(${(s.wallZ || 100) / 100})`;
+    w.style.transform = `translate(${s[k.x] || 0}%, ${s[k.y] || 0}%) scale(${(s[k.z] || 100) / 100})`;
   }
 
   function badge() {
@@ -238,7 +327,7 @@
 
   // ===== 每 N 則自動更新（清爽版：只帶角色卡＋最近劇情＋手機現在的內容，另外問 AI，不會出現在聊天裡）=====
   const MKEY = 'anan_phone_last'; // 這個聊天上次更新時的訊息數，存在聊天自己的資料裡
-  let busy = false, stEl = null;
+  let busy = false, stEl = null, stSum = null;
   const curChar = () => { const c = ctx(); return c.groupId ? null : c.characters?.[c.characterId] || null; };
   const isOwner = () => { const a = S().auto, ch = curChar(); return !!(a.owner && ch && ch.name === a.owner); };
   const msgCount = () => (ctx().chat || []).filter((m) => m && !m.is_system).length;
@@ -254,14 +343,15 @@
 
   function status(msg) {
     if (!stEl) return;
-    if (msg) { stEl.textContent = msg; return; }
-    if (busy) { stEl.textContent = '他拿起手機中……'; return; }
+    const put = (t) => { stEl.textContent = t; if (stSum) stSum.textContent = t.split('　·　')[0]; };
+    if (msg) { put(msg); return; }
+    if (busy) { put('他拿起手機中……'); return; }
     const a = S().auto;
     const tail = a.last ? `上次 ${hhmm(a.last)}` : '還沒更新過';
-    if (!a.owner) stEl.textContent = '先按「設成現在的角色」';
-    else if (!isOwner()) stEl.textContent = `現在不是 ${a.owner} 的聊天　·　${tail}`;
-    else if (!a.on) stEl.textContent = `自動更新關著　·　${tail}`;
-    else { const n = left(); stEl.textContent = (n == null ? '' : `還差 ${n} 則　·　`) + tail; }
+    if (!a.owner) put('先按「設成現在的角色」');
+    else if (!isOwner()) put(`現在不是 ${a.owner} 的聊天　·　${tail}`);
+    else if (!a.on) put(`自動更新關著　·　${tail}`);
+    else { const n = left(); put((n == null ? '' : `還差 ${n} 則　·　`) + tail); }
   }
 
   const CNUM = { 零: 0, 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
@@ -381,64 +471,109 @@ ${JSON.stringify(now)}
     [E.MESSAGE_SENT, E.MESSAGE_DELETED, E.CHAT_CHANGED].forEach((t) => t && es.on(t, () => setTimeout(() => status(), 300)));
   }
 
+  // ===== 設定頁：分成幾個小抽屜，一次只打開一個 =====
+  // 桌布那一組（鎖定畫面、主畫面共用同一套做法）
+  function wallBlock(kind, guide) {
+    return `
+          <div class="ap-mini" data-k="${kind}"><div class="ap-blur" data-w="${kind}"></div><div class="ap-wall" data-w="${kind}"></div><div class="ap-mini-guide">${guide}</div></div>
+          <div class="ap-sl"><span>大小</span><input type="range" class="ap-z" min="100" max="220" step="1"></div>
+          <div class="ap-sl"><span>上下</span><input type="range" class="ap-y" min="-35" max="35" step="0.5"></div>
+          <div class="ap-sl"><span>左右</span><input type="range" class="ap-xx" min="-35" max="35" step="0.5"></div>
+          <div class="ap-row">
+            <label class="menu_button ap-pick">選擇照片<input type="file" accept="image/*" hidden></label>
+            <div class="menu_button ap-del">移除</div>
+            <div class="menu_button ap-reset">位置歸零</div>
+          </div>`;
+  }
+  function bindWall(dr, kind, sumEl, emptyText) {
+    const k = WK[kind];
+    const mini = dr.querySelector('.ap-mini');
+    const zr = dr.querySelector('.ap-z'), yr = dr.querySelector('.ap-y'), xr = dr.querySelector('.ap-xx');
+    const show = () => {
+      const s = S();
+      mini.hidden = !s[k.img];
+      zr.value = s[k.z] || 100; yr.value = s[k.y] || 0; xr.value = s[k.x] || 0;
+      wallTo(dr, s, kind);
+      sumEl.textContent = s[k.img] ? '已選照片' : emptyText;
+      if (root && !root.hidden) paint();
+    };
+    show();
+    const onSlide = () => { const s = S(); s[k.z] = +zr.value; s[k.y] = +yr.value; s[k.x] = +xr.value; wallTo(dr, s, kind); if (root && !root.hidden) wallTo(root, s, kind); save(); };
+    [zr, yr, xr].forEach((el) => el.addEventListener('input', onSlide));
+    dr.querySelector('.ap-reset').addEventListener('click', () => { const s = S(); s[k.z] = 100; s[k.y] = 0; s[k.x] = 0; save(); show(); });
+    dr.querySelector('.ap-pick input').addEventListener('change', async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try { S()[k.img] = await shrink(f); save(); show(); } catch (err) { alert('照片讀不進來，換一張試試'); }
+      e.target.value = '';
+    });
+    dr.querySelector('.ap-del').addEventListener('click', () => { const s = S(); delete s[k.img]; s[k.z] = 100; s[k.y] = 0; s[k.x] = 0; save(); show(); });
+  }
+
   function settingsPanel() {
     const box = document.createElement('div');
     box.className = 'ap-settings';
+    const drawer = (key, title, body) => `
+          <details class="ap-dr" data-dr="${key}"><summary><span class="ap-dt">${title}</span><small class="ap-sum"></small><i class="fa-solid fa-chevron-down ap-arrow"></i></summary>
+            <div class="ap-dc">${body}</div></details>`;
     box.innerHTML = `
       <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header"><b>📱 安安的小手機</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div>
         <div class="inline-drawer-content">
-          <label class="checkbox_label"><input type="checkbox" class="ap-fabchk"> 顯示小手機懸浮球</label>
-          <div class="ap-row">鎖定畫面桌布</div>
-          <div class="ap-mini"><div class="ap-blur"></div><div class="ap-wall"></div><div class="ap-mini-guide"><span>時間＋小工具</span><span>摘句</span></div></div>
-          <div class="ap-sl"><span>大小</span><input type="range" class="ap-z" min="100" max="220" step="1"></div>
-          <div class="ap-sl"><span>上下</span><input type="range" class="ap-y" min="-35" max="35" step="0.5"></div>
-          <div class="ap-sl"><span>左右</span><input type="range" class="ap-xx" min="-35" max="35" step="0.5"></div>
-          <div class="ap-row"><div class="menu_button ap-reset">位置歸零</div></div>
           <div class="ap-row">
-            <label class="menu_button ap-pick">選擇照片<input type="file" accept="image/*" hidden></label>
-            <div class="menu_button ap-del">移除</div>
+            <label class="checkbox_label"><input type="checkbox" class="ap-fabchk"> 顯示小手機懸浮球</label>
             <div class="menu_button ap-open">打開小手機</div>
-            <div class="menu_button ap-test">試試紅點</div>
           </div>
-          <div class="ap-sep">自動更新</div>
+          ${drawer('lock', '🔒 鎖定畫面桌布', wallBlock('lock', '<span>時間＋小工具</span><span>摘句</span>'))}
+          ${drawer('home', '🏠 主畫面', `
+          <div class="ap-row ap-sub">主畫面桌布（沒選照片時是深灰藍）</div>
+          ${wallBlock('home', '<span class="ap-ghost"></span><span>常駐四格</span>')}
+          <div class="ap-row ap-sub">App 名字（只存在妳的酒館，空白就用原本的名字）</div>
+          ${RENAME.map(([id, def]) => `<div class="ap-nm"><span>${def}</span><input type="text" class="text_pole ap-name-in" data-id="${id}" maxlength="12" placeholder="${def}"></div>`).join('')}`)}
+          ${drawer('auto', '🔄 自動更新', `
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
           <div class="ap-row">每 <input type="number" class="text_pole ap-n" min="5" max="200" step="1"> 則更新一次</div>
           <div class="ap-row">他手機的小抄（給 AI 看：聯絡人、App 的設定）</div>
           <textarea class="text_pole ap-memo" rows="6" maxlength="4000" placeholder="例：LINE 置頂只有……"></textarea>
           <div class="ap-row ap-st"></div>
-          <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>
+          <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>`)}
+          ${drawer('tools', '🧰 小工具', `
+          <div class="ap-row"><div class="menu_button ap-test">試試紅點</div></div>`)}
         </div>
       </div>`;
     const target = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
     if (target) target.appendChild(box);
-    const mini = box.querySelector('.ap-mini');
-    const zr = box.querySelector('.ap-z'), yr = box.querySelector('.ap-y'), xr = box.querySelector('.ap-xx');
-    const show = () => {
-      const s = S();
-      mini.hidden = !s.lockWall;
-      zr.value = s.wallZ || 100; yr.value = s.wallY || 0; xr.value = s.wallX || 0;
-      wallTo(mini, s);
-    };
-    show();
-    const onSlide = () => { const s = S(); s.wallZ = +zr.value; s.wallY = +yr.value; s.wallX = +xr.value; wallTo(mini, s); save(); };
-    [zr, yr, xr].forEach((el) => el.addEventListener('input', onSlide));
-    box.querySelector('.ap-reset').addEventListener('click', () => { const s = S(); s.wallZ = 100; s.wallY = 0; s.wallX = 0; save(); show(); });
+    const D = (key) => box.querySelector(`[data-dr="${key}"]`);
+    const sum = (key) => D(key).querySelector('.ap-sum');
+
+    // 打開一個抽屜時，其他的自動收起來
+    box.querySelectorAll('.ap-dr').forEach((d) => d.addEventListener('toggle', () => {
+      if (d.open) box.querySelectorAll('.ap-dr').forEach((o) => { if (o !== d) o.open = false; });
+    }));
+
+    // 最上面常駐
     const chk = box.querySelector('.ap-fabchk');
     chk.checked = S().fab;
     chk.addEventListener('change', () => { S().fab = chk.checked; save(); badge(); });
-    box.querySelector('.ap-pick input').addEventListener('change', async (e) => {
-      const f = e.target.files[0]; if (!f) return;
-      try { S().lockWall = await shrink(f); save(); show(); } catch (err) { alert('照片讀不進來，換一張試試'); }
-      e.target.value = '';
-    });
-    box.querySelector('.ap-del').addEventListener('click', () => { const s = S(); delete s.lockWall; s.wallZ = 100; s.wallY = 0; s.wallX = 0; save(); show(); });
     box.querySelector('.ap-open').addEventListener('click', open);
+
+    // 桌布
+    bindWall(D('lock'), 'lock', sum('lock'), '沒有照片');
+    bindWall(D('home'), 'home', sum('home'), '深灰藍');
+
+    // App 名字
+    box.querySelectorAll('.ap-name-in').forEach((el) => {
+      el.value = S().names[el.dataset.id] || '';
+      el.addEventListener('input', () => { S().names[el.dataset.id] = el.value.trim(); save(); if (root && !root.hidden) paintHome(); });
+    });
+
+    // 小工具
+    sum('tools').textContent = '試試紅點';
     box.querySelector('.ap-test').addEventListener('click', () => { const s = S(); s.unseen = true; s.unseenMine = true; save(); badge(); });
 
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');
+    stSum = sum('auto');
     const ownEl = box.querySelector('.ap-owner'), nEl = box.querySelector('.ap-n'), autoChk = box.querySelector('.ap-autochk');
     const memoEl = box.querySelector('.ap-memo');
     const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; memoEl.value = a.memo || ''; status(); };

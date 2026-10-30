@@ -68,12 +68,42 @@
 .ap-hint{position:absolute;bottom:24px;width:100%;text-align:center;font-size:9.5px;letter-spacing:3px;opacity:.55;font-family:"Noto Sans TC",sans-serif}
 .ap-bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:120px;height:5px;border-radius:3px;background:rgba(255,255,255,.85);z-index:3}
 
-.ap-home{background:rgba(43,52,64,.55);display:flex;align-items:center;justify-content:center}
-.ap-wip{text-align:center;font-size:18px;line-height:1.8}
-.ap-wip small{display:block;font-size:12px;opacity:.75}
+/* ===== 主畫面 ===== */
+.ap-home{background:#3E4A5A;overflow:hidden}
+.ap-home.ap-nowall .ap-wall,.ap-home.ap-nowall .ap-blur,.ap-home.ap-nowall .ap-hshade{display:none}
+.ap-hshade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(22,26,32,.35) 0%,rgba(22,26,32,0) 22%,rgba(22,26,32,0) 72%,rgba(22,26,32,.35) 100%)}
+.ap-pages{position:absolute;top:58px;left:0;right:0;bottom:122px;overflow:hidden}
+.ap-track{display:flex;width:100%;height:100%;transition:transform .32s cubic-bezier(.25,.8,.3,1)}
+.ap-page{flex:0 0 100%;height:100%;box-sizing:border-box;padding:14px 16px 0;position:relative}
+#ap-root .ap-app{background:none;border:0;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0;-webkit-tap-highlight-color:transparent}
+.ap-tile{width:56px;height:56px;border-radius:15px;background:#EDE9E1;color:var(--c,#4F7A6B);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.ap-name{font-family:"Noto Serif TC",serif;font-size:11.5px;font-weight:500;letter-spacing:.5px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-boing{animation:ap-boing .38s ease}
+@keyframes ap-boing{0%{transform:scale(1)}35%{transform:scale(.86)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+/* 第一頁：工作區，深藍灰線；資料夾是毛玻璃盒子 */
+.ap-p1{--c:#3F5570}
+.ap-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));row-gap:18px}
+.ap-tile.ap-fold{background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.4);display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;box-sizing:border-box;box-shadow:none}
+.ap-fold i{background:#EDE9E1;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#3F5570}
+/* 第二頁：三個淡色毛玻璃方框，線條跟著框的顏色 */
+.ap-p2{display:flex;flex-direction:column;gap:12px}
+.ap-box{border-radius:18px;padding:12px 4px 10px;display:flex;justify-content:center}
+.ap-box .ap-app{width:33.33%}
+.ap-box.ap-oat{--c:#8A6E50;background:rgba(232,222,204,.30);border-color:rgba(240,232,216,.65)}
+.ap-box.ap-sage{--c:#4F7A6B;background:rgba(143,184,164,.30);border-color:rgba(180,214,196,.65)}
+.ap-box.ap-honey{--c:#B8893A;background:rgba(247,223,168,.30);border-color:rgba(250,232,190,.7)}
+/* 第三頁：正中間只有拾光手記 */
+.ap-p3{display:flex;align-items:center;justify-content:center;padding-bottom:40px}
+.ap-book{width:62px;height:78px;border-radius:5px 12px 12px 5px;background:#24324A;color:#E9E4D8;border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.3),inset 5px 0 0 rgba(0,0,0,.18)}
+#ap-root .ap-diary .ap-name{font-family:"Noto Serif TC",serif;font-size:13px;letter-spacing:2px}
+/* 頁數小圓點＋常駐四格（深灰線） */
+.ap-dots{position:absolute;left:0;right:0;bottom:114px;display:flex;justify-content:center;gap:7px}
+#ap-root .ap-dots button{width:6px;height:6px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.4);cursor:pointer}
+#ap-root .ap-dots button.ap-on{background:#fff}
+.ap-dock{--c:#4A4A48;position:absolute;left:14px;right:14px;bottom:26px;height:76px;border-radius:24px;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;justify-items:center}
 .ap-settings .ap-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
 .ap-dragging{transition:none!important;cursor:grabbing}
-.ap-nowall .ap-wall,.ap-nowall .ap-blur{display:none}
+.ap-screen.ap-nowall>.ap-wall,.ap-screen.ap-nowall>.ap-blur{display:none}
 .ap-settings .ap-mini{position:relative;width:110px;aspect-ratio:9/19.5;border-radius:14px;overflow:hidden;background:#3e342c;margin:4px 0 8px}
 .ap-settings .ap-mini[hidden]{display:none}
 .ap-settings .ap-mini .ap-blur{inset:-12px;filter:blur(8px) brightness(.92)}
@@ -88,3 +118,17 @@
 .ap-settings .ap-n{width:4.5em;display:inline-block;margin:0 4px}
 .ap-settings .ap-st{font-size:.9em;opacity:.8}
 .ap-settings .ap-memo{width:100%;box-sizing:border-box;resize:vertical;min-height:7em}
+/* 設定的小抽屜 */
+.ap-settings .ap-dr{border:1px solid rgba(128,128,128,.35);border-radius:10px;margin:8px 0;overflow:hidden}
+.ap-settings .ap-dr summary{list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer}
+.ap-settings .ap-dr summary::-webkit-details-marker{display:none}
+.ap-settings .ap-dt{flex:1;font-weight:bold}
+.ap-settings .ap-sum{font-size:.85em;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.ap-settings .ap-arrow{font-size:.8em;opacity:.7;transition:transform .2s}
+.ap-settings .ap-dr[open] .ap-arrow{transform:rotate(180deg)}
+.ap-settings .ap-dc{padding:2px 12px 12px;border-top:1px solid rgba(128,128,128,.2)}
+.ap-settings .ap-sub{margin-top:12px;opacity:.75;font-size:.92em}
+.ap-settings .ap-nm{display:flex;align-items:center;gap:8px;margin:6px 0}
+.ap-settings .ap-nm span{flex:none;width:5em;font-size:.92em}
+.ap-settings .ap-nm input{flex:1;margin:0}
+.ap-mini-guide .ap-ghost{visibility:hidden}
