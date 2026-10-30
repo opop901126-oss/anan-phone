@@ -78,6 +78,7 @@
     if (!s.auto) s.auto = { on: true, owner: '', n: 30, last: 0 };
     if (s.auto.memo == null) s.auto.memo = '';
     if (!s.names) s.names = {};
+    if (s.homeTint == null) s.homeTint = 35; // 主畫面桌布上的深灰藍濾鏡（%）
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -119,7 +120,7 @@
             <div class="ap-hint">向 上 翻 開</div>
           </div>
           <div class="ap-home" hidden>
-            <div class="ap-blur" data-w="home"></div><div class="ap-wall" data-w="home"></div><div class="ap-hshade"></div>
+            <div class="ap-blur" data-w="home"></div><div class="ap-wall" data-w="home"></div><div class="ap-htint"></div><div class="ap-hshade"></div>
             <div class="ap-pages"><div class="ap-track">
               <section class="ap-page ap-p1"></section>
               <section class="ap-page ap-p2"></section>
@@ -230,6 +231,7 @@
     root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button"><span class="ap-book">${ic('book', 24)}</span><span class="ap-name">拾光手記</span></button>`;
     root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}</span></button>`).join('');
     root.querySelector('.ap-home').classList.toggle('ap-nowall', !s.homeWall);
+    root.querySelector('.ap-home .ap-htint').style.opacity = s.homeTint / 100;
     wallTo(root, s, 'home');
   }
 
@@ -473,9 +475,9 @@ ${JSON.stringify(now)}
 
   // ===== 設定頁：分成幾個小抽屜，一次只打開一個 =====
   // 桌布那一組（鎖定畫面、主畫面共用同一套做法）
-  function wallBlock(kind, guide) {
+  function wallBlock(kind, guide, extra = '') {
     return `
-          <div class="ap-mini" data-k="${kind}"><div class="ap-blur" data-w="${kind}"></div><div class="ap-wall" data-w="${kind}"></div><div class="ap-mini-guide">${guide}</div></div>
+          <div class="ap-mini" data-k="${kind}"><div class="ap-blur" data-w="${kind}"></div><div class="ap-wall" data-w="${kind}"></div>${extra}<div class="ap-mini-guide">${guide}</div></div>
           <div class="ap-sl"><span>大小</span><input type="range" class="ap-z" min="100" max="220" step="1"></div>
           <div class="ap-sl"><span>上下</span><input type="range" class="ap-y" min="-35" max="35" step="0.5"></div>
           <div class="ap-sl"><span>左右</span><input type="range" class="ap-xx" min="-35" max="35" step="0.5"></div>
@@ -526,7 +528,8 @@ ${JSON.stringify(now)}
           ${drawer('lock', '🔒 鎖定畫面桌布', wallBlock('lock', '<span>時間＋小工具</span><span>摘句</span>'))}
           ${drawer('home', '🏠 主畫面', `
           <div class="ap-row ap-sub">主畫面桌布（沒選照片時是深灰藍）</div>
-          ${wallBlock('home', '<span class="ap-ghost"></span><span>常駐四格</span>')}
+          ${wallBlock('home', '<span class="ap-ghost"></span><span>常駐四格</span>', '<div class="ap-htint"></div>')}
+          <div class="ap-sl"><span>濾鏡</span><input type="range" class="ap-tint" min="0" max="85" step="1"><b class="ap-tintv"></b></div>
           <div class="ap-row ap-sub">App 名字（只存在妳的酒館，空白就用原本的名字）</div>
           ${RENAME.map(([id, def]) => `<div class="ap-nm"><span>${def}</span><input type="text" class="text_pole ap-name-in" data-id="${id}" maxlength="12" placeholder="${def}"></div>`).join('')}`)}
           ${drawer('auto', '🔄 自動更新', `
@@ -560,6 +563,17 @@ ${JSON.stringify(now)}
     // 桌布
     bindWall(D('lock'), 'lock', sum('lock'), '沒有照片');
     bindWall(D('home'), 'home', sum('home'), '深灰藍');
+
+    // 主畫面的深灰藍濾鏡：越往右越深，字越清楚
+    const tr = box.querySelector('.ap-tint'), tv = box.querySelector('.ap-tintv');
+    const showTint = () => {
+      const v = S().homeTint;
+      tr.value = v; tv.textContent = v + '%';
+      D('home').querySelector('.ap-mini .ap-htint').style.opacity = v / 100;
+      if (root && !root.hidden) root.querySelector('.ap-home .ap-htint').style.opacity = v / 100;
+    };
+    showTint();
+    tr.addEventListener('input', () => { S().homeTint = +tr.value; save(); showTint(); });
 
     // App 名字
     box.querySelectorAll('.ap-name-in').forEach((el) => {

@@ -70,7 +70,8 @@
 
 /* ===== 主畫面 ===== */
 .ap-home{background:#3E4A5A;overflow:hidden}
-.ap-home.ap-nowall .ap-wall,.ap-home.ap-nowall .ap-blur,.ap-home.ap-nowall .ap-hshade{display:none}
+.ap-home.ap-nowall .ap-wall,.ap-home.ap-nowall .ap-blur,.ap-home.ap-nowall .ap-hshade,.ap-home.ap-nowall .ap-htint{display:none}
+.ap-htint{position:absolute;inset:0;background:#3E4A5A;pointer-events:none}
 .ap-hshade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(22,26,32,.35) 0%,rgba(22,26,32,0) 22%,rgba(22,26,32,0) 72%,rgba(22,26,32,.35) 100%)}
 .ap-pages{position:absolute;top:58px;left:0;right:0;bottom:122px;overflow:hidden}
 .ap-track{display:flex;width:100%;height:100%;transition:transform .32s cubic-bezier(.25,.8,.3,1)}
@@ -114,6 +115,7 @@
 .ap-settings .ap-sl{display:flex;align-items:center;gap:8px;margin:4px 0}
 .ap-settings .ap-sl span{flex:none;width:2.5em}
 .ap-settings .ap-sl input{flex:1}
+.ap-settings .ap-tintv{flex:none;width:2.8em;text-align:right;font-weight:normal;font-size:.9em}
 .ap-settings .ap-sep{margin:14px 0 6px;padding-top:10px;border-top:1px solid rgba(128,128,128,.35);font-weight:bold}
 .ap-settings .ap-n{width:4.5em;display:inline-block;margin:0 4px}
 .ap-settings .ap-st{font-size:.9em;opacity:.8}
