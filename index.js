@@ -1,4 +1,4 @@
-// 安安的小手機 v0.6.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
+// 安安的小手機 v0.6.2：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -77,6 +77,7 @@
     if (s.fabY == null) s.fabY = 42;
     if (!s.auto) s.auto = { on: true, owner: '', n: 30, last: 0 };
     if (s.auto.memo == null) s.auto.memo = '';
+    if (s.auto.mute == null) s.auto.mute = ''; // 不會傳訊息來的人（名字只存在酒館）
     if (!s.names) s.names = {};
     if (s.homeTint == null) s.homeTint = 35; // 主畫面桌布上的深灰藍濾鏡（%）
     if (!s.memo) s.memo = { day: '', seq: 0, notes: [] }; // 他的備忘錄：內容由他在更新時自己寫
@@ -86,6 +87,10 @@
   const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
   const cn = (n) => (n <= 10 ? CN[n] : n < 20 ? '十' + CN[n - 10] : CN[Math.floor(n / 10)] + '十' + CN[n % 10]);
+
+  // 不會傳訊息來的人：寄件人是他們的通知，程式直接拿掉
+  const muteList = () => String(S().auto.mute || '').split(/[,，、\n]/).map((t) => t.trim()).filter(Boolean);
+  const muted = (x) => x && x.app !== 'memo' && muteList().includes(String(x.from || '').trim());
 
   let root, fab, timer, page = 0, swiped = 0;
 
@@ -139,7 +144,12 @@
     root.querySelector('.ap-dim').addEventListener('click', close);
     root.querySelector('.ap-x').addEventListener('click', close);
     root.querySelector('.ap-pill').addEventListener('click', () => root.querySelector('.ap-notes').classList.toggle('ap-open'));
-    root.querySelector('.ap-list').addEventListener('click', (e) => { if (e.target.closest('.ap-note')) unlock(); });
+    root.querySelector('.ap-list').addEventListener('click', (e) => {
+      const nt = e.target.closest('.ap-note');
+      if (!nt) return;
+      unlock();
+      if (nt.dataset.app === 'memo') openApp('memo', nt.dataset.id); // 點備忘錄通知：直接打開備忘錄，那則亮一下
+    });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
     const scr = root.querySelector('.ap-screen');
@@ -248,12 +258,19 @@
   // ===== App =====
   const READY = ['memo']; // 已經做好、點得開的 App
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
-  function openApp(id) {
+  function openApp(id, focus) {
     const v = root.querySelector(`.ap-view[data-app="${id}"]`);
     if (!v) return;
     if (id === 'memo') paintMemo();
     v.hidden = false;
     if (id === 'memo') replayChecks();
+    const f = focus && v.querySelector(`.ap-mn[data-id="${focus}"]`);
+    if (f) {
+      f.classList.add('ap-open');
+      f.scrollIntoView({ block: 'center' });
+      setTimeout(() => f.classList.add('ap-flash'), 250);
+      f.addEventListener('animationend', () => f.classList.remove('ap-flash'), { once: true });
+    }
     root.querySelector('.ap-screen').classList.add('ap-lite'); // 紙色 App：上面的字和橫線變深色
   }
   function closeApp() {
@@ -343,7 +360,7 @@
     root.querySelector('.ap-rings').innerHTML = ring(L.battery?.phone, 'mob') + ring(L.battery?.buds, 'buds');
     root.querySelector('.ap-quote span').textContent = L.quote || '';
 
-    const notes = s.notes.slice(0, 8);
+    const notes = s.notes.filter((x) => !muted(x)).slice(0, 8);
     const box = root.querySelector('.ap-notes');
     box.hidden = !notes.length;
     box.classList.remove('ap-open');
@@ -354,7 +371,7 @@
       + `<span>${notes.length} 則新通知</span>${ic('down', 14)}`;
     root.querySelector('.ap-list').innerHTML = notes.map((x) => {
       const [name, col] = APP[x.app] || APP.memo;
-      return `<div class="ap-note ap-glass">
+      return `<div class="ap-note ap-glass" data-app="${x.app}"${x.id ? ` data-id="${esc(x.id)}"` : ''}>
         <div class="ap-hd"><span class="ap-ic">${ic(x.app, 14)}</span>${esc(name)}<span class="${x.mine ? 'ap-me' : 'ap-ad'}" data-a="${x.app}" style="${x.mine ? '' : 'background:' + col}"></span><span class="ap-when">${esc(x.when)}</span></div>
         <div class="ap-tt">${esc(x.from)}</div><div class="ap-tx">${esc(x.text)}</div></div>`;
     }).join('');
@@ -462,6 +479,7 @@
       : { id: n.id, kind: 'text', pin: !!n.pin, title: n.title, body: n.body }));
     const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow };
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
+    const mute = muteList();
     const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面和備忘錄）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
@@ -479,7 +497,7 @@ ${JSON.stringify(now)}
 2. next：他行事曆上最近的下一件事。when 很短，像「明天 15:00」「週二 15:00」；what 10 字以內；跟 ${me} 有關 mine 就是 true。
 3. battery：phone 和 buds 是 0～100 的整數，合理就好；他不喜歡電量低於 50，除非劇情裡他忙了一整天。
 4. quote：今日摘句，由他自己決定換不換。不換就回傳原本那句，一字不改；要換的話，是他親手打的一句話，30 字以內，用他的語氣。
-5. notes：3～5 則通知。app 只能是 line、cal、web 其中一個（備忘錄的通知程式會自己從 memo 拿，你不用寫）；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的：傳給她的、在聊她的、跟她的約會或計畫；只是順便提到的不算。每次至少 1～2 則跟 ${me} 無關（工作、朋友、家人的日常）。聯絡人名字要照小抄裡存的名字寫。小抄裡的個性和習慣是參考，不要照抄裡面的句子，每次用新的說法。這次的通知要是新的：不要重複「他手機現在的內容」裡的通知，也不用每次都出現同樣的人，挑這段劇情裡最可能傳訊息來的人。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
+5. notes：3～5 則通知。app 只能是 line、cal、web 其中一個（備忘錄的通知程式會自己從 memo 拿，你不用寫）；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的：傳給她的、在聊她的、跟她的約會或計畫；只是順便提到的不算。每次至少 1～2 則跟 ${me} 無關（工作、朋友、家人的日常）。聯絡人名字要照小抄裡存的名字寫。小抄裡的個性和習慣是參考，不要照抄裡面的句子，每次用新的說法。這次的通知要是新的：不要重複「他手機現在的內容」裡的通知，也不用每次都出現同樣的人，挑這段劇情裡最可能傳訊息來的人。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。${mute.length ? `這些人不會傳訊息來，from 絕對不能是他們：${mute.join('、')}。` : ''}內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
 6. memo：他自己記給自己看的備忘錄。用他的口吻，記他自己會想記下的事；記什麼由他決定。
    - add：這次新增的 0～2 則，沒有想記的就給空陣列 []。每則的 kind 是 text 或 list：
      text＝一段話：title 15 字內、body 80 字內。
@@ -519,7 +537,7 @@ ${JSON.stringify(now)}
     const pct = (v, old) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.max(1, Math.min(100, n)) : old; };
     if (o.battery) L.battery = { phone: pct(o.battery.phone, L.battery?.phone ?? 76), buds: pct(o.battery.buds, L.battery?.buds ?? 88) };
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
-    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && APP[x.app] && x.app !== 'memo' && x.text).slice(0, 5) : [];
+    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && APP[x.app] && x.app !== 'memo' && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
     else s.notes = s.notes.filter((x) => x.app !== 'memo'); // 舊的備忘錄通知拿掉，下面重新從備忘錄拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
@@ -577,7 +595,7 @@ ${JSON.stringify(now)}
       const d = (+b.slice(0, 2) * 60 + +b.slice(3)) - (+a.slice(0, 2) * 60 + +a.slice(3));
       if (d >= 0) when = d < 1 ? '現在' : d < 60 ? `${d}分鐘前` : `${Math.floor(d / 60)}小時前`;
     }
-    s.notes.splice(Math.min(1, s.notes.length), 0, { app: 'memo', from: clean(n.title, 12), text: clean(text, 50), when, mine: !!n.mine });
+    s.notes.splice(Math.min(1, s.notes.length), 0, { app: 'memo', id: n.id, from: clean(n.title, 12), text: clean(text, 50), when, mine: !!n.mine });
     s.notes = s.notes.slice(0, 6);
   }
 
@@ -684,6 +702,8 @@ ${JSON.stringify(now)}
           <div class="ap-row">每 <input type="number" class="text_pole ap-n" min="5" max="200" step="1"> 則更新一次</div>
           <div class="ap-row">他手機的小抄（給 AI 看：聯絡人、App 的設定）</div>
           <textarea class="text_pole ap-memo" rows="6" maxlength="4000" placeholder="例：LINE 置頂只有……"></textarea>
+          <div class="ap-row">不會傳訊息來的人（名字照小抄寫，用、分開；他們的通知會直接拿掉）</div>
+          <input type="text" class="text_pole ap-mute" maxlength="200" placeholder="例：示範聯絡人">
           <div class="ap-row ap-st"></div>
           <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>`)}
           ${drawer('tools', '🧰 小工具', `
@@ -738,6 +758,9 @@ ${JSON.stringify(now)}
     const memoEl = box.querySelector('.ap-memo');
     const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; memoEl.value = a.memo || ''; status(); };
     memoEl.addEventListener('input', () => { S().auto.memo = memoEl.value; save(); });
+    const muteEl = box.querySelector('.ap-mute');
+    muteEl.value = S().auto.mute || '';
+    muteEl.addEventListener('input', () => { S().auto.mute = muteEl.value; save(); if (root && !root.hidden) paint(); });
     showAuto();
     autoChk.addEventListener('change', () => { S().auto.on = autoChk.checked; save(); status(); });
     box.querySelector('.ap-own').addEventListener('click', () => {
