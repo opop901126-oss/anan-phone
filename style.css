@@ -205,3 +205,22 @@
 .ap-gr.ap-open .ap-gb{display:block;color:#45423E}
 .ap-gs{display:none;margin:5px 0 0 35px;font-size:11.5px;color:#7A766F}
 .ap-gr.ap-open .ap-gs{display:block}
+/* ===== 瀏覽器（灰白紙，跟備忘錄同一家；淡紫是它的顏色）===== */
+.ap-wdot{background:#C9B9D6;box-shadow:0 0 0 1.2px #7E6A92}
+.ap-wbar{display:flex;align-items:center;gap:8px;margin:0 0 4px}
+.ap-wsearch{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:#F6F4F0;border:.5px solid #CFCBC2;border-radius:18px;padding:7px 12px;color:#7E6A92}
+.ap-wsearch span{font-family:"Noto Sans TC",sans-serif;font-size:12px;color:#A8A39A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-wsearch .ap-wdraft{font-family:"Noto Serif TC",serif;font-size:13px;color:#8E8B84} /* 他打到一半沒送出的字 */
+.ap-wtabs{flex:none;width:22px;height:22px;border:1.2px solid #4A4A48;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#4A4A48}
+.ap-wr{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0}
+.ap-wi{flex:none;color:#A8A39A;display:flex}
+.ap-wq{flex:1;min-width:0;font-size:14px;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-wr.ap-hid{cursor:pointer}
+.ap-wr.ap-hid .ap-wi,.ap-wr.ap-peeked .ap-wi{color:#7E6A92}
+.ap-wr.ap-hid .ap-wq{color:#7E6A92;filter:blur(4.5px)} /* 藏起來的：糊掉，果果點了才看得到 */
+.ap-wr.ap-peeked .ap-wq{color:#5E5070;transition:filter .35s}
+/* ===== 長按刪除：平常看不到，按住半秒才冒出來 ===== */
+.ap-view{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.ap-mn,.ap-gr{position:relative}
+#ap-root .ap-rm{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:2;border:.5px solid #B5533C;background:#F6F4F0;color:#B5533C;border-radius:14px;padding:3px 12px;font-family:"Noto Sans TC",sans-serif;font-size:12px;letter-spacing:.1em;cursor:pointer;box-shadow:0 2px 8px rgba(46,46,44,.12);animation:ap-rmin .18s ease}
+@keyframes ap-rmin{from{opacity:0;transform:translateY(-50%) scale(.85)}to{opacity:1;transform:translateY(-50%)}}

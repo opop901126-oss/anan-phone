@@ -1,4 +1,4 @@
-// 安安的小手機 v0.7.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集（照安安自己說的規則排版）
+// 安安的小手機 v0.8.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -29,6 +29,10 @@
     cloud: '<path d="M7 18.5a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.5 1.5 3.75 3.75 0 0 1-.5 7.5z"/>',
     pen: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
     bolt: '<path d="M13 3L6 13.5h5L10 21l7-10.5h-5z"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>',
+    lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/>',
   };
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
   // App：[名字, 小點顏色, 細框＋圖示線條（同色系深一點）, 圖示]（第 44 窗：每顆小點都有細框）
@@ -90,6 +94,8 @@
     if (s.homeTint == null) s.homeTint = 35; // 主畫面桌布上的深灰藍濾鏡（%）
     if (!s.memo) s.memo = { day: '', seq: 0, notes: [] }; // 他的備忘錄：內容由他在更新時自己寫
     if (!s.grains) s.grains = { seq: 0, items: [] }; // 拾穗小集：他撿的冷知識，一直累積、不換新
+    if (!s.web) s.web = { seq: 0, items: [], draft: '', tabs: 2, peek: [] }; // 瀏覽器：他的搜尋紀錄（藏起來的要果果點開才看得到）
+    if (s.auto.bind == null) { s.auto.bind = false; s.auto.chat = ''; } // 只在綁定的聊天室更新（開關）
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -145,6 +151,7 @@
             <div class="ap-dock ap-glass"></div>
           </div>
           <div class="ap-view" data-app="memo" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="web" hidden><div class="ap-vs"></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
       </div>`;
@@ -192,11 +199,23 @@
       if (dot) { goPage(+dot.dataset.i); return; }
       const b = e.target.closest('.ap-app');
       if (!b || Date.now() - swiped < 350) return;
-      if (READY.includes(b.dataset.id)) { openApp(b.dataset.id); return; }
-      b.classList.remove('ap-boing'); void b.offsetWidth; b.classList.add('ap-boing');
+      b.classList.remove('ap-boing'); void b.offsetWidth; b.classList.add('ap-boing'); // 點了都彈一下，果果才知道有點到
+      if (READY.includes(b.dataset.id)) { const id = b.dataset.id; setTimeout(() => openApp(id), 190); } // 彈到一半再打開
     });
     home.addEventListener('animationend', (e) => e.target.classList.remove('ap-boing'));
+    root.querySelectorAll('.ap-view').forEach((v) => {
+      v.addEventListener('contextmenu', (e) => e.preventDefault()); // 長按不要跳出複製選單
+      v.addEventListener('pointerdown', lpStart);
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => v.addEventListener(t, lpStop));
+      v.addEventListener('pointermove', lpMove);
+    });
+    root.querySelector('.ap-view[data-app="web"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const r = e.target.closest('.ap-wr.ap-hid');
+      if (r) peekWeb(r);
+    });
     root.querySelector('.ap-view[data-app="memo"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
       const tab = e.target.closest('.ap-tab');
       if (tab) { showTab(tab.dataset.t); return; }
       const it = e.target.closest('.ap-mi');
@@ -267,7 +286,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -275,8 +294,10 @@
     const v = root.querySelector(`.ap-view[data-app="${VIEW[id] || id}"]`);
     if (!v) return;
     if (v.dataset.app === 'memo') { tab = id === 'trivia' ? 'trivia' : 'memo'; paintMemo(); }
+    if (id === 'web') paintWeb();
+    v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
-    if (tab === 'memo') replayChecks();
+    if (v.dataset.app === 'memo' && tab === 'memo') replayChecks();
     const f = focus && v.querySelector(`[data-id="${focus}"]`);
     if (f) {
       f.classList.add('ap-open');
@@ -349,6 +370,73 @@
     root.querySelector('.ap-view[data-app="memo"] .ap-vs').scrollTop = 0;
     if (tab === 'memo') replayChecks();
   }
+  // ===== 瀏覽器（第 44 窗果果確認的草圖：灰白紙、搜尋列、照日期分組、藏起來的模糊＋小鎖）=====
+  const nowDay = () => S().memo.day || isoDate(new Date().toISOString());
+  function paintWeb() {
+    const W = S().web;
+    const key = (x) => `${x.day || ''} ${x.time || ''} ${String(+String(x.id).slice(1) || 0).padStart(6, '0')}`;
+    const list = W.items.slice().sort((a, b) => (key(a) < key(b) ? 1 : -1));
+    const days = [];
+    list.forEach((x) => { const d = days.find((g) => g.day === x.day); d ? d.items.push(x) : days.push({ day: x.day, items: [x] }); });
+    const row = (x) => {
+      const hid = x.secret && !x.seen, open = x.secret && x.seen;
+      return `<div class="ap-wr${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${x.id}"><span class="ap-wi">${ic(hid ? 'lockon' : open ? 'lockoff' : 'clock', 15)}</span><span class="ap-wq">${esc(x.q)}</span><span class="ap-mw">${esc(x.time)}</span></div>`;
+    };
+    root.querySelector('.ap-view[data-app="web"] .ap-vs').innerHTML = `
+      <div class="ap-meta">WEB · 搜尋紀錄</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-wdot"></span>瀏覽器</div>
+      <div class="ap-wbar"><div class="ap-wsearch">${ic('search', 15)}<span${W.draft ? ' class="ap-wdraft"' : ''}>${esc(W.draft || '搜尋或輸入網址')}</span></div><span class="ap-wtabs" aria-label="分頁">${Math.max(1, Math.min(9, +W.tabs || 1))}</span></div>
+      ${days.map((g) => `<div class="ap-msec">${g.day === nowDay() ? '今天' : slash(g.day) || '更早'}</div>${g.items.map(row).join('')}`).join('')}
+      ${list.length ? '' : '<div class="ap-mempty">還沒有搜尋紀錄。</div>'}`;
+  }
+  // 果果點開藏起來的那筆：解鎖、記下來，下次更新時告訴他
+  function peekWeb(el) {
+    const W = S().web, x = W.items.find((it) => it.id === el.dataset.id);
+    if (!x) return;
+    x.seen = true;
+    if (!W.peek.includes(x.id)) W.peek.push(x.id);
+    save();
+    el.classList.remove('ap-hid'); el.classList.add('ap-peeked');
+    el.querySelector('.ap-wi').innerHTML = ic('lockoff', 15);
+  }
+
+  // ===== 長按刪除（只有果果能刪；平常看不到，截圖也乾淨）=====
+  let lp = null, lpAt = 0;
+  const LPT = '.ap-mn, .ap-gr, .ap-wr';
+  function lpStart(e) {
+    const t = e.target.closest(LPT);
+    if (e.target.closest('.ap-rm')) return;
+    clearDel(t);
+    if (!t) return;
+    lp = { t, x: e.clientX, y: e.clientY, id: setTimeout(() => { lp = null; lpAt = Date.now(); showDel(t); }, 550) };
+  }
+  function lpMove(e) { if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 8) lpStop(); }
+  function lpStop() { if (lp) { clearTimeout(lp.id); lp = null; } }
+  const lpEat = (e) => {
+    const d = e.target.closest('.ap-rm');
+    if (d) { delItem(d.parentElement); return true; }
+    return Date.now() - lpAt < 450; // 長按放開的那一下不要算成點擊（不會順便打勾、展開）
+  };
+  function clearDel(keep) { root.querySelectorAll('.ap-rm').forEach((d) => { if (d.parentElement !== keep) d.remove(); }); }
+  function showDel(t) {
+    if (t.querySelector(':scope > .ap-rm')) return;
+    t.insertAdjacentHTML('beforeend', '<button type="button" class="ap-rm">拿掉</button>');
+  }
+  function delItem(t) {
+    const s = S(), id = t.dataset.id;
+    if (t.classList.contains('ap-mn')) s.memo.notes = s.memo.notes.filter((n) => n.id !== id);
+    else if (t.classList.contains('ap-gr')) {
+      s.grains.items = s.grains.items.filter((g) => g.id !== id);
+      s.grains.items.sort((a, b) => a.no - b.no).forEach((g, i) => { g.no = i + 1; }); // 編號重排，不跳號
+    } else if (t.classList.contains('ap-wr')) {
+      s.web.items = s.web.items.filter((x) => x.id !== id);
+      s.web.peek = s.web.peek.filter((x) => x !== id);
+    }
+    s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
+    save();
+    if (t.classList.contains('ap-wr')) paintWeb(); else paintMemo();
+  }
+
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
   // 一穗：№編號、標題、說給果寶聽過的鵝黃小點、分類小印記；點了原地展開全文和出處
   function grainRow(g) {
@@ -471,7 +559,9 @@
   const MKEY = 'anan_phone_last'; // 這個聊天上次更新時的訊息數，存在聊天自己的資料裡
   let busy = false, stEl = null, stSum = null;
   const curChar = () => { const c = ctx(); return c.groupId ? null : c.characters?.[c.characterId] || null; };
-  const isOwner = () => { const a = S().auto, ch = curChar(); return !!(a.owner && ch && ch.name === a.owner); };
+  const chatId = () => { const c = ctx(); return String((typeof c.getCurrentChatId === 'function' ? c.getCurrentChatId() : c.chatId) || ''); };
+  const bound = () => { const a = S().auto; return !a.bind || !a.chat || a.chat === chatId(); }; // 開關關著、或就是綁定的聊天室
+  const isOwner = () => { const a = S().auto, ch = curChar(); return !!(a.owner && ch && ch.name === a.owner && bound()); };
   const msgCount = () => (ctx().chat || []).filter((m) => m && !m.is_system).length;
   const saveMeta = () => { const c = ctx(); (c.saveMetadata || c.saveMetadataDebounced)?.call(c); };
   function lastAt() {
@@ -491,6 +581,7 @@
     const a = S().auto;
     const tail = a.last ? `上次 ${hhmm(a.last)}` : '還沒更新過';
     if (!a.owner) put('先按「設成現在的角色」');
+    else if (!bound()) put(`現在不是綁定的聊天室　·　${tail}`);
     else if (!isOwner()) put(`現在不是 ${a.owner} 的聊天　·　${tail}`);
     else if (!a.on) put(`自動更新關著　·　${tail}`);
     else { const n = left(); put((n == null ? '' : `還差 ${n} 則　·　`) + tail); }
@@ -521,10 +612,13 @@
       ? { id: n.id, kind: 'list', pin: !!n.pin, title: n.title, items: (n.items || []).map((it) => ({ t: it.t, done: !!it.done })) }
       : { id: n.id, kind: 'text', pin: !!n.pin, title: n.title, body: n.body }));
     const grainsNow = s.grains.items.map((g) => ({ id: g.id, title: g.title, told: !!g.told })); // 只給標題，收很多穗也不會太重
-    const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow };
+    const webNow = s.web.items.slice(-15).map((x) => ({ id: x.id, q: x.q, secret: !!x.secret }));
+    const peeked = s.web.items.filter((x) => s.web.peek.includes(x.id)).map((x) => x.q);
+    const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow } };
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、備忘錄、拾穗小集）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、備忘錄、拾穗小集、瀏覽器）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -555,10 +649,17 @@ ${JSON.stringify(now)}
    - 劇情裡他跟 ${me} 分享過的冷知識，可以收進來；小抄裡提到過、grains 裡還沒有的舊冷知識，也可以撿進來。
    - told：grains 裡已經有、這段劇情裡他說給 ${me} 聽了的，寫它的 id，像 ["t2"]；沒有就給 []。
    - 不要撿 grains 裡已經有的（標題、內容意思一樣都不行）。
-8. 全部用繁體中文、台灣用語。
+8. web：他的瀏覽器。他六成在出版社查證稿子（歷史年份、植物這類），四成在通勤或家裡查生活的事；分頁很少，超過五個就會全關。
+   - add：這段劇情裡他新查的 0～3 筆，沒有就給 []。q 是他打進搜尋列的字，20 字內，要像真的人在搜尋（關鍵字、短句、有時是問句）；time 像「15:20」。有時連續幾筆會像一串思路（同一件事一路越查越細）。
+   - secret：還沒準備好讓 ${me} 看到的（驚喜、偷偷在學的、會害羞的）才是 true，大部分都是 false。
+   - draft：他最近一次打到一半、沒有按下搜尋的字，15 字內；沒有就給空字串。
+   - tabs：他現在開著的分頁數，1～5 的整數。
+   - unhide：history 裡 secret 的、他覺得已經不用藏的，寫它的 id，像 ["w3"]；沒有就給 []。
+   - 不要重複 history 裡已經有的搜尋。${peeked.length ? `\n   - ${me} 剛剛偷看了他藏起來的這幾筆：「${peeked.join('」「')}」。他會知道被看到了，要不要有反應（備忘錄、通知、或乾脆不藏了）由他決定。` : ''}
+9. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false}],"draft":"","tabs":2,"unhide":[]}}`;
     return { sys, prompt };
   }
 
@@ -595,6 +696,7 @@ ${JSON.stringify(now)}
     applyMemo(o.memo, isoDate(o.date));
     memoNotice();
     grainNotice(applyGrains(o.grains));
+    applyWeb(o.web);
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || !!L.next?.mine;
   }
@@ -649,6 +751,22 @@ ${JSON.stringify(now)}
     s.notes = s.notes.slice(0, 6);
   }
 
+  // 瀏覽器：加新的搜尋（亂寫、重複的擋掉）、打到一半的字、分頁數、不藏了的；果果偷看過的清掉（他這次已經知道了）
+  function applyWeb(w) {
+    const W = S().web;
+    W.peek = [];
+    if (!w || typeof w !== 'object') return;
+    (Array.isArray(w.unhide) ? w.unhide : []).forEach((id) => { const x = W.items.find((it) => it.id === id); if (x) x.secret = false; });
+    if (typeof w.draft === 'string') W.draft = clean(w.draft, 18);
+    const t = Math.round(Number(w.tabs)); if (Number.isFinite(t)) W.tabs = Math.max(1, Math.min(5, t));
+    (Array.isArray(w.add) ? w.add : []).slice(0, 3).forEach((x) => {
+      const q = clean(x?.q, 24);
+      if (!q || W.items.some((it) => it.q === q)) return;
+      W.items.push({ id: 'w' + (++W.seq), q, day: nowDay(), time: hm(x.time) || S().lock.time || '', secret: x.secret === true, seen: false });
+    });
+    W.items = W.items.slice(-40); // 留最近 40 筆，太舊的自己消失
+  }
+
   // 拾穗小集：他說給果寶聽了的補上鵝黃點（只能補上、不能拿掉）→ 撿新的一穗（亂寫的、重複的擋掉）
   const CATS = ['典故', '歷史', '植物', '天文', '動物'];
   function applyGrains(g) {
@@ -675,7 +793,7 @@ ${JSON.stringify(now)}
 
   async function runUpdate(manual) {
     if (busy) return;
-    if (!isOwner()) { if (manual) status(S().auto.owner ? `現在不是 ${S().auto.owner} 的聊天，不能更新` : '先按「設成現在的角色」'); return; }
+    if (!isOwner()) { if (manual) status(!S().auto.owner ? '先按「設成現在的角色」' : !bound() ? '現在不是綁定的聊天室，不能更新' : `現在不是 ${S().auto.owner} 的聊天，不能更新`); return; }
     busy = true; status();
     try {
       const { sys, prompt } = buildPrompt();
@@ -773,6 +891,8 @@ ${JSON.stringify(now)}
           ${drawer('auto', '🔄 自動更新', `
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
+          <label class="checkbox_label"><input type="checkbox" class="ap-bindchk"> 只在綁定的聊天室更新（關掉就是他的每個聊天室都會更新）</label>
+          <div class="ap-row">綁定：<b class="ap-bindname"></b><div class="menu_button ap-bind">設成這個聊天室</div></div>
           <div class="ap-row">每 <input type="number" class="text_pole ap-n" min="5" max="200" step="1"> 則更新一次</div>
           <div class="ap-row">他手機的小抄（給 AI 看：聯絡人、App 的設定）</div>
           <textarea class="text_pole ap-memo" rows="6" maxlength="4000" placeholder="例：LINE 置頂只有……"></textarea>
@@ -780,8 +900,6 @@ ${JSON.stringify(now)}
           <input type="text" class="text_pole ap-mute" maxlength="200" placeholder="例：示範聯絡人">
           <div class="ap-row ap-st"></div>
           <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>`)}
-          ${drawer('tools', '🧰 小工具', `
-          <div class="ap-row"><div class="menu_button ap-test">試試紅點</div></div>`)}
         </div>
       </div>`;
     const target = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
@@ -821,16 +939,20 @@ ${JSON.stringify(now)}
       el.addEventListener('input', () => { S().names[el.dataset.id] = el.value.trim(); save(); if (root && !root.hidden) paintHome(); });
     });
 
-    // 小工具
-    sum('tools').textContent = '試試紅點';
-    box.querySelector('.ap-test').addEventListener('click', () => { const s = S(); s.unseen = true; s.unseenMine = true; save(); badge(); });
-
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');
     stSum = sum('auto');
     const ownEl = box.querySelector('.ap-owner'), nEl = box.querySelector('.ap-n'), autoChk = box.querySelector('.ap-autochk');
     const memoEl = box.querySelector('.ap-memo');
-    const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; memoEl.value = a.memo || ''; status(); };
+    const bindChk = box.querySelector('.ap-bindchk'), bindName = box.querySelector('.ap-bindname');
+    const showAuto = () => { const a = S().auto; ownEl.textContent = a.owner || '（還沒設定）'; nEl.value = a.n; autoChk.checked = a.on; memoEl.value = a.memo || '';
+      bindChk.checked = !!a.bind; bindName.textContent = a.chat || '（還沒設定）'; status(); };
+    bindChk.addEventListener('change', () => { S().auto.bind = bindChk.checked; save(); showAuto(); });
+    box.querySelector('.ap-bind').addEventListener('click', () => {
+      const id = chatId();
+      if (!id) { status('先打開一個聊天室，再按一次'); return; }
+      S().auto.chat = id; save(); showAuto();
+    });
     memoEl.addEventListener('input', () => { S().auto.memo = memoEl.value; save(); });
     const muteEl = box.querySelector('.ap-mute');
     muteEl.value = S().auto.mute || '';
