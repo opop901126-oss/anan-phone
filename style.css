@@ -13,7 +13,7 @@
 .ap-dim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
 /* 電腦：有機身 */
 .ap-phone{position:relative;height:min(88vh,820px);aspect-ratio:9/19.5;max-width:94vw;background:#3a3d42;border-radius:46px;padding:9px;box-sizing:border-box;box-shadow:0 12px 40px rgba(0,0,0,.45)}
-.ap-screen{position:relative;height:100%;border-radius:38px;overflow:hidden;background:#3e342c;touch-action:none;user-select:none}
+.ap-screen{position:relative;height:100%;border-radius:38px;overflow:hidden;overflow:clip;background:#3e342c;touch-action:none;user-select:none}
 .ap-blur{position:absolute;inset:-30px;background:center/cover no-repeat;filter:blur(18px) brightness(.92)}
 .ap-wall{position:absolute;inset:0;background:center/cover no-repeat;transform-origin:center}
 /* 手機：滿版 */
@@ -177,3 +177,7 @@
 .ap-ad[data-a="memo"]{box-shadow:0 0 0 1.2px rgba(74,74,72,.55)} /* 灰白小點加細框，亮的桌布上才看得到 */
 .ap-mn.ap-flash{animation:ap-flash 1.8s ease;border-radius:2px} /* 從通知點進來：那則亮一下 */
 @keyframes ap-flash{0%,30%{background:rgba(79,122,107,.13);box-shadow:-10px 0 0 rgba(79,122,107,.13),10px 0 0 rgba(79,122,107,.13)}100%{background:transparent;box-shadow:-10px 0 0 transparent,10px 0 0 transparent}}
+/* 紙往上捲時，字不會跑到電信、電量底下：上下各一條同色漸層遮住 */
+.ap-view::before,.ap-view::after{content:'';position:absolute;left:0;right:0;z-index:1;pointer-events:none}
+.ap-view::before{top:0;height:56px;background:linear-gradient(#ECEAE5 72%,rgba(236,234,229,0))}
+.ap-view::after{bottom:0;height:40px;background:linear-gradient(rgba(236,234,229,0),#ECEAE5 65%)}

@@ -1,4 +1,4 @@
-// 安安的小手機 v0.6.2：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
+// 安安的小手機 v0.6.3：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -267,7 +267,9 @@
     const f = focus && v.querySelector(`.ap-mn[data-id="${focus}"]`);
     if (f) {
       f.classList.add('ap-open');
-      f.scrollIntoView({ block: 'center' });
+      // 只捲備忘錄自己的紙，不用 scrollIntoView（它會連整支手機一起捲，桌布往下挪過時整個畫面會往上跑）
+      const vs = v.querySelector('.ap-vs');
+      vs.scrollTop = Math.max(0, f.offsetTop - (vs.clientHeight - f.offsetHeight) / 2);
       setTimeout(() => f.classList.add('ap-flash'), 250);
       f.addEventListener('animationend', () => f.classList.remove('ap-flash'), { once: true });
     }
@@ -403,6 +405,7 @@
   function open() {
     const s = S();
     paint(); lock(); root.hidden = false;
+    root.querySelector('.ap-screen').scrollTop = 0; // 保險：手機畫面本身永遠不捲動
     if (s.unseen) { s.unseen = false; s.unseenMine = false; save(); badge(); }
     clearInterval(timer); timer = setInterval(tick, 15000);
   }
