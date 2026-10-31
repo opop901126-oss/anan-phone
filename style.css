@@ -34,6 +34,10 @@
 .ap-bat{position:relative;width:22px;height:11px;border:1.2px solid currentColor;border-radius:3.5px;box-sizing:border-box;padding:1.4px;display:inline-flex;margin-right:3px}
 .ap-bat::after{content:'';position:absolute;right:-3.6px;top:2.6px;width:2px;height:3.6px;border-radius:0 1.5px 1.5px 0;background:currentColor}
 .ap-bat i{display:block;height:100%;background:currentColor;border-radius:1.4px}
+/* 充電中：填色變臻綠（暗底淺臻綠、紙色 App 上深臻綠）＋電池裡面一顆白色小閃電 */
+.ap-bat.ap-chg i{background:#8FC4AE}
+.ap-lite .ap-bat.ap-chg i{background:#3F7A64}
+.ap-bat.ap-chg::before{content:'';position:absolute;left:50%;top:50%;width:7px;height:9px;transform:translate(-50%,-50%);background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 13'%3E%3Cpath d='M6 .5L1 7.4h3.4L3.6 12.5 9 5.4H5.6z' fill='%23fff' stroke='%233F7A64' stroke-width='.7' stroke-linejoin='round'/%3E%3C/svg%3E")}
 .ap-x{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-left:8px;cursor:pointer;padding:0}
 
 .ap-lock,.ap-home{position:absolute;inset:0;z-index:2}
@@ -50,21 +54,23 @@
 .ap-rings{display:flex;justify-content:space-around;align-items:center}
 .ap-ring{width:30px;height:30px;border-radius:50%;position:relative}
 .ap-ring span{position:absolute;inset:3px;border-radius:50%;background:rgba(60,66,74,.85);display:flex;align-items:center;justify-content:center}
+.ap-ring.ap-chg span{color:#8FC4AE}
 
 .ap-notes{position:absolute;top:250px;left:14px;right:14px;display:flex;flex-direction:column-reverse;align-items:center}
 .ap-pill{border-radius:18px;padding:5px 12px;font-size:11.5px;display:flex;align-items:center;gap:6px;font-family:"Noto Sans TC",sans-serif;cursor:pointer}
 .ap-pill svg{transition:transform .2s}
 .ap-open .ap-pill svg{transform:rotate(180deg)}
 .ap-ad{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
-.ap-me{width:8px;height:8px;border-radius:50%;background:#F7DFA8;box-shadow:0 0 0 3px rgba(247,223,168,.28),0 0 8px rgba(247,223,168,.8);display:inline-block;flex:none}
+.ap-me{width:7px;height:7px;border-radius:50%;background:#F7DFA8;border:1px solid #B8893A;box-sizing:content-box;box-shadow:0 0 0 2px rgba(247,223,168,.35),0 0 6px rgba(247,223,168,.6);display:inline-block;flex:none;vertical-align:middle} /* 果果的鵝黃：蜂蜜金細框＋淡淡光暈（第 44 窗改小） */
 .ap-list{display:none;width:100%;margin-top:8px;flex-direction:column;gap:8px;max-height:calc(100dvh - 420px);overflow-y:auto;scrollbar-width:none}
 .ap-list::-webkit-scrollbar{display:none}
 .ap-open .ap-list{display:flex}
-.ap-note{border-radius:18px;padding:10px 12px;cursor:pointer;flex:none}
+.ap-note{border-radius:18px;padding:10px 12px;cursor:pointer;flex:none;position:relative;overflow:hidden}
+.ap-note.ap-mine::before{content:'';position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:0 2px 2px 0;background:#F7DFA8;box-shadow:0 0 6px rgba(247,223,168,.8)} /* 跟果果有關：左邊一條鵝黃線 */
 .ap-hd{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:1.5px;font-family:"Noto Sans TC",sans-serif}
 .ap-ic{width:22px;height:22px;border-radius:7px;background:#FBFAF6;color:#2F5D50;display:flex;align-items:center;justify-content:center}
 .ap-when{margin-left:auto;opacity:.7}
-.ap-tt{font-size:14.5px;margin-top:5px;letter-spacing:1px}
+.ap-tt{font-size:14.5px;margin-top:5px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ap-tx{font-size:13px;opacity:.9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .ap-btm{position:absolute;bottom:46px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -174,10 +180,28 @@
 .ap-on .ap-ck{stroke-dashoffset:0}
 .ap-mempty{font-size:13px;color:#7A766F;margin-top:22px;letter-spacing:.5px}
 @media (prefers-reduced-motion:reduce){.ap-ln,.ap-ck,.ap-mx{transition:none}.ap-view{animation:none}}
-.ap-ad[data-a="memo"]{box-shadow:0 0 0 1.2px rgba(74,74,72,.55)} /* 灰白小點加細框，亮的桌布上才看得到 */
-.ap-mn.ap-flash{animation:ap-flash 1.8s ease;border-radius:2px} /* 從通知點進來：那則亮一下 */
+.ap-mn.ap-flash,.ap-gr.ap-flash{animation:ap-flash 1.8s ease;border-radius:2px} /* 從通知點進來：那則亮一下 */
 @keyframes ap-flash{0%,30%{background:rgba(79,122,107,.13);box-shadow:-10px 0 0 rgba(79,122,107,.13),10px 0 0 rgba(79,122,107,.13)}100%{background:transparent;box-shadow:-10px 0 0 transparent,10px 0 0 transparent}}
 /* 紙往上捲時，字不會跑到電信、電量底下：上下各一條同色漸層遮住 */
 .ap-view::before,.ap-view::after{content:'';position:absolute;left:0;right:0;z-index:1;pointer-events:none}
 .ap-view::before{top:0;height:56px;background:linear-gradient(#ECEAE5 72%,rgba(236,234,229,0))}
 .ap-view::after{bottom:0;height:40px;background:linear-gradient(rgba(236,234,229,0),#ECEAE5 65%)}
+
+/* ===== 備忘錄／拾穗小集 切換（方式 A：大標題下面兩個字）===== */
+.ap-tabs{display:flex;gap:18px;margin:-4px 0 6px}
+#ap-root .ap-tab{border:0;background:none;padding:2px 0 4px;font-family:"Noto Serif TC",serif;font-size:14px;letter-spacing:.5px;color:#A8A39A;cursor:pointer;border-bottom:1.5px solid transparent}
+#ap-root .ap-tab.ap-on{color:#4F7A6B;font-weight:500;border-bottom-color:#4F7A6B}
+/* ===== 拾穗小集 ===== */
+.ap-gdot{background:#C8A97E;box-shadow:0 0 0 1.2px #9A7B52}
+.ap-gcount{margin-left:auto;font-family:"Noto Sans TC",sans-serif;font-size:11px;font-weight:400;letter-spacing:.1em;color:#7A766F}
+.ap-gr{border-top:.5px solid #CFCBC2;padding:11px 8px;margin:0 -8px;cursor:pointer;border-radius:2px}
+.ap-tabs+.ap-gr{margin-top:6px}
+.ap-gr.ap-open{background:rgba(79,122,107,.06)}
+.ap-gh{display:flex;align-items:center;gap:7px}
+.ap-gno{width:28px;flex:none;font-size:11px;color:#A8A39A}
+.ap-gt{flex:1;min-width:0;font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55}
+.ap-gtag{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:10.5px;line-height:16px;padding:0 5px;color:#4F7A6B;border:.5px solid #4F7A6B;border-radius:3px}
+.ap-gb{margin:3px 0 0 35px;font-size:13px;line-height:1.85;color:#8E8B84;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ap-gr.ap-open .ap-gb{display:block;color:#45423E}
+.ap-gs{display:none;margin:5px 0 0 35px;font-size:11.5px;color:#7A766F}
+.ap-gr.ap-open .ap-gs{display:block}
