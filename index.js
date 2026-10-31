@@ -1,4 +1,4 @@
-// 安安的小手機 v0.6：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
+// 安安的小手機 v0.6.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -99,8 +99,8 @@
         <div class="ap-screen">
           <div class="ap-blur" data-w="lock"></div><div class="ap-wall" data-w="lock"></div>
           <div class="ap-shade"></div>
-          <div class="ap-top"><span class="ap-carrier"></span><span class="ap-notch"></span>
-            <span class="ap-right">${ic('wifi', 15)}<span class="ap-pct"></span><span class="ap-bat" aria-hidden="true"><i></i></span><button class="ap-x" type="button" aria-label="關掉小手機">${ic('x', 16)}</button></span></div>
+          <div class="ap-top"><span class="ap-left"><span class="ap-carrier"></span><span class="ap-net">5G</span><svg class="ap-sig" viewBox="0 0 17 11" width="17" height="11" aria-hidden="true"><rect x="0" y="7" width="2.8" height="4" rx=".7"/><rect x="4.6" y="5" width="2.8" height="6" rx=".7"/><rect x="9.2" y="2.6" width="2.8" height="8.4" rx=".7"/><rect x="13.8" y="0" width="2.8" height="11" rx=".7"/></svg></span><span class="ap-notch"></span>
+            <span class="ap-right"><span class="ap-pct"></span><span class="ap-bat" aria-hidden="true"><i></i></span><button class="ap-x" type="button" aria-label="關掉小手機">${ic('x', 16)}</button></span></div>
           <div class="ap-lock">
             <div class="ap-date"></div>
             <div class="ap-time"></div>

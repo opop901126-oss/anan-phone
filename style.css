@@ -28,6 +28,9 @@
 .ap-top{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:12px;font-family:"Noto Sans TC",sans-serif;z-index:3}
 .ap-notch{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:96px;height:25px;border-radius:14px;background:#111}
 .ap-right{display:inline-flex;align-items:center;gap:5px}
+.ap-left{display:inline-flex;align-items:center;gap:5px} /* 電信＋5G 訊號放左邊，窄手機才不會被瀏海擋住 */
+.ap-net{font-size:11px;font-weight:500;letter-spacing:.3px;margin-left:3px}
+.ap-sig{fill:currentColor}
 .ap-bat{position:relative;width:22px;height:11px;border:1.2px solid currentColor;border-radius:3.5px;box-sizing:border-box;padding:1.4px;display:inline-flex;margin-right:3px}
 .ap-bat::after{content:'';position:absolute;right:-3.6px;top:2.6px;width:2px;height:3.6px;border-radius:0 1.5px 1.5px 0;background:currentColor}
 .ap-bat i{display:block;height:100%;background:currentColor;border-radius:1.4px}
@@ -154,16 +157,16 @@
 .ap-mdot{width:9px;height:9px;border-radius:50%;background:#D9D6CF;box-shadow:0 0 0 1.2px rgba(74,74,72,.55);flex:none}
 .ap-msec{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#4F7A6B;margin:12px 0 2px;border-top:.5px solid #CFCBC2;padding-top:12px}
 .ap-mn{padding:8px 0}
-.ap-mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.ap-mt{font-size:14.5px;font-weight:500;letter-spacing:.5px}
+.ap-mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:3px}
+.ap-mt{font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55} /* 標題：他的深藍灰 */
 .ap-mw{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;flex:none}
 .ap-mtext{cursor:pointer}
 .ap-mb{font-size:13px;line-height:1.85;color:#8E8B84;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.ap-mtext.ap-open .ap-mb{display:block;color:#2E2E2C}
+.ap-mtext.ap-open .ap-mb{display:block;color:#55524C} /* 展開後的內文：暖灰墨，比標題退一步 */
 .ap-mi{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:5px 0;cursor:pointer}
 .ap-cc{flex:none}
-.ap-mx{position:relative;white-space:nowrap;transition:color .4s .3s}
-.ap-mi.ap-on .ap-mx{color:#8E8B84}
+.ap-mx{position:relative;white-space:nowrap;color:#55524C;transition:color .4s .3s}
+.ap-mi.ap-on .ap-mx{color:#A8A39A} /* 劃掉的再淡一點，紅筆才跳出來 */
 .ap-mx svg{position:absolute;left:-2px;top:50%;width:calc(100% + 4px);height:10px;transform:translateY(-50%);overflow:visible;pointer-events:none}
 .ap-ln{stroke-dasharray:300;stroke-dashoffset:300;transition:stroke-dashoffset .45s ease .25s}
 .ap-on .ap-ln{stroke-dashoffset:0}
