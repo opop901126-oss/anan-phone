@@ -161,7 +161,7 @@
 .ap-mt{font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55} /* 標題：他的深藍灰 */
 .ap-mw{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#7A766F;flex:none}
 .ap-mtext{cursor:pointer}
-.ap-mb{font-size:13px;line-height:1.85;color:#6E6A63;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ap-mb{font-size:13px;line-height:1.85;color:#8E8B84;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .ap-mtext.ap-open .ap-mb{display:block;color:#45423E} /* 展開後的內文：暖灰墨，比標題退一步 */
 .ap-mi{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:5px 0;cursor:pointer}
 .ap-cc{flex:none}

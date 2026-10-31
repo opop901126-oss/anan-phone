@@ -1,4 +1,4 @@
-// 安安的小手機 v0.6.3：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
+// 安安的小手機 v0.6.4：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -311,7 +311,10 @@
   }
   function paintMemo() {
     const M = S().memo;
-    const pins = M.notes.filter((n) => n.pin), today = M.notes.filter((n) => !n.pin);
+    // 照時間排，新的在上面（同一時間的話，後寫的在上面）
+    const key = (n) => `${n.day || ''} ${n.time || ''} ${String(+String(n.id).slice(1) || 0).padStart(6, '0')}`;
+    const byNew = (a, b) => (key(a) < key(b) ? 1 : -1);
+    const pins = M.notes.filter((n) => n.pin).sort(byNew), today = M.notes.filter((n) => !n.pin).sort(byNew);
     const sec = (t, list) => (list.length ? `<div class="ap-msec">${t}</div>${list.map(memoNote).join('')}` : '');
     root.querySelector('.ap-view[data-app="memo"] .ap-vs').innerHTML = `
       <div class="ap-meta">MEMO · ${headDate()}</div>
