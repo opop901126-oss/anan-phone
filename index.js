@@ -345,7 +345,7 @@
     if (v.dataset.app === 'memo') { tab = id === 'trivia' ? 'trivia' : 'memo'; paintMemo(); }
     if (id === 'web') paintWeb();
     if (id === 'cal') prepCal(focus); // 一打開選今天；從通知點進來就選那件事的那天
-    if (id === 'shop') { const k = String(focus || '')[0]; if (k === 's') shopTab = 'buy'; else if (k === 'h') shopTab = 'home'; else if (k === 'g') shopTab = 'her'; paintShop(); }
+    if (id === 'shop') { const k = String(focus || '')[0]; if (k === 's') shopTab = 'buy'; else if (k === 'h') shopTab = 'home'; else if (k === 'g') shopTab = 'her'; try { paintShop(); } catch (e) { window.toastr?.error('日常物事：' + e.message); throw e; } }
     if (id === 'food') paintFood();
     if (id === 'diary') { diaryOpen = false; paintDiary(); } // 每次打開都要先臉部解鎖
     v.querySelector('.ap-vs').scrollTop = 0;
@@ -982,15 +982,20 @@ ${JSON.stringify(now)}
     const fn = ctx().generateRaw;
     if (typeof fn !== 'function') throw new Error('這個酒館版本找不到 generateRaw');
     let out = null;
-    try { out = await fn({ prompt, systemPrompt: sys }); } catch (e) { console.warn('[anan_phone] 新寫法失敗，改用舊寫法', e); }
-    if (!out || typeof out !== 'string') out = await fn(prompt, null, false, false, sys); // 舊版酒館的寫法
+    // 第 46 窗：手機多了三個 App，AI 要回的字變多，原本的回覆長度上限會把它切掉 → 這次給它夠長的上限
+    const LEN = 8192;
+    try { out = await fn({ prompt, systemPrompt: sys, responseLength: LEN }); } catch (e) { console.warn('[anan_phone] 新寫法失敗，改用舊寫法', e); }
+    if (!out || typeof out !== 'string') out = await fn(prompt, null, false, false, sys, LEN); // 舊版酒館的寫法
     return String(out || '');
   }
 
   function parse(txt) {
-    const m = txt.replace(/```(json)?/gi, '').match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('AI 沒有回 JSON');
-    return JSON.parse(m[0]);
+    const t = txt.replace(/```(json)?/gi, '').trim();
+    if (!t) throw new Error('AI 什麼都沒回（可能被擋掉或連線斷了）');
+    const a = t.indexOf('{');
+    if (a < 0) throw new Error('AI 沒有回手機的資料');
+    if (!t.endsWith('}')) throw new Error('AI 回到一半被切掉了（太長）');
+    try { return JSON.parse(t.slice(a, t.lastIndexOf('}') + 1)); } catch (e) { throw new Error('AI 回的格式壞掉了'); }
   }
 
   // 只收合格的欄位，不合格的保留原本內容（不會把手機弄壞）
@@ -1263,8 +1268,9 @@ ${JSON.stringify(now)}
       busy = false; status();
     } catch (e) {
       console.warn('[anan_phone] 更新失敗', e);
-      busy = false; status('這次沒成功，下一輪再試');
-      if (manual) window.toastr?.warning('這次沒成功，等一下再按一次看看');
+      const why = clean(e?.message || '', 40) || '不知道原因';
+      busy = false; status(`這次沒成功：${why}`); // 第 46 窗：寫出原因，才知道要修哪裡
+      if (manual) window.toastr?.warning(`這次沒成功：${why}`);
       // 自動更新失敗：計數退回「還差 5 則」，過幾則再試，不用等滿一整輪
       const md = ctx().chatMetadata;
       if (!manual && md) { md[MKEY] = Math.max(0, msgCount() - Math.max(0, S().auto.n - 5)); saveMeta(); }
