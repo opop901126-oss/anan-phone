@@ -160,12 +160,12 @@
 /* ===== 備忘錄：灰白紙感 ===== */
 .ap-meta{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#7A766F}
 .ap-mtitle{display:flex;align-items:center;gap:9px;margin:4px 0 14px;font-family:"Noto Serif TC",serif;font-size:24px;font-weight:700;letter-spacing:1px}
-.ap-mdot{width:9px;height:9px;border-radius:50%;background:#D9D6CF;box-shadow:0 0 0 1.2px rgba(74,74,72,.55);flex:none}
+.ap-mdot{width:9px;height:9px;border-radius:50%;background:#8FC4AE;box-shadow:0 0 0 1.2px #4F7A6B;flex:none}
 .ap-msec{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#4F7A6B;margin:12px 0 2px;border-top:.5px solid #CFCBC2;padding-top:12px}
 .ap-mn{padding:8px 0}
 .ap-mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:3px}
 .ap-mt{font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55} /* 標題：他的深藍灰 */
-.ap-mw{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#7A766F;flex:none}
+.ap-mw{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;flex:none}
 .ap-mtext{cursor:pointer}
 .ap-mb{font-size:13px;line-height:1.85;color:#8E8B84;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .ap-mtext.ap-open .ap-mb{display:block;color:#45423E} /* 展開後的內文：暖灰墨，比標題退一步 */
@@ -191,6 +191,7 @@
 .ap-tabs{display:flex;gap:18px;margin:-4px 0 6px}
 #ap-root .ap-tab{border:0;background:none;padding:2px 0 4px;font-family:"Noto Serif TC",serif;font-size:14px;letter-spacing:.5px;color:#A8A39A;cursor:pointer;border-bottom:1.5px solid transparent}
 #ap-root .ap-tab.ap-on{color:#4F7A6B;font-weight:500;border-bottom-color:#4F7A6B}
+#ap-root .ap-tab[data-t="trivia"].ap-on{color:#9A7B52;border-bottom-color:#9A7B52}
 /* ===== 拾穗小集 ===== */
 .ap-gdot{background:#C8A97E;box-shadow:0 0 0 1.2px #9A7B52}
 .ap-gcount{margin-left:auto;font-family:"Noto Sans TC",sans-serif;font-size:11px;font-weight:400;letter-spacing:.1em;color:#7A766F}
@@ -198,12 +199,12 @@
 .ap-tabs+.ap-gr{margin-top:6px}
 .ap-gr.ap-open{background:rgba(79,122,107,.06)}
 .ap-gh{display:flex;align-items:center;gap:7px}
-.ap-gno{width:28px;flex:none;font-size:11px;color:#A8A39A}
+.ap-gno{width:28px;flex:none;font-size:11px;color:#8E8B84}
 .ap-gt{flex:1;min-width:0;font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55}
-.ap-gtag{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:10.5px;line-height:16px;padding:0 5px;color:#4F7A6B;border:.5px solid #4F7A6B;border-radius:3px}
+.ap-gtag{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:10.5px;line-height:16px;padding:0 5px;color:#9A7B52;border:.5px solid #9A7B52;border-radius:3px}
 .ap-gb{margin:3px 0 0 35px;font-size:13px;line-height:1.85;color:#8E8B84;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .ap-gr.ap-open .ap-gb{display:block;color:#45423E}
-.ap-gs{display:none;margin:5px 0 0 35px;font-size:11.5px;color:#7A766F}
+.ap-gs{display:none;margin:5px 0 0 35px;font-size:11.5px;color:#8E8B84}
 .ap-gr.ap-open .ap-gs{display:block}
 /* ===== 瀏覽器（灰白紙，跟備忘錄同一家；淡紫是它的顏色）===== */
 .ap-wdot{background:#C9B9D6;box-shadow:0 0 0 1.2px #7E6A92}
@@ -212,9 +213,10 @@
 .ap-wsearch span{font-family:"Noto Sans TC",sans-serif;font-size:12px;color:#A8A39A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ap-wsearch .ap-wdraft{font-family:"Noto Serif TC",serif;font-size:13px;color:#8E8B84} /* 他打到一半沒送出的字 */
 .ap-wtabs{flex:none;width:22px;height:22px;border:1.2px solid #4A4A48;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#4A4A48}
-.ap-wr{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0}
+.ap-wr{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 0}
 .ap-wi{flex:none;color:#A8A39A;display:flex}
-.ap-wq{flex:1;min-width:0;font-size:14px;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-wq{flex:0 1 auto;min-width:0;font-size:14px;font-weight:500;color:#2F3F55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* 搜尋的字＝小標題：藍灰（第 45 窗） */
+.ap-wr>.ap-mw{margin-left:auto}
 .ap-wr.ap-hid{cursor:pointer}
 .ap-wr.ap-hid .ap-wi,.ap-wr.ap-peeked .ap-wi{color:#7E6A92}
 .ap-wr.ap-hid .ap-wq{color:#7E6A92;filter:blur(4.5px)} /* 藏起來的：糊掉，果果點了才看得到 */
@@ -224,3 +226,58 @@
 .ap-mn,.ap-gr{position:relative}
 #ap-root .ap-rm{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:2;border:.5px solid #B5533C;background:#F6F4F0;color:#B5533C;border-radius:14px;padding:3px 12px;font-family:"Noto Sans TC",sans-serif;font-size:12px;letter-spacing:.1em;cursor:pointer;box-shadow:0 2px 8px rgba(46,46,44,.12);animation:ap-rmin .18s ease}
 @keyframes ap-rmin{from{opacity:0;transform:translateY(-50%) scale(.85)}to{opacity:1;transform:translateY(-50%)}}
+/* mur：字尾淡紫小點＝這筆有心聲；點了在下面展開（心聲＝內文的暖灰墨、左邊淺灰細線，第 45 窗） */
+.ap-wm{width:5px;height:5px;border-radius:50%;background:#C9B9D6;box-shadow:0 0 0 1px #7E6A92;flex:none;margin-left:-5px}
+.ap-wr.ap-hid .ap-wm{display:none}
+.ap-wr:has(.ap-wmur):not(.ap-hid){cursor:pointer}
+.ap-wmur{display:none;flex:0 0 calc(100% - 25px);box-sizing:border-box;margin:-2px 0 2px 25px;padding-left:9px;border-left:1px solid #CFCBC2;font-size:12.5px;line-height:1.8;color:#45423E;white-space:pre-line}
+.ap-wr.ap-open .ap-wmur{display:block}
+
+/* ===== 行事曆（霧藍紙；深霧藍 #5B7393 是它自己的記號；臻綠／天藍／鵝黃是三種行程，第 45 窗）===== */
+.ap-view[data-app="cal"]{background:#E3E7EC}
+.ap-view[data-app="cal"]::before{background:linear-gradient(#E3E7EC 72%,rgba(227,231,236,0))}
+.ap-view[data-app="cal"]::after{background:linear-gradient(rgba(227,231,236,0),#E3E7EC 65%)}
+.ap-kdot{background:#9DB4D3;box-shadow:0 0 0 1.2px #5B7393}
+.ap-ktabs{align-items:baseline}
+#ap-root .ap-ktabs .ap-tab.ap-on{color:#5B7393;border-bottom-color:#5B7393}
+.ap-kmon{margin-left:auto;display:flex;gap:12px}
+#ap-root .ap-kmon button{border:0;background:none;padding:0;font-family:"Noto Sans TC",sans-serif;font-size:11.5px;letter-spacing:.08em;color:#8E8B84;cursor:pointer}
+#ap-root .ap-kmon button.ap-on{color:#5B7393;font-weight:500}
+.ap-kwk,.ap-kgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center}
+.ap-kwk{margin:10px 0 2px;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+#ap-root .ap-kday{border:0;background:none;padding:4px 0 0;margin:0;height:44px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:"Noto Serif TC",serif;font-size:13.5px;color:#2F3F55;-webkit-tap-highlight-color:transparent}
+.ap-kn{width:26px;height:26px;line-height:26px;border-radius:50%;box-sizing:border-box}
+.ap-kold .ap-kn{color:#AEB5BE}
+.ap-kold .ap-kds{opacity:.4}
+.ap-ksel .ap-kn{border:1.2px solid #5B7393;line-height:23.6px;color:#5B7393;font-weight:500}
+.ap-ktoday .ap-kn{border:0;line-height:26px;background:#5B7393;color:#F6F4F0;font-weight:500} /* 今天＝實心（果果：選中的用實心會以為那天出事了） */
+.ap-kds{display:flex;gap:3px;height:6px;align-items:center}
+.ap-kc{width:6px;height:6px;border-radius:50%;flex:none;display:inline-block}
+.ap-kds .ap-kc{width:5px;height:5px}
+.ap-k-work{background:#4F7A6B}
+.ap-k-family{background:#9DB4D3}
+.ap-k-her{background:#F7DFA8;box-shadow:0 0 0 1px rgba(184,137,58,.35),0 0 5px rgba(247,223,168,.95)} /* 果果：同大小，只多一圈淡淡的光 */
+.ap-ksec{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#5B7393;margin:12px 0 2px;border-top:.5px solid #C9CFD6;padding-top:12px}
+.ap-kr{position:relative;padding:8px 0}
+.ap-kh{display:flex;align-items:center;gap:10px}
+.ap-kt{flex:1;min-width:0;font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-khas{cursor:pointer}
+.ap-kb{display:none;margin:3px 0 0 16px;font-size:13px;line-height:1.85;color:#45423E;white-space:pre-line}
+.ap-kr.ap-open .ap-kb{display:block}
+.ap-kr.ap-open .ap-kt{white-space:normal}
+.ap-kpast{opacity:.5}
+.ap-kempty{font-size:13px;color:#8E8B84;margin-top:12px;letter-spacing:.5px}
+.ap-kr.ap-flash{animation:ap-kflash 1.8s ease;border-radius:2px}
+@keyframes ap-kflash{0%,30%{background:rgba(91,115,147,.14);box-shadow:-10px 0 0 rgba(91,115,147,.14),10px 0 0 rgba(91,115,147,.14)}100%{background:transparent;box-shadow:-10px 0 0 transparent,10px 0 0 transparent}}
+
+/* ===== 鎖定畫面「下一件事」：點了原地冒出玻璃小卡，浮在上面蓋住下面；點哪裡都收起來（第 45 窗）===== */
+.ap-next.ap-tap{cursor:pointer}
+.ap-none{margin-top:6px;opacity:.7}
+.ap-nextcard{position:absolute;top:246px;left:50%;transform:translateX(-50%);width:min(310px,calc(100% - 28px));box-sizing:border-box;z-index:3;border-radius:16px;padding:11px 14px 12px;background:rgba(48,54,64,.8);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.32);box-shadow:0 6px 20px rgba(0,0,0,.25);animation:ap-ncin .18s ease}
+.ap-notes{transition:opacity .15s}
+.ap-lock:has(.ap-nextcard:not([hidden])) .ap-notes{opacity:0} /* 小卡開著：底下的通知先淡出去，不會透出來 */
+@keyframes ap-ncin{from{opacity:0;transform:translateX(-50%) scale(.96)}to{opacity:1;transform:translateX(-50%)}}
+.ap-nch{display:flex;align-items:center;gap:7px;font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.1em;opacity:.88}
+.ap-nct{font-size:15px;font-weight:500;letter-spacing:.5px;margin-top:5px;line-height:1.5}
+.ap-ncb{font-size:12.5px;line-height:1.75;opacity:.9;margin-top:3px;white-space:pre-line}
+@media (prefers-reduced-motion:reduce){.ap-nextcard,.ap-kr.ap-flash{animation:none}}

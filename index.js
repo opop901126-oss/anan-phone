@@ -1,4 +1,4 @@
-// 安安的小手機 v0.8.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器（照安安自己說的規則排版）
+// 安安的小手機 v0.9.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -37,10 +37,10 @@
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
   // App：[名字, 小點顏色, 細框＋圖示線條（同色系深一點）, 圖示]（第 44 窗：每顆小點都有細框）
   const APP = {
-    line: ['LINE', '#8FC4AE', '#4F7A6B', 'line'], cal: ['行事曆', '#9DB4D3', '#5B7393', 'cal'], memo: ['備忘錄', '#D9D6CF', 'rgba(74,74,72,.55)', 'memo'],
+    line: ['LINE', '#B5D68F', '#6A8F45', 'line'], cal: ['行事曆', '#9DB4D3', '#5B7393', 'cal'], memo: ['備忘錄', '#8FC4AE', '#4F7A6B', 'memo'],
     web: ['瀏覽器', '#C9B9D6', '#7E6A92', 'web'], trivia: ['拾穗小集', '#C8A97E', '#9A7B52', 'wheat'],
   };
-  const ICOL = { memo: '#4A4A48' }; // 圖示線條：灰白的備忘錄用深灰，其他跟細框同色
+  const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
   const ME = '<span class="ap-me"></span>'; // 果果的鵝黃小點：鵝黃底＋蜂蜜金細框＋淡淡光暈
 
@@ -96,6 +96,7 @@
     if (!s.grains) s.grains = { seq: 0, items: [] }; // 拾穗小集：他撿的冷知識，一直累積、不換新
     if (!s.web) s.web = { seq: 0, items: [], draft: '', tabs: 2, peek: [] }; // 瀏覽器：他的搜尋紀錄（藏起來的要果果點開才看得到）
     if (s.auto.bind == null) { s.auto.bind = false; s.auto.chat = ''; } // 只在綁定的聊天室更新（開關）
+    if (!s.cal) s.cal = { seq: 0, items: [] }; // 行事曆：他有約定時間的事（第 45 窗）
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -129,6 +130,7 @@
               <div class="ap-sq ap-glass ap-next"></div>
               <div class="ap-sq ap-glass ap-rings"></div>
             </div>
+            <div class="ap-nextcard" hidden></div>
             <div class="ap-notes">
               <div class="ap-list"></div>
               <button class="ap-pill ap-glass" type="button"></button>
@@ -152,6 +154,7 @@
           </div>
           <div class="ap-view" data-app="memo" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="web" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="cal" hidden><div class="ap-vs"></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
       </div>`;
@@ -160,11 +163,14 @@
     root.querySelector('.ap-dim').addEventListener('click', close);
     root.querySelector('.ap-x').addEventListener('click', close);
     root.querySelector('.ap-pill').addEventListener('click', () => root.querySelector('.ap-notes').classList.toggle('ap-open'));
+    // 下一件事：點了原地冒出玻璃小卡（浮在上面、蓋住下面的東西）；小卡開著時，點哪裡都先收起來
+    root.querySelector('.ap-lock').addEventListener('click', (e) => { if (!nextCard().hidden) { hideNextCard(); e.stopPropagation(); } }, true);
+    root.querySelector('.ap-next').addEventListener('click', showNextCard);
     root.querySelector('.ap-list').addEventListener('click', (e) => {
       const nt = e.target.closest('.ap-note');
       if (!nt) return;
       unlock();
-      if (nt.dataset.app === 'memo' || nt.dataset.app === 'trivia') openApp(nt.dataset.app, nt.dataset.id); // 點備忘錄／拾穗通知：直接打開，那則亮一下
+      if (nt.dataset.app === 'memo' || nt.dataset.app === 'trivia' || (nt.dataset.app === 'cal' && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點備忘錄／拾穗／行事曆通知：直接打開，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -211,8 +217,21 @@
     });
     root.querySelector('.ap-view[data-app="web"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
-      const r = e.target.closest('.ap-wr.ap-hid');
-      if (r) peekWeb(r);
+      const r = e.target.closest('.ap-wr');
+      if (!r) return;
+      if (r.classList.contains('ap-hid')) { peekWeb(r); return; } // 藏起來的：先解鎖，再點才看得到心聲
+      if (r.querySelector('.ap-wmur')) r.classList.toggle('ap-open');
+    });
+    root.querySelector('.ap-view[data-app="cal"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const t = e.target.closest('[data-ct]');
+      if (t) { calTab = t.dataset.ct; paintCal(); return; }
+      const m = e.target.closest('[data-cm]');
+      if (m) { calMon = +m.dataset.cm; calSel = monthPick(calMon); paintCal(); return; }
+      const d = e.target.closest('[data-cd]');
+      if (d) { calSel = d.dataset.cd; paintCal(); return; }
+      const r = e.target.closest('.ap-kr.ap-khas');
+      if (r) r.classList.toggle('ap-open');
     });
     root.querySelector('.ap-view[data-app="memo"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
@@ -258,8 +277,8 @@
   }
 
   const isLocked = () => !root.querySelector('.ap-lock').hidden;
-  function lock() { closeApp(); root.querySelector('.ap-lock').hidden = false; root.querySelector('.ap-home').hidden = true; }
-  function unlock() { root.querySelector('.ap-lock').hidden = true; root.querySelector('.ap-home').hidden = false; goPage(0, true); }
+  function lock() { closeApp(); hideNextCard(); root.querySelector('.ap-lock').hidden = false; root.querySelector('.ap-home').hidden = true; }
+  function unlock() { hideNextCard(); root.querySelector('.ap-lock').hidden = true; root.querySelector('.ap-home').hidden = false; goPage(0, true); }
   function goPage(i, now) {
     page = Math.max(0, Math.min(2, i));
     const t = root.querySelector('.ap-track');
@@ -279,14 +298,14 @@
       + HOME.p1.map((a) => appBtn(a, s)).join('') + '</div>';
     root.querySelector('.ap-p2').innerHTML = HOME.boxes.map((b) => `<div class="ap-box ap-glass ap-${b.tone}">${b.apps.map((a) => appBtn(a, s)).join('')}</div>`).join('');
     root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button"><span class="ap-book">${ic('book', 24)}</span><span class="ap-name">拾光手記</span></button>`;
-    root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}</span></button>`).join('');
+    root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" data-id="${a.k}" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}</span></button>`).join('');
     root.querySelector('.ap-home').classList.toggle('ap-nowall', !s.homeWall);
     root.querySelector('.ap-home .ap-htint').style.opacity = s.homeTint / 100;
     wallTo(root, s, 'home');
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -295,6 +314,7 @@
     if (!v) return;
     if (v.dataset.app === 'memo') { tab = id === 'trivia' ? 'trivia' : 'memo'; paintMemo(); }
     if (id === 'web') paintWeb();
+    if (id === 'cal') prepCal(focus); // 一打開選今天；從通知點進來就選那件事的那天
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
     if (v.dataset.app === 'memo' && tab === 'memo') replayChecks();
@@ -380,7 +400,8 @@
     list.forEach((x) => { const d = days.find((g) => g.day === x.day); d ? d.items.push(x) : days.push({ day: x.day, items: [x] }); });
     const row = (x) => {
       const hid = x.secret && !x.seen, open = x.secret && x.seen;
-      return `<div class="ap-wr${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${x.id}"><span class="ap-wi">${ic(hid ? 'lockon' : open ? 'lockoff' : 'clock', 15)}</span><span class="ap-wq">${esc(x.q)}</span><span class="ap-mw">${esc(x.time)}</span></div>`;
+      // mur：他寫在這筆上的一句心聲（字尾淡紫小點；點了在下面展開）
+      return `<div class="ap-wr${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${x.id}"><span class="ap-wi">${ic(hid ? 'lockon' : open ? 'lockoff' : 'clock', 15)}</span><span class="ap-wq">${esc(x.q)}</span>${x.mur ? '<span class="ap-wm"></span>' : ''}<span class="ap-mw">${esc(x.time)}</span>${x.mur ? `<div class="ap-wmur">${esc(x.mur)}</div>` : ''}</div>`;
     };
     root.querySelector('.ap-view[data-app="web"] .ap-vs').innerHTML = `
       <div class="ap-meta">WEB · 搜尋紀錄</div>
@@ -400,9 +421,100 @@
     el.querySelector('.ap-wi').innerHTML = ic('lockoff', 15);
   }
 
+  // ===== 行事曆（第 45 窗果果確認的草圖：霧藍紙、月曆｜列表、深霧藍是它自己的記號）=====
+  // 三種行程：work 出版社＝臻綠、family 家人＝天藍、her 果果＝鵝黃（他在酒館說的）
+  const WD = '日一二三四五六';
+  const dOf = (iso) => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const addDays = (iso, n) => { const d = dOf(iso) || new Date(); d.setDate(d.getDate() + n); return isoOf(d); };
+  const diffDays = (a, b) => Math.round((dOf(a) - dOf(b)) / 864e5); // a 比 b 晚幾天
+  const mdw = (iso) => { const d = dOf(iso); return d ? `${d.getMonth() + 1}/${d.getDate()} 週${WD[d.getDay()]}` : ''; };
+  const storyNow = () => ({ day: nowDay(), time: hm(S().lock.time) }); // 劇情的「現在」：停在上次更新那一刻
+  const kSort = (a, b) => (`${a.day} ${a.time || '00:00'} ${a.id}` < `${b.day} ${b.time || '00:00'} ${b.id}` ? -1 : 1);
+  // 過去了沒：前幾天的、今天時間已經過了的（變淡）
+  const kPast = (x, n = storyNow()) => x.day < n.day || (x.day === n.day && !!x.time && !!n.time && x.time < n.time);
+  const kShow = (x, n) => x.day >= addDays(n.day, -7); // 過期一週以上的收起來
+  // 鎖定畫面「下一件事」：行事曆裡劇情時間之後最近的一件（他不用另外寫，兩邊才不會對不上）
+  function nextEv() {
+    const n = storyNow();
+    return S().cal.items.filter((x) => !kPast(x, n)).sort(kSort)[0] || null;
+  }
+  function nextWhen(x) {
+    const dd = diffDays(x.day, storyNow().day);
+    const day = dd === 0 ? '今天' : dd === 1 ? '明天' : dd > 1 && dd < 7 ? '週' + WD[dOf(x.day).getDay()] : slash(x.day);
+    return x.time ? `${day} ${x.time}` : day;
+  }
+  const nextCard = () => root.querySelector('.ap-nextcard');
+  function showNextCard() {
+    const x = nextEv();
+    if (!x) return;
+    const c = nextCard();
+    c.innerHTML = `<div class="ap-nch"><span class="ap-kc ap-k-${x.cat}"></span>${esc(mdw(x.day))} ${x.time ? esc(x.time) : '整天'}</div>`
+      + `<div class="ap-nct">${esc(x.title)}</div>${x.body ? `<div class="ap-ncb">${esc(x.body)}</div>` : ''}`;
+    c.hidden = false;
+  }
+  const hideNextCard = () => { if (root) nextCard().hidden = true; };
+
+  let calTab = 'month', calMon = 0, calSel = ''; // 看月曆還是列表、看這個月(0)還是下個月(1)、點選的那天
+  const monthStart = (k) => { const d = dOf(nowDay()) || new Date(); return new Date(d.getFullYear(), d.getMonth() + k, 1); };
+  // 切到某個月時先選哪天：這個月選今天；下個月選第一件事那天，沒有就 1 號
+  function monthPick(k) {
+    const n = storyNow(), key = isoOf(monthStart(k)).slice(0, 7);
+    if (n.day.slice(0, 7) === key) return n.day;
+    const f = S().cal.items.filter((x) => x.day.slice(0, 7) === key && kShow(x, n)).sort(kSort)[0];
+    return f ? f.day : key + '-01';
+  }
+  function prepCal(focus) {
+    const n = storyNow(), x = focus && S().cal.items.find((it) => it.id === focus);
+    if (x) { calSel = x.day; calMon = x.day.slice(0, 7) === n.day.slice(0, 7) ? 0 : 1; } else { calMon = 0; calSel = n.day; }
+    paintCal();
+  }
+  function kRow(x, n, withDate) {
+    return `<div class="ap-kr${kPast(x, n) ? ' ap-kpast' : ''}${x.body ? ' ap-khas' : ''}" data-id="${x.id}">`
+      + `<div class="ap-kh"><span class="ap-kc ap-k-${x.cat}"></span><span class="ap-kt">${esc(x.title)}</span><span class="ap-mw">${esc(withDate ? slash(x.day) : (x.time || '整天'))}</span></div>`
+      + `${x.body ? `<div class="ap-kb">${esc(x.body)}</div>` : ''}</div>`;
+  }
+  function paintCal() {
+    const K = S().cal, n = storyNow();
+    const m0 = monthStart(calTab === 'month' ? calMon : 0), key = isoOf(m0).slice(0, 7); // 列表永遠從這個月開始算（這個月＋下個月）
+    const tabs = `<div class="ap-tabs ap-ktabs"><button type="button" class="ap-tab${calTab === 'month' ? ' ap-on' : ''}" data-ct="month">月曆</button>`
+      + `<button type="button" class="ap-tab${calTab === 'list' ? ' ap-on' : ''}" data-ct="list">列表</button>`
+      + (calTab === 'month' ? `<span class="ap-kmon">${[0, 1].map((k) => `<button type="button"${k === calMon ? ' class="ap-on"' : ''} data-cm="${k}">${monthStart(k).getMonth() + 1}月</button>`).join('')}</span>` : '') + '</div>';
+    let body;
+    if (calTab === 'month') {
+      const byDay = {};
+      K.items.filter((x) => x.day.slice(0, 7) === key && kShow(x, n)).sort(kSort).forEach((x) => { (byDay[x.day] = byDay[x.day] || []).push(x); });
+      let cells = '<span></span>'.repeat(m0.getDay());
+      const last = new Date(m0.getFullYear(), m0.getMonth() + 1, 0).getDate();
+      for (let i = 1; i <= last; i++) {
+        const iso = `${key}-${String(i).padStart(2, '0')}`;
+        const cls = ['ap-kday', iso < n.day ? 'ap-kold' : '', iso === calSel ? 'ap-ksel' : '', iso === n.day ? 'ap-ktoday' : ''].filter(Boolean).join(' ');
+        cells += `<button type="button" class="${cls}" data-cd="${iso}"><span class="ap-kn">${i}</span><span class="ap-kds">${(byDay[iso] || []).slice(0, 3).map((x) => `<i class="ap-kc ap-k-${x.cat}"></i>`).join('')}</span></button>`;
+      }
+      const sel = (byDay[calSel] || []);
+      body = `<div class="ap-kwk">${[...WD].map((w) => `<span>${w}</span>`).join('')}</div><div class="ap-kgrid">${cells}</div>`
+        + `<div class="ap-ksec">${calSel === n.day ? '今天・' : ''}${mdw(calSel)}</div>`
+        + (sel.length ? sel.map((x) => kRow(x, n)).join('') : '<div class="ap-kempty">這天沒有排事。</div>');
+    } else {
+      // 列表：今天在最上面，往下由近到遠；過去一週的淡淡收在最下面
+      const end = isoOf(new Date(m0.getFullYear(), m0.getMonth() + 2, 0));
+      const up = K.items.filter((x) => x.day >= n.day && x.day <= end).sort(kSort);
+      const gone = K.items.filter((x) => x.day < n.day && kShow(x, n)).sort(kSort).reverse();
+      const groups = [];
+      up.forEach((x) => { const g = groups.find((y) => y.day === x.day); if (g) g.items.push(x); else groups.push({ day: x.day, items: [x] }); });
+      body = groups.map((g) => `<div class="ap-ksec">${g.day === n.day ? '今天・' : ''}${mdw(g.day)}</div>${g.items.map((x) => kRow(x, n)).join('')}`).join('')
+        + (gone.length ? `<div class="ap-ksec">已經過去</div>${gone.map((x) => kRow(x, n, true)).join('')}` : '')
+        + (up.length || gone.length ? '' : '<div class="ap-kempty">這兩個月還沒有排事。</div>');
+    }
+    root.querySelector('.ap-view[data-app="cal"] .ap-vs').innerHTML = `
+      <div class="ap-meta">CALENDAR · ${m0.getMonth() + 1}月</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-kdot"></span>行事曆</div>
+      ${tabs}${body}`;
+  }
+
   // ===== 長按刪除（只有果果能刪；平常看不到，截圖也乾淨）=====
   let lp = null, lpAt = 0;
-  const LPT = '.ap-mn, .ap-gr, .ap-wr';
+  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr';
   function lpStart(e) {
     const t = e.target.closest(LPT);
     if (e.target.closest('.ap-rm')) return;
@@ -431,10 +543,10 @@
     } else if (t.classList.contains('ap-wr')) {
       s.web.items = s.web.items.filter((x) => x.id !== id);
       s.web.peek = s.web.peek.filter((x) => x !== id);
-    }
+    } else if (t.classList.contains('ap-kr')) s.cal.items = s.cal.items.filter((x) => x.id !== id);
     s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
     save();
-    if (t.classList.contains('ap-wr')) paintWeb(); else paintMemo();
+    if (t.classList.contains('ap-wr')) paintWeb(); else if (t.classList.contains('ap-kr')) paintCal(); else paintMemo();
   }
 
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
@@ -485,8 +597,12 @@
     const W = (L.weather || []).slice(0, 2);
     root.querySelector('.ap-weather').innerHTML = '<div class="ap-lb">天 氣</div>'
       + W.map((w, i) => `<div class="${i ? 'ap-sm' : ''}">${esc(w.place)} <b>${esc(w.temp)}</b>${w.extra ? ' ' + esc(w.extra) : ''}</div>`).join('');
-    const n = L.next || {};
-    root.querySelector('.ap-next').innerHTML = `<div class="ap-lb">下 一 件 事</div><div><b>${esc(n.when)}</b></div><div class="ap-sm">${esc(n.what)}${n.mine ? ' ' + ME : ''}</div>`;
+    // 下一件事：從行事曆拿；還沒有行事曆時（升級後第一次更新前）先顯示原本那句
+    const nx = nextEv(), old = !s.cal.seq && L.next?.what ? L.next : null;
+    const nxWhat = nx ? nx.title : old ? old.what : '', nxWhen = nx ? nextWhen(nx) : old ? old.when : '', nxMine = nx ? nx.cat === 'her' : !!old?.mine;
+    const nxEl = root.querySelector('.ap-next');
+    nxEl.innerHTML = '<div class="ap-lb">下 一 件 事</div>' + (nxWhat ? `<div><b>${esc(nxWhen)}</b></div><div class="ap-sm">${esc(nxWhat)}${nxMine ? ' ' + ME : ''}</div>` : '<div class="ap-sm ap-none">近期沒有排事</div>');
+    nxEl.classList.toggle('ap-tap', !!nx);
     root.querySelector('.ap-rings').innerHTML = ring(L.battery?.phone, 'mob', !!L.battery?.charging) + ring(L.battery?.buds, 'buds');
     root.querySelector('.ap-quote span').textContent = L.quote || '';
 
@@ -495,8 +611,8 @@
     box.hidden = !notes.length;
     box.classList.remove('ap-open');
     const apps = [...new Set(notes.map((x) => x.app))];
-    const mine = notes.some((x) => x.mine);
-    root.querySelector('.ap-pill').innerHTML = (mine ? ME : '') + apps.map(adot).join('')
+    // 膠囊只放各 App 的色點（第 45 窗拿掉鵝黃點：卡片左邊已經有鵝黃線）
+    root.querySelector('.ap-pill').innerHTML = apps.map(adot).join('')
       + `<span>${notes.length} 則新通知</span>${ic('down', 14)}`;
     root.querySelector('.ap-list').innerHTML = notes.map((x) => {
       const [name, , line, k] = APP[x.app] || APP.memo;
@@ -612,13 +728,14 @@
       ? { id: n.id, kind: 'list', pin: !!n.pin, title: n.title, items: (n.items || []).map((it) => ({ t: it.t, done: !!it.done })) }
       : { id: n.id, kind: 'text', pin: !!n.pin, title: n.title, body: n.body }));
     const grainsNow = s.grains.items.map((g) => ({ id: g.id, title: g.title, told: !!g.told })); // 只給標題，收很多穗也不會太重
-    const webNow = s.web.items.slice(-15).map((x) => ({ id: x.id, q: x.q, secret: !!x.secret }));
+    const webNow = s.web.items.slice(-15).map((x) => ({ id: x.id, q: x.q, secret: !!x.secret, mur: x.mur || undefined }));
     const peeked = s.web.items.filter((x) => s.web.peek.includes(x.id)).map((x) => x.q);
-    const now = { weather: L.weather, next: L.next, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
+    const calNow = s.cal.items.filter((x) => x.day >= addDays(nowDay(), -7)).sort(kSort).slice(0, 30).map((x) => ({ id: x.id, day: x.day, time: x.time, title: x.title, cat: x.cat }));
+    const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
       web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow } };
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、備忘錄、拾穗小集、瀏覽器）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -632,11 +749,15 @@ ${JSON.stringify(now)}
 規則：
 0. date、time：劇情裡「最新」那一刻的日期和時間（看最近劇情的狀態欄或敘述）。date 寫成「2026-02-15」，time 寫成「15:45」；看不出來就空字串。下面通知的「幾分鐘前」都以這個時間來算。
 1. weather：兩個地點。沿用現在的兩個地點，除非劇情裡有人到了別的城市或區域，才換成新地點。temp 寫像「18°」，符合季節；extra 寫降雨機率，像「雨10%」，沒有就空字串。
-2. next：他行事曆上最近的下一件事。when 很短，像「明天 15:00」「週二 15:00」；what 10 字以內；跟 ${me} 有關 mine 就是 true。
+2. cal：他的行事曆，只放「有約定時間」的事（約會、截稿、會議、回家吃飯、帶毛孩看醫生…）。鎖定畫面的「下一件事」和行事曆通知，程式會從這裡自己拿，你不用另外寫。
+   - add：這段劇情裡新出現的 0～3 則，沒有就給 []。只寫劇情裡真的說到、約好的事，不要自己編。day 寫成「2026-02-17」；time 像「15:00」，整天的事給空字串；title 15 字內；body 是細節，40 字內，沒有就給空字串。
+   - cat 只能是這三個其中一個：work（出版社的截稿、編輯會議、工作）、family（家人、毛孩、朋友，他的私人生活）、her（跟 ${me} 的約定、為她安排的事）。
+   - 有時間的事寫在行事曆；沒有時間的待辦寫在備忘錄。同一件事不要兩邊都寫。
+   - 不要重複 cal 裡已經有的事（同一天、意思一樣都不行）。
 3. battery：phone 和 buds 是 0～100 的整數，跟著他的一天自然變化：用手機、出門在外會慢慢往下掉，可以掉到 50 以下；他回到家會插上充電，電量往上；睡一覺起來是 100。charging：他的手機現在是不是插著在充電（true／false），在家、在充電時才是 true。
 4. quote：今日摘句，由他自己決定換不換。不換就回傳原本那句，一字不改；要換的話，是他親手打的一句話，30 字以內，用他的語氣。
-5. notes：3～5 則通知。app 只能是 line、cal、web 其中一個（備忘錄和拾穗小集的通知程式會自己拿，你不用寫）；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的：傳給她的、在聊她的、跟她的約會或計畫；只是順便提到的不算。每次至少 1～2 則跟 ${me} 無關（工作、朋友、家人的日常）。聯絡人名字要照小抄裡存的名字寫。小抄裡的個性和習慣是參考，不要照抄裡面的句子，每次用新的說法。這次的通知要是新的：不要重複「他手機現在的內容」裡的通知，也不用每次都出現同樣的人，挑這段劇情裡最可能傳訊息來的人。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。${mute.length ? `這些人不會傳訊息來，from 絕對不能是他們：${mute.join('、')}。` : ''}內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
-6. memo：他自己記給自己看的備忘錄。用他的口吻，記他自己會想記下的事；記什麼由他決定。
+5. notes：3～5 則通知。app 只能是 line、web 其中一個（行事曆、備忘錄和拾穗小集的通知程式會自己拿，你不用寫）；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的：傳給她的、在聊她的、跟她的約會或計畫；只是順便提到的不算。每次至少 1～2 則跟 ${me} 無關（工作、朋友、家人的日常）。聯絡人名字要照小抄裡存的名字寫。小抄裡的個性和習慣是參考，不要照抄裡面的句子，每次用新的說法。這次的通知要是新的：不要重複「他手機現在的內容」裡的通知，也不用每次都出現同樣的人，挑這段劇情裡最可能傳訊息來的人。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。${mute.length ? `這些人不會傳訊息來，from 絕對不能是他們：${mute.join('、')}。` : ''}內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
+6. memo：他自己記給自己看的備忘錄。用他的口吻，記他自己會想記下的事；記什麼由他決定。有約定時間的事寫在行事曆（cal），這裡記沒有時間的待辦和想法。
    - add：這次新增的 0～2 則，沒有想記的就給空陣列 []。每則的 kind 是 text 或 list：
      text＝一段話：title 15 字內、body 80 字內。
      list＝勾勾清單：title 15 字內、items 是 1～6 個項目（每項 18 字內的字串）。
@@ -655,11 +776,12 @@ ${JSON.stringify(now)}
    - draft：他最近一次打到一半、沒有按下搜尋的字，15 字內；沒有就給空字串。
    - tabs：他現在開著的分頁數，1～5 的整數。
    - unhide：history 裡 secret 的、他覺得已經不用藏的，寫它的 id，像 ["w3"]；沒有就給 []。
+   - mur：他偷偷寫在某一筆搜尋上的一句心聲（為什麼查、查的時候在想什麼），25 字內，用他的口吻。不是每次都要有，每次最多 1 句：寫在 add 的某一筆裡（那筆的 "mur"），或寫給 history 裡已經有、還沒有 mur 的某一筆（web 的 "mur" 寫成 {"id":"w3","t":"…"}）；沒有就都不用寫（add 的 mur 給空字串、web 的 mur 給 null）。
    - 不要重複 history 裡已經有的搜尋。${peeked.length ? `\n   - ${me} 剛剛偷看了他藏起來的這幾筆：「${peeked.join('」「')}」。他會知道被看到了，要不要有反應（備忘錄、通知、或乾脆不藏了）由他決定。` : ''}
 9. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"next":{"when":"","what":"","mine":false},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false}],"draft":"","tabs":2,"unhide":[]}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null}}`;
     return { sys, prompt };
   }
 
@@ -683,22 +805,23 @@ ${JSON.stringify(now)}
     const s = S(), L = s.lock;
     const W = Array.isArray(o.weather) ? o.weather.filter((w) => w && w.place).slice(0, 2) : [];
     if (W.length === 2) L.weather = W.map((w) => ({ place: clean(w.place, 8), temp: clean(w.temp, 6), extra: clean(w.extra, 8) }));
-    if (o.next && o.next.what) L.next = { when: clean(o.next.when, 10), what: clean(o.next.what, 14), mine: !!o.next.mine };
     const pct = (v, old) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.max(1, Math.min(100, n)) : old; };
     if (o.battery) L.battery = { phone: pct(o.battery.phone, L.battery?.phone ?? 76), buds: pct(o.battery.buds, L.battery?.buds ?? 88), charging: o.battery.charging === true };
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
-    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'cal', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
+    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => x.app !== 'memo' && x.app !== 'trivia'); // 舊的備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
     applyMemo(o.memo, isoDate(o.date));
     memoNotice();
+    applyCal(o.cal);
+    calNotice();
     grainNotice(applyGrains(o.grains));
     applyWeb(o.web);
     s.unseen = true;
-    s.unseenMine = s.notes.some((x) => x.mine) || !!L.next?.mine;
+    s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
   }
 
   const isoDate = (t) => { const m = String(t || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : ''; };
@@ -759,12 +882,51 @@ ${JSON.stringify(now)}
     (Array.isArray(w.unhide) ? w.unhide : []).forEach((id) => { const x = W.items.find((it) => it.id === id); if (x) x.secret = false; });
     if (typeof w.draft === 'string') W.draft = clean(w.draft, 18);
     const t = Math.round(Number(w.tabs)); if (Number.isFinite(t)) W.tabs = Math.max(1, Math.min(5, t));
+    let murLeft = 1; // 心聲每次最多 1 句
     (Array.isArray(w.add) ? w.add : []).slice(0, 3).forEach((x) => {
       const q = clean(x?.q, 24);
       if (!q || W.items.some((it) => it.q === q)) return;
-      W.items.push({ id: 'w' + (++W.seq), q, day: nowDay(), time: hm(x.time) || S().lock.time || '', secret: x.secret === true, seen: false });
+      const it = { id: 'w' + (++W.seq), q, day: nowDay(), time: hm(x.time) || S().lock.time || '', secret: x.secret === true, seen: false };
+      const m = clean(x.mur, 30);
+      if (m && murLeft) { it.mur = m; murLeft--; }
+      W.items.push(it);
     });
+    if (murLeft && w.mur && typeof w.mur === 'object') {
+      const it = W.items.find((x) => x.id === w.mur.id), m = clean(w.mur.t, 30);
+      if (it && m && !it.mur) it.mur = m;
+    }
     W.items = W.items.slice(-40); // 留最近 40 筆，太舊的自己消失
+  }
+
+  // 行事曆：加新的（亂寫、重複的擋掉）；過期一個月以上的自己消失
+  const KCAT = { work: 'work', family: 'family', her: 'her', mine: 'her', 出版社: 'work', 工作: 'work', 家人: 'family' };
+  function applyCal(c) {
+    const K = S().cal, n = storyNow();
+    if (c && typeof c === 'object') {
+      const same = (t) => String(t).replace(/[\s「」『』，。、！？：:]/g, '');
+      (Array.isArray(c.add) ? c.add : []).slice(0, 3).forEach((x) => {
+        const day = isoDate(x?.day), title = clean(x?.title, 16);
+        if (!dOf(day) || !title) return;
+        if (K.items.some((it) => it.day === day && same(it.title) === same(title))) return;
+        K.items.push({ id: 'c' + (++K.seq), day, time: hm(x.time), title, body: clean(x.body, 44), cat: KCAT[String(x.cat || '').trim()] || 'family' });
+      });
+    }
+    K.items = K.items.filter((x) => x.day >= addDays(n.day, -30)).sort(kSort).slice(-80);
+  }
+  // 鎖定畫面的行事曆通知：今天、明天的下一件事，從行事曆真的拿（AI 不另外寫，才不會對不上）
+  function calNotice() {
+    const s = S(), x = nextEv(), n = storyNow();
+    if (!x) return;
+    const dd = diffDays(x.day, n.day);
+    if (dd > 1) return;
+    let when = dd === 1 ? '明天' : '今天';
+    if (dd === 0 && x.time && n.time) {
+      const m = (+x.time.slice(0, 2) * 60 + +x.time.slice(3)) - (+n.time.slice(0, 2) * 60 + +n.time.slice(3));
+      when = m < 1 ? '現在' : m < 60 ? `${m}分鐘後` : `${Math.floor(m / 60)}小時後`;
+    }
+    const text = [(dd ? '明天' : '今天') + (x.time ? ' ' + x.time : '整天'), x.body].filter(Boolean).join('・');
+    s.notes.unshift({ app: 'cal', id: x.id, from: clean(x.title, 12), text: clean(text, 50), when, mine: x.cat === 'her' });
+    s.notes = s.notes.slice(0, 6);
   }
 
   // 拾穗小集：他說給果寶聽了的補上鵝黃點（只能補上、不能拿掉）→ 撿新的一穗（亂寫的、重複的擋掉）
