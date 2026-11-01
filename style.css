@@ -282,96 +282,86 @@
 .ap-ncb{font-size:12.5px;line-height:1.75;opacity:.9;margin-top:3px;white-space:pre-line}
 @media (prefers-reduced-motion:reduce){.ap-nextcard,.ap-kr.ap-flash{animation:none}}
 
-/* ===== 行事曆圖例（第 45 窗草圖：右對齊、中灰小字）===== */
-.ap-klg{display:flex;justify-content:flex-end;gap:12px;margin:6px 0 0;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+/* ===== 第 46 窗：行事曆圖例（月曆格子下面，右對齊中灰小字）===== */
+.ap-klg{display:flex;justify-content:flex-end;gap:12px;margin:8px 2px 0;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
 .ap-klg span{display:inline-flex;align-items:center;gap:5px}
 
-/* ===== 第二批共用：從通知點進來亮一下（用 App 自己的顏色）===== */
-.ap-sh-row,.ap-sh-crow,.ap-fd-row,.ap-dy-ent{position:relative}
-.ap-sh-row.ap-flash,.ap-sh-crow.ap-flash{--fl:rgba(221,168,148,.32)}
-.ap-fd-row.ap-flash{--fl:rgba(230,179,190,.38)}
-.ap-dy-ent.ap-flash{--fl:rgba(79,95,126,.08)}
-.ap-sh-row.ap-flash,.ap-sh-crow.ap-flash,.ap-fd-row.ap-flash,.ap-dy-ent.ap-flash{animation:ap-flash2 1.8s ease;border-radius:2px}
-@keyframes ap-flash2{0%,30%{background:var(--fl);box-shadow:-8px 0 0 var(--fl),8px 0 0 var(--fl)}100%{background:transparent;box-shadow:-8px 0 0 transparent,8px 0 0 transparent}}
-
-/* ===== 柴米油鹽一家人（日常物事、餵食指南）：燕麥底、收據／卡片、中標題深咖（第 46 窗）===== */
+/* ===== 柴米油鹽一家人：燕麥米白底 #EFE6D6、收據／卡片 #FBF7EF、中標題深咖 #5C4733、內文暖灰墨、小字中灰 ===== */
 .ap-view[data-app="shop"],.ap-view[data-app="food"]{background:#EFE6D6}
 .ap-view[data-app="shop"]::before,.ap-view[data-app="food"]::before{background:linear-gradient(#EFE6D6 72%,rgba(239,230,214,0))}
 .ap-view[data-app="shop"]::after,.ap-view[data-app="food"]::after{background:linear-gradient(rgba(239,230,214,0),#EFE6D6 65%)}
+.ap-spdot{background:#DDA894;box-shadow:0 0 0 1.2px #8A6E50}
+.ap-fddot{background:#E6B3BE;box-shadow:0 0 0 1.2px #A9677A}
+#ap-root .ap-otabs .ap-tab{color:#A89C8A}
+#ap-root .ap-otabs .ap-tab.ap-on{color:#5C4733;border-bottom-color:#DDA894}
+.ap-view[data-app="shop"] .ap-mw,.ap-view[data-app="food"] .ap-mw{color:#8E8B84}
+/* 日常物事：收據條（上下鋸齒、虛線分行） */
+.ap-sp-rc{position:relative;background:#FBF7EF;margin:16px 0 18px;padding:8px 14px 6px;filter:drop-shadow(0 0 .6px #CDBFA8)}
+.ap-sp-rc::before,.ap-sp-rc::after{content:'';position:absolute;left:0;right:0;height:6px;background-repeat:repeat-x;background-size:10px 6px}
+.ap-sp-rc::before{top:-6px;background-image:radial-gradient(circle at 5px 0,transparent 3px,#FBF7EF 3.5px)}
+.ap-sp-rc::after{bottom:-6px;background-image:radial-gradient(circle at 5px 6px,transparent 3px,#FBF7EF 3.5px)}
+.ap-sp-dd{text-align:center;font-size:11px;letter-spacing:3px;color:#5C4733;border-bottom:1px dashed #D8CCB8;padding:3px 0 7px}
+.ap-sp-r{position:relative;display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed #E2D6C2;font-size:14px;color:#45423E}
+.ap-sp-r:last-child{border-bottom:0}
+.ap-sp-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-sp-lk,.ap-fd-lk{flex:none;display:flex}
+.ap-sp-lk{color:#8A6E50}
+.ap-fd-lk{color:#A9677A}
+.ap-sp-r.ap-hid,.ap-sp-g.ap-hid,.ap-fd-r.ap-hid{cursor:pointer}
+.ap-hid .ap-sp-t,.ap-hid .ap-sp-v,.ap-hid .ap-fd-n{filter:blur(4.5px)} /* 藏起來的：糊掉，果果點了才看得到（他下次會知道） */
+.ap-sp-done .ap-sp-t{color:#A8A39A}
+/* 家計處理好的：圓框小印章，買的蓋「買」、帳單蓋「繳」 */
+.ap-sp-st{flex:none;width:22px;height:22px;box-sizing:border-box;border-radius:50%;border:1.3px solid #B5705A;color:#B5705A;font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-12deg)}
+/* 她的小卡 */
+.ap-sp-card{position:relative;background:#FBF7EF;border-radius:3px;box-shadow:0 0 0 .5px #E2D6C2;padding:12px 16px 4px;margin:12px 0}
+.ap-sp-cdot{position:absolute;top:13px;right:14px;width:7px;height:7px;border-radius:50%;background:#DDA894;box-shadow:0 0 0 1px #8A6E50}
+.ap-sp-ct{font-size:13px;color:#5C4733;margin-bottom:4px}
+.ap-sp-g{position:relative;display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #EDE4D4;font-size:14px;color:#45423E}
+.ap-sp-g:last-child{border-bottom:0}
+.ap-sp-k{flex:none;width:4.5em;font-size:12px;color:#8E8B84}
+.ap-sp-v{flex:1;min-width:0}
+/* 餵食指南：一區一張摺頁地圖卡 */
+.ap-fd-cd{background:#FBF7EF;border-radius:4px;box-shadow:0 0 0 .5px #E2D6C2;margin:12px 0 14px;padding-bottom:4px}
+.ap-fd-ch{display:flex;align-items:center;gap:6px;font-size:13px;color:#5C4733;padding:8px 12px;border-bottom:1px dashed #E2D6C2}
+.ap-fd-ch small{margin-left:auto;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+.ap-fd-r{position:relative;padding:7px 12px}
+.ap-fd-r.ap-has,.ap-fd-tl{cursor:pointer}
+.ap-fd-h{display:flex;align-items:center;gap:8px;font-size:14px;color:#45423E}
+.ap-fd-ic{flex:none;margin:0 1.5px}
+.ap-fd-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-fd-bar{display:block;width:7.5em;max-width:100%;height:9px;border-radius:5px;background:#E8DECD}
+.ap-fd-note{display:none;margin:4px 0 2px 19px;padding:1px 0 2px 10px;border-left:1px solid #CFCBC2;font-size:13px;line-height:1.75;color:#45423E}
+.ap-fd-r.ap-open .ap-fd-note{display:block}
+.ap-fd-shake{animation:ap-shake .36s ease}
+@keyframes ap-shake{20%,60%{transform:translateX(-3px)}40%,80%{transform:translateX(3px)}}
 
-/* ===== 日常物事：收據條；陶土粉是它的記號 ===== */
-.ap-sh-dot{background:#DDA894;box-shadow:0 0 0 1.2px #8A6E50}
-#ap-root .ap-sh-tabs .ap-tab.ap-on{color:#5C4733;border-bottom-color:#DDA894}
-.ap-sh-rc{position:relative;background:#FBF7EF;margin:18px 2px 22px;padding:12px 16px 10px;filter:drop-shadow(0 1px 1.5px rgba(92,71,51,.12))}
-.ap-sh-rc::before,.ap-sh-rc::after{content:'';position:absolute;left:0;right:0;height:6px;background-size:10px 6px;background-repeat:repeat-x}
-.ap-sh-rc::before{top:-6px;background-image:linear-gradient(45deg,#FBF7EF 3.6px,transparent 0),linear-gradient(-45deg,#FBF7EF 3.6px,transparent 0);background-position:0 100%}
-.ap-sh-rc::after{bottom:-6px;background-image:linear-gradient(135deg,#FBF7EF 3.6px,transparent 0),linear-gradient(-135deg,#FBF7EF 3.6px,transparent 0);background-position:0 0}
-.ap-sh-rd{text-align:center;font-size:12.5px;letter-spacing:.2em;color:#5C4733;padding:2px 0 8px}
-.ap-sh-row{display:flex;align-items:center;gap:8px;min-height:34px;border-top:1px dashed #DCD2C2}
-.ap-sh-nm{flex:1;min-width:0;font-size:14px;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ap-sh-pr{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11.5px;color:#8E8B84}
-.ap-sh-lk{flex:none;display:flex;color:#8A6E50}
-.ap-sh-row.ap-hid,.ap-sh-crow.ap-hid{cursor:pointer}
-.ap-sh-row.ap-hid .ap-sh-nm,.ap-sh-crow.ap-hid .ap-sh-ct{filter:blur(4.5px);color:#8A6E50} /* 偷偷買給小果的：糊掉，果果點了才看得到 */
-.ap-sh-row.ap-hid .ap-sh-pr{filter:blur(3px)}
-.ap-sh-row.ap-done .ap-sh-nm,.ap-sh-row.ap-done .ap-sh-pr{color:#A8A39A} /* 蓋了章的：字變淡 */
-.ap-sh-stamp{flex:none;width:23px;height:23px;margin-left:2px;border:1.3px solid #B5705A;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;line-height:1;color:#B5705A;transform:rotate(-12deg);opacity:.9}
-.ap-sh-card{position:relative;background:#FBF7EF;border-radius:12px;margin:16px 2px;padding:8px 16px;box-shadow:0 1px 2px rgba(92,71,51,.12)}
-.ap-sh-cdot{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:#DDA894;box-shadow:0 0 0 1.2px #8A6E50}
-.ap-sh-crow{display:flex;align-items:baseline;gap:12px;padding:10px 14px 10px 0}
-.ap-sh-crow+.ap-sh-crow{border-top:.5px solid #E6DCCB}
-.ap-sh-ck{flex:none;width:4.5em;font-family:"Noto Sans TC",sans-serif;font-size:11.5px;letter-spacing:.06em;color:#8E8B84}
-.ap-sh-cv{flex:1;min-width:0;display:flex;align-items:center;gap:6px;font-size:14px;color:#45423E}
-.ap-sh-cv .ap-sh-lk{align-self:center}
-
-/* ===== 果果的餵食指南：一區一張摺頁地圖卡；莓果粉是它的記號 ===== */
-.ap-fd-dot{background:#E6B3BE;box-shadow:0 0 0 1.2px #A9677A}
-.ap-fd-card{background:#FBF7EF;border-radius:10px;margin:14px 2px;padding:10px 14px 4px;box-shadow:0 1px 2px rgba(92,71,51,.12);background-image:linear-gradient(90deg,transparent calc(33.33% - .5px),rgba(92,71,51,.05) calc(33.33% - .5px),rgba(92,71,51,.05) calc(33.33% + .5px),transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),rgba(92,71,51,.05) calc(66.66% - .5px),rgba(92,71,51,.05) calc(66.66% + .5px),transparent calc(66.66% + .5px))} /* 淡淡的兩條摺痕 */
-.ap-fd-hd{display:flex;align-items:center;gap:7px;padding-bottom:7px;border-bottom:.5px solid #E6DCCB}
-.ap-fd-pin{flex:none}
-.ap-fd-area{flex:1;font-size:15px;font-weight:700;letter-spacing:1px;color:#5C4733}
-.ap-fd-cnt{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
-.ap-fd-row{padding:9px 0}
-.ap-fd-row+.ap-fd-row{border-top:.5px dashed #E6DCCB}
-.ap-fd-h{display:flex;align-items:center;gap:6px}
-.ap-fd-nm{min-width:0;font-size:14px;font-weight:500;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ap-fd-mk{flex:none}
-.ap-fd-lk{flex:none;display:flex;color:#A9677A}
-.ap-fd-when{margin-left:auto;flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
-.ap-fd-row.ap-has,.ap-fd-row.ap-hid,.ap-fd-row.ap-tl{cursor:pointer}
-.ap-fd-row.ap-hid .ap-fd-nm,.ap-fd-row.ap-tl .ap-fd-nm{filter:blur(4.5px);color:#A9677A} /* 上鎖的：糊掉 */
-.ap-fd-note{display:none;margin:5px 0 1px 2px;padding-left:9px;border-left:1px solid #CFCBC2;font-size:12.5px;line-height:1.8;color:#45423E;white-space:pre-line}
-.ap-fd-row.ap-open .ap-fd-note{display:block}
-.ap-fd-row.ap-nope{animation:ap-nope .36s ease} /* 時間鎖：日子還沒到，輕輕晃一下 */
-@keyframes ap-nope{0%,100%{transform:none}25%{transform:translateX(-4px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
-
-/* ===== 拾光手記：象牙白紙＋左邊深藍書脊、右邊圓角；深夜藍是它的記號（第 46 窗）===== */
-.ap-view[data-app="diary"]{background:#24324A}
-.ap-view[data-app="diary"]::before{left:10px;background:linear-gradient(#F5F2EC 72%,rgba(245,242,236,0));border-radius:0 18px 0 0}
-.ap-view[data-app="diary"]::after{left:10px;background:linear-gradient(rgba(245,242,236,0),#F5F2EC 65%);border-radius:0 0 18px 0}
-.ap-dy-page{position:absolute;inset:0 0 0 10px;background:#F5F2EC;border-radius:0 18px 18px 0;overflow:hidden}
-.ap-dy-page .ap-vs{padding-left:20px}
-.ap-dy-dot{background:#4F5F7E;box-shadow:0 0 0 1.2px #24324A}
-.ap-dy-ent{border-top:.5px solid #E4E0D7;padding:13px 0 12px}
-.ap-dy-ent:not(.ap-dy-draft){cursor:pointer}
-.ap-dy-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
-.ap-dy-t{font-size:15.5px;font-weight:700;letter-spacing:1.5px;color:#24324A}
-.ap-dy-d{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
-.ap-dy-b{font-size:13.5px;line-height:1.9;color:#45423E;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ap-dy-ent.ap-open .ap-dy-b{display:block}
-.ap-dy-draft .ap-dy-b{color:#8E8B84;display:block}
-.ap-dy-cur{display:inline-block;width:1px;height:1.05em;margin-left:2px;vertical-align:-2px;background:#24324A;animation:ap-cur 1.1s steps(1) infinite} /* 打到一半的小游標 */
-@keyframes ap-cur{50%{opacity:0}}
-/* 解鎖畫面：象牙紙中間一本小深藍書 */
-.ap-dy-lock{position:absolute;inset:0 0 0 10px;z-index:3;background:#F5F2EC;border-radius:0 18px 18px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:40px;box-sizing:border-box;cursor:pointer;transition:opacity .35s}
-.ap-dy-book{position:relative;width:84px;height:112px;perspective:500px}
-.ap-dy-inner{position:absolute;inset:0;border-radius:3px 8px 8px 3px;background:#FBF9F4;box-shadow:0 2px 8px rgba(36,50,74,.18),inset 0 0 0 .5px #E4E0D7}
-.ap-dy-cover{position:absolute;inset:0;border-radius:3px 8px 8px 3px;background:#24324A;box-shadow:0 3px 10px rgba(36,50,74,.3),inset 5px 0 0 rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;transform-origin:left center;transition:transform .62s cubic-bezier(.4,.1,.3,1)}
-.ap-dy-face{color:#E8DDC6;display:flex}
-.ap-dy-name{margin-top:20px;font-size:16px;font-weight:500;letter-spacing:4px;color:#24324A}
-.ap-dy-hint{margin-top:6px;font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.15em;color:#8E8B84}
-.ap-dy-lock.ap-scan .ap-dy-face{animation:ap-scan .6s ease}
-@keyframes ap-scan{0%{opacity:1;transform:scale(1)}30%{opacity:.25;transform:scale(.9)}60%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
-.ap-dy-lock.ap-turn .ap-dy-cover{transform:rotateY(-160deg)}
-.ap-dy-lock.ap-gone{opacity:0}
-@media (prefers-reduced-motion:reduce){.ap-dy-cover,.ap-dy-lock{transition:none}.ap-dy-cur,.ap-fd-row.ap-nope{animation:none}}
+/* ===== 拾光手記：象牙白 #F5F2EC＋左邊深藍書脊；天數深藍、內文暖灰墨、日期中灰 ===== */
+.ap-view[data-app="diary"]{background:#F5F2EC;box-shadow:inset 10px 0 0 #24324A}
+.ap-view[data-app="diary"]::before{left:10px;background:linear-gradient(#F5F2EC 72%,rgba(245,242,236,0))}
+.ap-view[data-app="diary"]::after{left:10px;background:linear-gradient(rgba(245,242,236,0),#F5F2EC 65%)}
+.ap-view[data-app="diary"] .ap-vs{padding-left:32px}
+.ap-dydot{background:#4F5F7E;box-shadow:0 0 0 1.2px #24324A}
+.ap-dy-in{animation:ap-appin .3s cubic-bezier(.2,.8,.3,1)}
+.ap-dy-e{position:relative;padding:12px 0 10px;border-top:1px solid #E4E0D7;cursor:pointer}
+.ap-mtitle+.ap-dy-e{border-top:0;padding-top:4px}
+.ap-dy-h{display:flex;align-items:baseline;gap:8px;font-size:15px;letter-spacing:1px;color:#24324A}
+.ap-dy-h small{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.05em;color:#8E8B84}
+.ap-dy-b{margin-top:4px;font-size:13.5px;line-height:1.95;color:#45423E;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ap-dy-e.ap-open .ap-dy-b{display:block}
+.ap-dy-draft{cursor:default}
+.ap-dy-draft .ap-dy-b{display:block;color:#8E8B84}
+.ap-dy-cur{display:inline-block;width:1px;height:14px;margin-left:2px;vertical-align:-2px;background:#24324A;animation:ap-blink 1.1s steps(1) infinite}
+@keyframes ap-blink{50%{opacity:0}}
+/* 解鎖畫面：象牙紙中間一本小深藍書，點了辨識框閃一下、書翻開 */
+.ap-dy-lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 0 40px 10px}
+#ap-root .ap-dy-book{position:relative;width:84px;height:112px;padding:0;border:0;border-radius:3px 8px 8px 3px;background:#24324A;color:#E8DDC6;box-shadow:inset 5px 0 0 #1A2537,0 3px 10px rgba(36,50,74,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transform-origin:left center;transition:transform .3s ease,opacity .3s ease}
+.ap-dy-book i{display:block;width:36px;height:1px;background:#C9BFA8}
+.ap-dy-face{display:flex}
+.ap-dy-scan .ap-dy-face{animation:ap-scan .5s ease}
+@keyframes ap-scan{0%{transform:scale(1)}40%{transform:scale(.86);color:#fff}100%{transform:scale(1)}}
+#ap-root .ap-dy-go{transform:perspective(500px) rotateY(-75deg);opacity:0}
+.ap-dy-lt{font-size:16px;letter-spacing:4px;color:#24324A}
+.ap-dy-ls{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:2px;color:#8E8B84}
+/* 從通知點進來：那筆亮一下；長按刪除的位置 */
+.ap-sp-r.ap-flash,.ap-sp-g.ap-flash,.ap-fd-r.ap-flash,.ap-dy-e.ap-flash{animation:ap-flash 1.8s ease;border-radius:2px}
+@media (prefers-reduced-motion:reduce){.ap-dy-cur,.ap-dy-in,.ap-dy-scan .ap-dy-face,.ap-fd-shake{animation:none}#ap-root .ap-dy-book{transition:none}}
