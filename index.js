@@ -1,4 +1,4 @@
-// 安安的小手機 v0.9.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆（照安安自己說的規則排版）
+// 安安的小手機 v0.10.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -33,12 +33,16 @@
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>',
     lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/>',
+    pin: '<path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z"/>',
+    face: '<path d="M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5"/><path d="M9 9.5v1.5M15 9.5v1.5M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.6 3.6 0 0 0 5 0"/>',
   };
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
   // App：[名字, 小點顏色, 細框＋圖示線條（同色系深一點）, 圖示]（第 44 窗：每顆小點都有細框）
   const APP = {
     line: ['LINE', '#B5D68F', '#6A8F45', 'line'], cal: ['行事曆', '#9DB4D3', '#5B7393', 'cal'], memo: ['備忘錄', '#8FC4AE', '#4F7A6B', 'memo'],
     web: ['瀏覽器', '#C9B9D6', '#7E6A92', 'web'], trivia: ['拾穗小集', '#C8A97E', '#9A7B52', 'wheat'],
+    // 第二批（第 46 窗定的顏色）：日常物事＝陶土粉、餵食指南＝莓果粉、拾光手記＝深夜藍；框都是小點自己的同色系深一點
+    shop: ['日常物事', '#DDA894', '#8A6E50', 'cart'], food: ['餵食指南', '#E6B3BE', '#A9677A', 'pin'], diary: ['拾光手記', '#4F5F7E', '#24324A', 'book'],
   };
   const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
@@ -97,6 +101,10 @@
     if (!s.web) s.web = { seq: 0, items: [], draft: '', tabs: 2, peek: [] }; // 瀏覽器：他的搜尋紀錄（藏起來的要果果點開才看得到）
     if (s.auto.bind == null) { s.auto.bind = false; s.auto.chat = ''; } // 只在綁定的聊天室更新（開關）
     if (!s.cal) s.cal = { seq: 0, items: [] }; // 行事曆：他有約定時間的事（第 45 窗）
+    if (!s.shop) s.shop = { seq: 0, cseq: 0, items: [], card: [], peek: [] }; // 日常物事：購物、家計、給小果的小卡（第 47 窗）
+    if (!s.food) s.food = { seq: 0, items: [], peek: [] }; // 果果的餵食指南：一區一張卡的美食地圖
+    if (!s.diary) s.diary = { seq: 0, items: [], draft: '' }; // 拾光手記：他的日記
+    if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
@@ -155,6 +163,9 @@
           <div class="ap-view" data-app="memo" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="web" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="cal" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="shop" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="food" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="diary" hidden><div class="ap-dy-page"><div class="ap-vs"></div></div><div class="ap-dy-lock" hidden></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
       </div>`;
@@ -170,7 +181,7 @@
       const nt = e.target.closest('.ap-note');
       if (!nt) return;
       unlock();
-      if (nt.dataset.app === 'memo' || nt.dataset.app === 'trivia' || (nt.dataset.app === 'cal' && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點備忘錄／拾穗／行事曆通知：直接打開，那則亮一下
+      if (['memo', 'trivia'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -231,6 +242,28 @@
       const d = e.target.closest('[data-cd]');
       if (d) { calSel = d.dataset.cd; paintCal(); return; }
       const r = e.target.closest('.ap-kr.ap-khas');
+      if (r) r.classList.toggle('ap-open');
+    });
+    root.querySelector('.ap-view[data-app="shop"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const t = e.target.closest('[data-st]');
+      if (t) { shopTab = t.dataset.st; paintShop(); root.querySelector('.ap-view[data-app="shop"] .ap-vs').scrollTop = 0; return; }
+      const r = e.target.closest('.ap-sh-row.ap-hid, .ap-sh-crow.ap-hid');
+      if (r) peekIn('shop', r.dataset.id); // 偷偷買的、上鎖的那格：解鎖，下次更新告訴他
+    });
+    root.querySelector('.ap-view[data-app="food"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const r = e.target.closest('.ap-fd-row');
+      if (!r) return;
+      if (r.classList.contains('ap-tl')) { r.classList.remove('ap-nope'); void r.offsetWidth; r.classList.add('ap-nope'); return; } // 時間鎖：日子還沒到，怎麼點都不開（輕輕晃一下）
+      if (r.classList.contains('ap-hid')) { peekIn('food', r.dataset.id); return; }
+      if (r.classList.contains('ap-has')) r.classList.toggle('ap-open');
+    });
+    root.querySelector('.ap-view[data-app="food"]').addEventListener('animationend', (e) => e.target.classList.remove('ap-nope'));
+    root.querySelector('.ap-view[data-app="diary"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      if (e.target.closest('.ap-dy-lock')) { faceUnlock(); return; }
+      const r = e.target.closest('.ap-dy-ent:not(.ap-dy-draft)');
       if (r) r.classList.toggle('ap-open');
     });
     root.querySelector('.ap-view[data-app="memo"]').addEventListener('click', (e) => {
@@ -297,7 +330,7 @@
       + HOME.folders.map((f) => `<button class="ap-app" type="button"><span class="ap-tile ap-fold">${f.mini.map((k) => `<i>${ic(k, 11)}</i>`).join('')}</span><span class="ap-name">${esc(f.n)}</span></button>`).join('')
       + HOME.p1.map((a) => appBtn(a, s)).join('') + '</div>';
     root.querySelector('.ap-p2').innerHTML = HOME.boxes.map((b) => `<div class="ap-box ap-glass ap-${b.tone}">${b.apps.map((a) => appBtn(a, s)).join('')}</div>`).join('');
-    root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button"><span class="ap-book">${ic('book', 24)}</span><span class="ap-name">拾光手記</span></button>`;
+    root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button" data-id="diary"><span class="ap-book">${ic('book', 24)}</span><span class="ap-name">拾光手記</span></button>`;
     root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" data-id="${a.k}" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}</span></button>`).join('');
     root.querySelector('.ap-home').classList.toggle('ap-nowall', !s.homeWall);
     root.querySelector('.ap-home .ap-htint').style.opacity = s.homeTint / 100;
@@ -305,7 +338,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -315,19 +348,27 @@
     if (v.dataset.app === 'memo') { tab = id === 'trivia' ? 'trivia' : 'memo'; paintMemo(); }
     if (id === 'web') paintWeb();
     if (id === 'cal') prepCal(focus); // 一打開選今天；從通知點進來就選那件事的那天
+    if (id === 'shop') prepShop(focus); // 從通知點進來：先切到那筆所在的分頁
+    if (id === 'food') paintFood();
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
+    if (id === 'diary') { paintDiary(); diaryLock(focus); root.querySelector('.ap-screen').classList.add('ap-lite'); return; } // 拾光手記：每次都先臉部解鎖
+
     if (v.dataset.app === 'memo' && tab === 'memo') replayChecks();
-    const f = focus && v.querySelector(`[data-id="${focus}"]`);
-    if (f) {
-      f.classList.add('ap-open');
-      // 只捲備忘錄自己的紙，不用 scrollIntoView（它會連整支手機一起捲，桌布往下挪過時整個畫面會往上跑）
-      const vs = v.querySelector('.ap-vs');
-      vs.scrollTop = Math.max(0, f.offsetTop - (vs.clientHeight - f.offsetHeight) / 2);
-      setTimeout(() => f.classList.add('ap-flash'), 250);
-      f.addEventListener('animationend', () => f.classList.remove('ap-flash'), { once: true });
-    }
+    focusIn(v, focus);
     root.querySelector('.ap-screen').classList.add('ap-lite'); // 紙色 App：上面的字和橫線變深色
+  }
+  // 從通知點進來：那則展開、捲到中間、亮一下
+  function focusIn(v, focus) {
+    const f = focus && v.querySelector(`.ap-vs [data-id="${focus}"]`);
+    if (!f) return;
+    if (!f.classList.contains('ap-hid') && !f.classList.contains('ap-tl')) f.classList.add('ap-open');
+    // 只捲 App 自己的紙，不用 scrollIntoView（它會連整支手機一起捲，桌布往下挪過時整個畫面會往上跑）
+    const vs = v.querySelector('.ap-vs');
+    let top = 0; for (let el = f; el && el !== vs; el = el.offsetParent) top += el.offsetTop; // 收據、卡片裡的那一行也算得準
+    vs.scrollTop = Math.max(0, top - (vs.clientHeight - f.offsetHeight) / 2);
+    setTimeout(() => f.classList.add('ap-flash'), 250);
+    f.addEventListener('animationend', () => f.classList.remove('ap-flash'), { once: true });
   }
   function closeApp() {
     if (!root) return;
@@ -493,6 +534,7 @@
       }
       const sel = (byDay[calSel] || []);
       body = `<div class="ap-kwk">${[...WD].map((w) => `<span>${w}</span>`).join('')}</div><div class="ap-kgrid">${cells}</div>`
+        + '<div class="ap-klg"><span><i class="ap-kc ap-k-work"></i>出版社</span><span><i class="ap-kc ap-k-family"></i>家人/朋友</span><span><i class="ap-kc ap-k-her"></i>果果</span></div>' // 圖例（第 45 窗草圖）
         + `<div class="ap-ksec">${calSel === n.day ? '今天・' : ''}${mdw(calSel)}</div>`
         + (sel.length ? sel.map((x) => kRow(x, n)).join('') : '<div class="ap-kempty">這天沒有排事。</div>');
     } else {
@@ -512,9 +554,145 @@
       ${tabs}${body}`;
   }
 
+  // ===== 第二批共用 =====
+  // 重畫 App 時停在原本捲到的地方（解鎖、刪掉一筆後不會跳回最上面）
+  function keepScroll(app, fn) {
+    const vs = root.querySelector(`.ap-view[data-app="${app}"] .ap-vs`), y = vs ? vs.scrollTop : 0;
+    fn();
+    if (vs) vs.scrollTop = y;
+  }
+  // 果果點開他上鎖的：解鎖、記下來，下次更新時告訴他（跟瀏覽器一樣）
+  function peekIn(app, id) {
+    const B = S()[app], x = (B.items || []).find((it) => it.id === id) || (B.card || []).find((it) => it.id === id);
+    if (!x) return;
+    x.seen = true;
+    if (!B.peek.includes(id)) B.peek.push(id);
+    save();
+    keepScroll(app, app === 'shop' ? paintShop : paintFood);
+  }
+  const STAR = '<svg class="ap-fd-mk" viewBox="0 0 24 24" width="12" height="12" aria-label="星星"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.5l6.1-.7z" fill="#E2B23F"/></svg>';
+  const HEART = '<svg class="ap-fd-mk" viewBox="0 0 24 24" width="12" height="12" aria-label="愛心"><path d="M12 20.5s-7.8-4.7-7.8-10.3A4.3 4.3 0 0 1 12 7.7a4.3 4.3 0 0 1 7.8 2.5c0 5.6-7.8 10.3-7.8 10.3z" fill="#C2564F"/></svg>';
+
+  // ===== 日常物事（第 46 窗定案：柴米油鹽的燕麥底＋收據條；陶土粉是它的記號）=====
+  let shopTab = 'buy'; // buy 購物、bill 家計、her 小果
+  function prepShop(focus) {
+    const H = S().shop, x = focus && H.items.find((it) => it.id === focus);
+    if (x) shopTab = x.tab; else if (focus && H.card.some((it) => it.id === focus)) shopTab = 'her';
+    paintShop();
+  }
+  // 畫面上看得到哪些：購物留最近一個月；家計蓋了章的過一週消失、沒蓋章的過一個月消失
+  const shopShow = (x, n) => (x.tab === 'bill' && x.stamp ? (x.sday || x.day) >= addDays(n.day, -7) : x.day >= addDays(n.day, -30));
+  function paintShop() {
+    const H = S().shop, n = storyNow();
+    const tabs = `<div class="ap-tabs ap-sh-tabs">${[['buy', '購物'], ['bill', '家計'], ['her', '小果']].map(([k, t]) =>
+      `<button type="button" class="ap-tab${shopTab === k ? ' ap-on' : ''}" data-st="${k}">${t}</button>`).join('')}</div>`;
+    let body;
+    if (shopTab === 'her') {
+      // 小果：一張小卡，左邊項目、右邊內容；他更新時是改那一格或多一格
+      body = H.card.length ? `<div class="ap-sh-card"><span class="ap-sh-cdot"></span>${H.card.map((c) => {
+        const hid = c.lock && !c.seen, open = c.lock && c.seen;
+        return `<div class="ap-sh-crow${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${c.id}"><span class="ap-sh-ck">${esc(c.k)}</span>`
+          + `<span class="ap-sh-cv">${c.lock ? `<span class="ap-sh-lk">${ic(hid ? 'lockon' : 'lockoff', 13)}</span>` : ''}<span class="ap-sh-ct">${esc(c.v)}</span></span></div>`;
+      }).join('')}</div>` : '<div class="ap-mempty">還沒有寫下什麼。</div>';
+    } else {
+      // 購物、家計：一天一張收據（上面「— 10/31 —」），新的日子在上面，同一張裡照寫下的順序
+      const list = H.items.filter((x) => x.tab === shopTab && shopShow(x, n));
+      const days = [...new Set(list.map((x) => x.day))].sort().reverse();
+      const row = (x) => {
+        const hid = x.secret && !x.seen, open = x.secret && x.seen;
+        const right = x.price || (x.tab === 'buy' ? x.time : '');
+        return `<div class="ap-sh-row${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}${x.stamp ? ' ap-done' : ''}" data-id="${x.id}">`
+          + `${x.secret ? `<span class="ap-sh-lk">${ic(hid ? 'lockon' : 'lockoff', 13)}</span>` : ''}<span class="ap-sh-nm">${esc(x.name)}</span>`
+          + `<span class="ap-sh-pr">${esc(right)}</span>${x.stamp ? `<span class="ap-sh-stamp">${esc(x.stamp)}</span>` : ''}</div>`;
+      };
+      body = days.map((d) => `<div class="ap-sh-rc"><div class="ap-sh-rd">— ${slash(d)} —</div>${list.filter((x) => x.day === d).map(row).join('')}</div>`).join('')
+        || `<div class="ap-mempty">${shopTab === 'buy' ? '這個月還沒有購物紀錄。' : '家計清單是空的。'}</div>`;
+    }
+    root.querySelector('.ap-view[data-app="shop"] .ap-vs').innerHTML = `
+      <div class="ap-meta">SHOP · ${headDate()}</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-sh-dot"></span>日常物事</div>
+      ${tabs}${body}`;
+  }
+
+  // ===== 果果的餵食指南（第 46 窗定案：一區一張摺頁地圖卡；莓果粉是它的記號）=====
+  const fdLate = (x, n = storyNow()) => x.lock === 'date' && x.open && n.day < x.open; // 時間鎖：劇情日期還沒到
+  function paintFood() {
+    const s = S(), F = s.food, n = storyNow();
+    const areas = [];
+    F.items.forEach((x) => { const a = areas.find((g) => g.area === x.area); a ? a.items.unshift(x) : areas.push({ area: x.area, items: [x] }); }); // 區照第一次出現的順序；區裡新的在上面
+    const row = (x) => {
+      const tl = fdLate(x, n), hid = x.lock === 'tap' && !x.seen, done = (x.lock === 'tap' && x.seen) || (x.lock === 'date' && !tl);
+      const lockIc = tl || hid ? `<span class="ap-fd-lk">${ic('lockon', 13)}</span>` : done ? `<span class="ap-fd-lk">${ic('lockoff', 13)}</span>` : '';
+      const shut = tl || hid;
+      return `<div class="ap-fd-row${tl ? ' ap-tl' : ''}${hid ? ' ap-hid' : ''}${done ? ' ap-peeked' : ''}${x.note && !shut ? ' ap-has' : ''}" data-id="${x.id}">`
+        + `<div class="ap-fd-h">${lockIc}<span class="ap-fd-nm">${esc(x.name)}</span>${shut ? '' : x.mark === 'heart' ? HEART : STAR}`
+        + `${tl ? `<span class="ap-fd-when">${slash(x.open)} 打開</span>` : ''}</div>${x.note && !shut ? `<div class="ap-fd-note">${esc(x.note)}</div>` : ''}</div>`;
+    };
+    const pin = `<svg class="ap-fd-pin" viewBox="0 0 24 24" width="15" height="15" fill="rgba(79,138,94,.15)" stroke="#4F8A5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P.pin}</svg>`;
+    root.querySelector('.ap-view[data-app="food"] .ap-vs').innerHTML = `
+      <div class="ap-meta">FOOD · 美食地圖</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-fd-dot"></span>${esc(nm({ id: 'food', n: '餵食指南' }, s))}</div>
+      ${areas.map((g) => `<div class="ap-fd-card"><div class="ap-fd-hd">${pin}<span class="ap-fd-area">${esc(g.area)}</span><span class="ap-fd-cnt">${g.items.length} 間</span></div>${g.items.map(row).join('')}</div>`).join('')
+        || '<div class="ap-mempty">還沒有標上任何一間。</div>'}`;
+  }
+
+  // ===== 拾光手記（第 46 窗定案：象牙白紙＋左邊深藍書脊；每次打開先臉部解鎖）=====
+  const DG = '零一二三四五六七八九';
+  // 101 → 一百零一、345 → 三百四十五、1000 → 一千、15 → 十五
+  function cnBig(n) {
+    if (!(n >= 1 && n <= 9999)) return String(n);
+    const u = ['千', '百', '十', ''], d = String(n).padStart(4, '0');
+    let out = '', zero = false;
+    for (let i = 0; i < 4; i++) {
+      const k = +d[i];
+      if (!k) { if (out) zero = true; continue; }
+      if (zero) { out += '零'; zero = false; }
+      out += DG[k] + u[i];
+    }
+    return out.startsWith('一十') ? out.slice(1) : out;
+  }
+  // 「第 N 天」：劇情日期 − 開始的日子 ＋ 1（開始那天＝第一天）；還沒填開始的日子就寫日期
+  function dayTitle(day) {
+    const st = S().start;
+    if (!dOf(st) || !dOf(day)) return slash(day) || '今天';
+    const k = diffDays(day, st) + 1;
+    return k >= 1 ? `第${cnBig(k)}天` : slash(day);
+  }
+  function paintDiary() {
+    const D = S().diary, hasStart = !!dOf(S().start);
+    const list = D.items.slice().sort((a, b) => (`${a.day} ${String(+a.id.slice(1)).padStart(6, '0')}` < `${b.day} ${String(+b.id.slice(1)).padStart(6, '0')}` ? 1 : -1));
+    const draft = D.draft ? `<div class="ap-dy-ent ap-dy-draft"><div class="ap-dy-h"><span class="ap-dy-t">${esc(dayTitle(nowDay()))}</span><span class="ap-dy-d">草稿</span></div>`
+      + `<div class="ap-dy-b">${esc(D.draft)}<i class="ap-dy-cur"></i></div></div>` : '';
+    root.querySelector('.ap-view[data-app="diary"] .ap-vs').innerHTML = `
+      <div class="ap-meta">DIARY · ${headDate()}</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-dy-dot"></span>拾光手記</div>
+      ${draft}${list.map((x) => `<div class="ap-dy-ent" data-id="${x.id}"><div class="ap-dy-h"><span class="ap-dy-t">${esc(dayTitle(x.day))}</span>`
+        + `<span class="ap-dy-d">${esc(hasStart ? slash(x.day) : x.time || '')}</span></div><div class="ap-dy-b">${esc(x.body)}</div></div>`).join('')}
+      ${list.length || draft ? '' : '<div class="ap-mempty">還沒有寫下什麼。</div>'}`;
+  }
+  // 解鎖畫面：象牙紙中間一本小深藍書＋臉部辨識圖示；點一下 → 辨識框閃一下 → 小書翻開 → 日記出現
+  let dyFocus = null, dyBusy = false;
+  function diaryLock(focus) {
+    const L = root.querySelector('.ap-dy-lock');
+    dyFocus = focus || null; dyBusy = false;
+    L.className = 'ap-dy-lock';
+    L.innerHTML = `<div class="ap-dy-book"><div class="ap-dy-inner"></div><div class="ap-dy-cover"><span class="ap-dy-face">${ic('face', 34)}</span></div></div>`
+      + '<div class="ap-dy-name">拾光手記</div><div class="ap-dy-hint">輕觸以臉部解鎖</div>';
+    L.hidden = false;
+  }
+  function faceUnlock() {
+    if (dyBusy) return;
+    dyBusy = true;
+    const L = root.querySelector('.ap-dy-lock');
+    L.classList.add('ap-scan');
+    setTimeout(() => L.classList.add('ap-turn'), 620);
+    setTimeout(() => L.classList.add('ap-gone'), 1250);
+    setTimeout(() => { L.hidden = true; dyBusy = false; focusIn(root.querySelector('.ap-view[data-app="diary"]'), dyFocus); dyFocus = null; }, 1600);
+  }
+
   // ===== 長按刪除（只有果果能刪；平常看不到，截圖也乾淨）=====
   let lp = null, lpAt = 0;
-  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr';
+  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft)';
   function lpStart(e) {
     const t = e.target.closest(LPT);
     if (e.target.closest('.ap-rm')) return;
@@ -544,9 +722,14 @@
       s.web.items = s.web.items.filter((x) => x.id !== id);
       s.web.peek = s.web.peek.filter((x) => x !== id);
     } else if (t.classList.contains('ap-kr')) s.cal.items = s.cal.items.filter((x) => x.id !== id);
+    else if (t.classList.contains('ap-sh-row')) { s.shop.items = s.shop.items.filter((x) => x.id !== id); s.shop.peek = s.shop.peek.filter((x) => x !== id); }
+    else if (t.classList.contains('ap-sh-crow')) { s.shop.card = s.shop.card.filter((x) => x.id !== id); s.shop.peek = s.shop.peek.filter((x) => x !== id); }
+    else if (t.classList.contains('ap-fd-row')) { s.food.items = s.food.items.filter((x) => x.id !== id); s.food.peek = s.food.peek.filter((x) => x !== id); }
+    else if (t.classList.contains('ap-dy-ent')) s.diary.items = s.diary.items.filter((x) => x.id !== id);
     s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
     save();
-    if (t.classList.contains('ap-wr')) paintWeb(); else if (t.classList.contains('ap-kr')) paintCal(); else paintMemo();
+    const app = t.closest('.ap-view')?.dataset.app;
+    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : paintMemo()));
   }
 
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
@@ -731,11 +914,19 @@
     const webNow = s.web.items.slice(-15).map((x) => ({ id: x.id, q: x.q, secret: !!x.secret, mur: x.mur || undefined }));
     const peeked = s.web.items.filter((x) => s.web.peek.includes(x.id)).map((x) => x.q);
     const calNow = s.cal.items.filter((x) => x.day >= addDays(nowDay(), -7)).sort(kSort).slice(0, 30).map((x) => ({ id: x.id, day: x.day, time: x.time, title: x.title, cat: x.cat }));
+    const nd = storyNow();
+    const shopNow = { items: s.shop.items.filter((x) => shopShow(x, nd)).slice(-25).map((x) => (x.tab === 'bill'
+      ? { id: x.id, tab: 'bill', name: x.name, kind: x.kind, stamped: !!x.stamp } : { id: x.id, tab: 'buy', day: x.day, name: x.name, secret: !!x.secret })),
+      card: s.shop.card.map((c) => ({ id: c.id, k: c.k, v: c.v, lock: !!c.lock })) };
+    const foodNow = s.food.items.slice(-40).map((x) => ({ id: x.id, area: x.area, name: x.name, mark: x.mark, lock: x.lock || undefined, open: x.open || undefined }));
+    const diaryNow = { recent: s.diary.items.slice(-3).map((x) => ({ day: x.day, body: x.body })), draft: s.diary.draft }; // 只給最近幾篇，越寫越多也不會變慢
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow } };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow };
+    const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
+    const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -772,17 +963,35 @@ ${JSON.stringify(now)}
    - told：grains 裡已經有、這段劇情裡他說給 ${me} 聽了的，寫它的 id，像 ["t2"]；沒有就給 []。
    - 不要撿 grains 裡已經有的（標題、內容意思一樣都不行）。
 8. web：他的瀏覽器。他六成在出版社查證稿子（歷史年份、植物這類），四成在通勤或家裡查生活的事；分頁很少，超過五個就會全關。
-   - add：這段劇情裡他新查的 0～3 筆，沒有就給 []。q 是他打進搜尋列的字，20 字內，要像真的人在搜尋（關鍵字、短句、有時是問句）；time 像「15:20」。有時連續幾筆會像一串思路（同一件事一路越查越細）。
+   - add：這段劇情裡他新查的 0～3 筆，沒有就給 []。q 是他打進搜尋列的字，20 字內，要像真的人在搜尋（關鍵字、短句、有時是問句）；time 像「15:20」。有時連續幾筆會像一串思路（同一件事一路越查越細）；也可以接著 history 裡以前查過的事繼續查（換個說法、查得更細），讓一件事慢慢查上好幾天。
    - secret：還沒準備好讓 ${me} 看到的（驚喜、偷偷在學的、會害羞的）才是 true，大部分都是 false。
    - draft：他最近一次打到一半、沒有按下搜尋的字，15 字內；沒有就給空字串。
    - tabs：他現在開著的分頁數，1～5 的整數。
    - unhide：history 裡 secret 的、他覺得已經不用藏的，寫它的 id，像 ["w3"]；沒有就給 []。
    - mur：他偷偷寫在某一筆搜尋上的一句心聲（為什麼查、查的時候在想什麼），25 字內，用他的口吻。不是每次都要有，每次最多 1 句：寫在 add 的某一筆裡（那筆的 "mur"），或寫給 history 裡已經有、還沒有 mur 的某一筆（web 的 "mur" 寫成 {"id":"w3","t":"…"}）；沒有就都不用寫（add 的 mur 給空字串、web 的 mur 給 null）。
    - 不要重複 history 裡已經有的搜尋。${peeked.length ? `\n   - ${me} 剛剛偷看了他藏起來的這幾筆：「${peeked.join('」「')}」。他會知道被看到了，要不要有反應（備忘錄、通知、或乾脆不藏了）由他決定。` : ''}
-9. 全部用繁體中文、台灣用語。
+9. shop：「日常物事」，他記生活開銷的地方。
+   - add：這段劇情裡新出現的 0～3 筆，沒有就給 []。tab 只能是 buy 或 bill：
+     buy＝購物紀錄，他已經買好的東西；secret：想偷偷準備給 ${me}、還不想讓她看到的才是 true，大部分都是 false。
+     bill＝家計清單，還沒處理的家裡的事（要繳的帳單、要補貨的東西）；kind：pay（帳單、要繳的錢）或 buy（要去買的）。
+     name 15 字內；price 像「$320」，不知道就給空字串；time 像「15:20」。
+   - stamp：家計裡他已經處理好的，寫它的 id，像 ["s4"]。日常小事總會做完，他可以自己判斷，不用等劇情提到；沒有就給 []。
+   - card：給 ${me} 的那張小卡，記他記住的她的事（尺碼、愛用的東西這類）。k 是項目名（6 字內），v 是內容（20 字內）；寫已經有的項目名＝改那一格，寫新的項目名＝多一格；lock：要先藏起來的才是 true。只寫劇情、角色設定或小抄裡知道的，不要自己編；沒有要改就給 []。
+   - unhide：buy 裡 secret 的、或小卡裡 lock 的，他覺得已經不用藏了，寫它的 id；沒有就給 []。
+   - 不要重複 shop 裡已經有的。${peekShop.length ? `\n   - ${me} 剛剛偷看了他藏起來的這幾筆：「${peekShop.join('」「')}」。他會知道被看到了，要不要有反應（備忘錄、通知、不藏了、或乾脆不說）由他決定。` : ''}
+10. food：「${s.names.food || '餵食指南'}」，他的美食地圖，一區一張卡。
+   - add：這段劇情裡新的 0～2 間，沒有就給 []。area 是區名（6 字內，像行政區、商圈、城市；已經有的區照原本的寫法）；name 店名 12 字內；mark 是 star 或 heart：star＝${me} 提過想吃的、或他路過覺得舒服想帶她去的；heart＝一起吃過、她說喜歡的。note 是他的備註，30 字內，用他的口吻。
+   - lock：一般給空字串；還不想讓 ${me} 看到的給 "tap"；想等到某一天才讓她打開的給 "date"，並把那天寫在 open（像「2026-03-28」）。
+   - heart：food 裡已經有、這段劇情裡一起去吃了而且她說喜歡的，寫它的 id，像 ["f2"]；沒有就給 []。
+   - 只寫劇情、角色設定或小抄裡出現過的店，或他生活裡自然會知道的店；不要重複 food 裡已經有的。${peekFood.length ? `\n   - ${me} 剛剛偷看了他上鎖的這幾間：「${peekFood.join('」「')}」。他會知道被看到了，要不要有反應由他決定。` : ''}
+11. diary：「拾光手記」，他的日記，只有他自己看。記的多半是一天裡很碎的小事，用他的口吻。不一定每次都寫，想寫才寫。
+   - add：這次寫好的一篇，沒有就給 null。body 150 字內；time 像「23:40」。
+   - draft：他打到一半還沒寫完的一句，30 字內；下次可以寫完放進 add、重寫，或給空字串。
+   - 不要重複 diary.recent 裡已經寫過的內容。
+12. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""}}`;
     return { sys, prompt };
   }
 
@@ -811,7 +1020,7 @@ ${JSON.stringify(now)}
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
     const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
@@ -821,6 +1030,9 @@ ${JSON.stringify(now)}
     calNotice();
     grainNotice(applyGrains(o.grains));
     applyWeb(o.web);
+    putNote(shopNotice(applyShop(o.shop)));
+    putNote(applyFood(o.food));
+    putNote(diaryNotice(applyDiary(o.diary)), 4);
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
   }
@@ -968,6 +1180,80 @@ ${JSON.stringify(now)}
     s.notes = s.notes.slice(0, 6);
   }
 
+  // ===== 第二批：把他寫的收進來（亂寫的、重複的擋掉，保留原本）=====
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  const sameT = (t) => String(t || '').replace(/[\s「」『』，。、！？：:・·]/g, '');
+  const putNote = (x, pos = 3) => { if (!x) return; const s = S(); s.notes.splice(Math.min(pos, s.notes.length), 0, x); s.notes = s.notes.slice(0, 7); };
+  // 日常物事：不藏了的 → 蓋章 → 加新的 → 小果小卡改一格或多一格；過期的自己消失
+  function applyShop(o) {
+    const H = S().shop, n = storyNow();
+    H.peek = []; // 果果偷看過的，他這次已經知道了
+    let fresh = null;
+    if (o && typeof o === 'object') {
+      arr(o.unhide).forEach((id) => { const x = H.items.find((it) => it.id === id) || H.card.find((it) => it.id === id); if (x) { x.secret = false; x.lock = false; } });
+      arr(o.stamp).forEach((id) => { const x = H.items.find((it) => it.id === id && it.tab === 'bill'); if (x && !x.stamp) { x.stamp = x.kind === 'pay' ? '繳' : '買'; x.sday = n.day; } });
+      arr(o.add).slice(0, 3).forEach((a) => {
+        const name = clean(a?.name, 16), tab = a?.tab === 'bill' ? 'bill' : 'buy';
+        if (!name || H.items.some((it) => it.tab === tab && shopShow(it, n) && sameT(it.name) === sameT(name))) return;
+        const it = { id: 's' + (++H.seq), tab, name, price: clean(a.price, 10), day: n.day, time: hm(a.time) || S().lock.time || '' };
+        if (tab === 'buy') { it.secret = a.secret === true; it.seen = false; } else { it.kind = a.kind === 'pay' ? 'pay' : 'buy'; it.stamp = ''; }
+        H.items.push(it);
+        if (!it.secret && (!fresh || (tab === 'bill' && fresh.tab !== 'bill'))) fresh = it; // 通知：家計的待處理優先
+      });
+      arr(o.card).slice(0, 4).forEach((c) => {
+        const k = clean(c?.k, 8), v = clean(c?.v, 24);
+        if (!k || !v) return;
+        const old = H.card.find((x) => sameT(x.k) === sameT(k));
+        if (old) { old.v = v; if (c.lock === true && !old.lock) { old.lock = true; old.seen = false; } }
+        else if (H.card.length < 12) H.card.push({ id: 'q' + (++H.cseq), k, v, lock: c.lock === true, seen: false });
+      });
+    }
+    H.items = H.items.filter((x) => shopShow(x, n)).slice(-80);
+    return fresh;
+  }
+  const shopNotice = (x) => x && { app: 'shop', id: x.id, from: x.tab === 'bill' ? '家計・還沒處理' : '購物紀錄', text: clean(x.name + (x.price ? '　' + x.price : ''), 50), when: '現在', mine: false };
+  // 餵食指南：改成愛心 → 加新店（區由他寫，寫了新的區就自動多一區）
+  function applyFood(o) {
+    const F = S().food;
+    F.peek = [];
+    if (!o || typeof o !== 'object') return null;
+    let note = null;
+    arr(o.heart).forEach((id) => {
+      const x = F.items.find((it) => it.id === id);
+      if (!x || x.mark === 'heart') return;
+      x.mark = 'heart';
+      if (!note && !fdLate(x) && !(x.lock === 'tap' && !x.seen)) note = { app: 'food', id: x.id, from: '改成愛心', text: `${x.area}・${x.name}`, when: '現在', mine: true };
+    });
+    arr(o.add).slice(0, 2).forEach((a) => {
+      let area = clean(a?.area, 8);
+      const name = clean(a?.name, 14);
+      if (!area || !name || F.items.some((it) => sameT(it.name) === sameT(name))) return;
+      area = F.items.find((it) => sameT(it.area) === sameT(area))?.area || area; // 同一區的不同寫法併在一起
+      let lock = a.lock === 'tap' || a.lock === 'date' ? a.lock : '';
+      const open = lock === 'date' ? kDay(a.open) : '';
+      if (lock === 'date' && !open) lock = 'tap'; // 時間鎖沒寫日子：當成一般的鎖
+      const it = { id: 'f' + (++F.seq), area, name, mark: a.mark === 'heart' ? 'heart' : 'star', note: clean(a.note, 34), lock, open, seen: false, day: nowDay() };
+      F.items.push(it);
+      if (!note && !lock) note = { app: 'food', id: it.id, from: it.mark === 'heart' ? '畫上愛心' : '標了一顆星星', text: `${area}・${name}`, when: '現在', mine: it.mark === 'heart' };
+    });
+    F.items = F.items.slice(-120);
+    return note;
+  }
+  // 拾光手記：打到一半的草稿 → 這次寫好的那一篇（不一定每次都有）
+  function applyDiary(o) {
+    const D = S().diary;
+    if (!o || typeof o !== 'object') return null;
+    if (typeof o.draft === 'string') D.draft = clean(o.draft, 40);
+    const a = Array.isArray(o.add) ? o.add[0] : o.add;
+    const body = cleanBody(typeof a === 'string' ? a : a?.body, 300);
+    if (!body) return null;
+    const it = { id: 'd' + (++D.seq), day: nowDay(), time: hm(a?.time) || S().lock.time || '', body, mine: a?.mine === true };
+    D.items.push(it);
+    return it;
+  }
+  // 日記的通知不露內容（要臉部解鎖才看得到）
+  const diaryNotice = (x) => x && { app: 'diary', id: x.id, from: dayTitle(x.day), text: '輕觸以臉部解鎖查看', when: '現在', mine: false };
+
   async function runUpdate(manual) {
     if (busy) return;
     if (!isOwner()) { if (manual) status(!S().auto.owner ? '先按「設成現在的角色」' : !bound() ? '現在不是綁定的聊天室，不能更新' : `現在不是 ${S().auto.owner} 的聊天，不能更新`); return; }
@@ -1065,6 +1351,9 @@ ${JSON.stringify(now)}
           <div class="ap-sl"><span>濾鏡</span><input type="range" class="ap-tint" min="0" max="85" step="1"><b class="ap-tintv"></b></div>
           <div class="ap-row ap-sub">App 名字（只存在妳的酒館，空白就用原本的名字）</div>
           ${RENAME.map(([id, def]) => `<div class="ap-nm"><span>${def}</span><input type="text" class="text_pole ap-name-in" data-id="${id}" maxlength="12" placeholder="${def}"></div>`).join('')}`)}
+          ${drawer('diary', '📖 拾光手記', `
+          <div class="ap-row">開始的日子（這天是第一天，日記標題的「第 N 天」從這裡算）</div>
+          <div class="ap-row"><input type="date" class="text_pole ap-start"><div class="menu_button ap-start-clr">清掉</div></div>`)}
           ${drawer('auto', '🔄 自動更新', `
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
@@ -1115,6 +1404,13 @@ ${JSON.stringify(now)}
       el.value = S().names[el.dataset.id] || '';
       el.addEventListener('input', () => { S().names[el.dataset.id] = el.value.trim(); save(); if (root && !root.hidden) paintHome(); });
     });
+
+    // 拾光手記：開始的日子（果果自己填，不寫死在程式）
+    const stIn = box.querySelector('.ap-start');
+    const showStart = () => { const v = S().start; stIn.value = dOf(v) ? v : ''; sum('diary').textContent = dOf(v) ? v.replace(/-/g, '/') + ' 開始' : '還沒填開始的日子'; };
+    showStart();
+    stIn.addEventListener('change', () => { S().start = dOf(stIn.value) ? stIn.value : ''; save(); showStart(); if (root && !root.hidden && inApp()) paintDiary(); });
+    box.querySelector('.ap-start-clr').addEventListener('click', () => { S().start = ''; save(); showStart(); });
 
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');
