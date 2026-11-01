@@ -1,4 +1,4 @@
-// 安安的小手機 v0.9.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆（照安安自己說的規則排版）
+// 安安的小手機 v0.9.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -598,7 +598,7 @@
     root.querySelector('.ap-weather').innerHTML = '<div class="ap-lb">天 氣</div>'
       + W.map((w, i) => `<div class="${i ? 'ap-sm' : ''}">${esc(w.place)} <b>${esc(w.temp)}</b>${w.extra ? ' ' + esc(w.extra) : ''}</div>`).join('');
     // 下一件事：從行事曆拿；還沒有行事曆時（升級後第一次更新前）先顯示原本那句
-    const nx = nextEv(), old = !s.cal.seq && L.next?.what ? L.next : null;
+    const nx = nextEv(), old = !s.cal.on && !s.cal.seq && L.next?.what ? L.next : null;
     const nxWhat = nx ? nx.title : old ? old.what : '', nxWhen = nx ? nextWhen(nx) : old ? old.when : '', nxMine = nx ? nx.cat === 'her' : !!old?.mine;
     const nxEl = root.querySelector('.ap-next');
     nxEl.innerHTML = '<div class="ap-lb">下 一 件 事</div>' + (nxWhat ? `<div><b>${esc(nxWhen)}</b></div><div class="ap-sm">${esc(nxWhat)}${nxMine ? ' ' + ME : ''}</div>` : '<div class="ap-sm ap-none">近期沒有排事</div>');
@@ -750,7 +750,8 @@ ${JSON.stringify(now)}
 0. date、time：劇情裡「最新」那一刻的日期和時間（看最近劇情的狀態欄或敘述）。date 寫成「2026-02-15」，time 寫成「15:45」；看不出來就空字串。下面通知的「幾分鐘前」都以這個時間來算。
 1. weather：兩個地點。沿用現在的兩個地點，除非劇情裡有人到了別的城市或區域，才換成新地點。temp 寫像「18°」，符合季節；extra 寫降雨機率，像「雨10%」，沒有就空字串。
 2. cal：他的行事曆，只放「有約定時間」的事（約會、截稿、會議、回家吃飯、帶毛孩看醫生…）。鎖定畫面的「下一件事」和行事曆通知，程式會從這裡自己拿，你不用另外寫。
-   - add：這段劇情裡新出現的 0～3 則，沒有就給 []。只寫劇情裡真的說到、約好的事，不要自己編。day 寫成「2026-02-17」；time 像「15:00」，整天的事給空字串；title 15 字內；body 是細節，40 字內，沒有就給空字串。
+   - add：要放進行事曆、但 cal 裡還沒有的事，沒有就給 []。可以寫的有三種：①最近劇情裡說到、約好的事；②角色設定和小抄裡寫的固定行程（像每週固定的事），寫成這個月和下個月裡實際的那幾天；③他手機現在的內容（備忘錄、瀏覽器）裡已經提到、有確定日期的事。不能自己編新的事。cal 是空的時候可以一次補到 8 則，平常每次最多 3 則。
+   - day 寫成「2026-02-17」；time 像「15:00」，整天的事給空字串；title 15 字內；body 是細節，40 字內，沒有就給空字串。
    - cat 只能是這三個其中一個：work（出版社的截稿、編輯會議、工作）、family（家人、毛孩、朋友，他的私人生活）、her（跟 ${me} 的約定、為她安排的事）。
    - 有時間的事寫在行事曆；沒有時間的待辦寫在備忘錄。同一件事不要兩邊都寫。
    - 不要重複 cal 裡已經有的事（同一天、意思一樣都不行）。
@@ -900,12 +901,26 @@ ${JSON.stringify(now)}
 
   // 行事曆：加新的（亂寫、重複的擋掉）；過期一個月以上的自己消失
   const KCAT = { work: 'work', family: 'family', her: 'her', mine: 'her', 出版社: 'work', 工作: 'work', 家人: 'family' };
+  // 日期：2026-02-17、2月17日、2/17、3-28、今天／明天／後天 都認得（沒寫年份就用劇情那年；早了兩個月以上算明年）
+  function kDay(t) {
+    const base = dOf(nowDay()) || new Date(), v = String(t ?? '').trim();
+    let m = v.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if (m) return isoOf(new Date(+m[1], +m[2] - 1, +m[3]));
+    const rel = { 今天: 0, 今日: 0, 明天: 1, 後天: 2 }[v];
+    if (rel != null) return addDays(isoOf(base), rel);
+    m = v.match(/^(\d{1,2})\s*[/月.-]\s*(\d{1,2})/);
+    if (!m) return '';
+    const d = new Date(base.getFullYear(), +m[1] - 1, +m[2]);
+    if (d < base - 60 * 864e5) d.setFullYear(d.getFullYear() + 1);
+    return isoOf(d);
+  }
   function applyCal(c) {
     const K = S().cal, n = storyNow();
+    K.on = true; // 新版更新過了：舊版留下的「下一件事」那句退休
     if (c && typeof c === 'object') {
       const same = (t) => String(t).replace(/[\s「」『』，。、！？：:]/g, '');
-      (Array.isArray(c.add) ? c.add : []).slice(0, 3).forEach((x) => {
-        const day = isoDate(x?.day), title = clean(x?.title, 16);
+      (Array.isArray(c.add) ? c.add : []).slice(0, K.items.length ? 3 : 8).forEach((x) => { // 行事曆空的時候第一次可以補到 8 則
+        const day = kDay(x?.day), title = clean(x?.title, 16);
         if (!dOf(day) || !title) return;
         if (K.items.some((it) => it.day === day && same(it.title) === same(title))) return;
         K.items.push({ id: 'c' + (++K.seq), day, time: hm(x.time), title, body: clean(x.body, 44), cat: KCAT[String(x.cat || '').trim()] || 'family' });
