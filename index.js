@@ -1,4 +1,4 @@
-// 安安的小手機 v0.12.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂（照安安自己說的規則排版）
+// 安安的小手機 v0.13.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -36,6 +36,8 @@
     bolt: '<path d="M13 3L6 13.5h5L10 21l7-10.5h-5z"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    back: '<path d="M14.5 6l-6 6 6 6"/>',
+    folder: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.2h7a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
     lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15.5" r="1.1"/>',
     lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/><circle cx="12" cy="15.5" r="1.1"/>',
     pin: '<path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z"/>', // 跟主畫面那顆圖釘同一個樣子
@@ -51,6 +53,7 @@
     // 第三批（第 48 窗）：相機＝石墨灰
     cam: ['相機', '#B9BDC2', '#5E646B', 'cam'], phone: ['電話', '#E6D3B8', '#A08463', 'phone'], // 電話＝米杏
     music: ['音樂', '#A9636E', '#6E3540', 'music'], // 音樂＝酒紅（第 48 窗）
+    album: ['相簿', '#BDBF8F', '#767A47', 'photo'], // 相簿＝橄欖（第 49 窗）
   };
   const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
@@ -115,6 +118,7 @@
     if (!s.mus) s.mus = { seq: 0, fixed: '', lists: [], now: { t: '', a: '' }, last: '' }; // 音樂：固定歌單（果果在設定填）＋他開的歌單、正在播放（第 48 窗）
     if (!s.tel) s.tel = { day: '', seq: 0, calls: [], vm: [], favs: '', last: '' }; // 電話：通話紀錄（換新的一天清掉）、語音信箱（留著的不清）、最愛（果果在設定填）（第 48 窗）
     if (!s.cam) s.cam = { day: '', seq: 0, items: [] }; // 相機：沒拍到的瞬間，劇情換新的一天整本換新（第 48 窗）
+    if (!s.alb) s.alb = { seq: 0, folders: [], photos: [], wall: '', wallDay: '', last: '' }; // 相簿：照片檔放在酒館伺服器（Railway 硬碟），這裡只記路徑、資料夾、說明、位置（第 49 窗）
     if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
     return s;
   }
@@ -179,6 +183,7 @@
           <div class="ap-view" data-app="cam" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="phone" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="music" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="album" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="diary" hidden><div class="ap-dy-page"><div class="ap-vs"></div></div><div class="ap-dy-lock" hidden></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
@@ -195,7 +200,7 @@
       const nt = e.target.closest('.ap-note');
       if (!nt) return;
       unlock();
-      if (['memo', 'trivia', 'music'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
+      if (['memo', 'trivia', 'music'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone', 'album'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -288,6 +293,24 @@
       const r = e.target.closest('.ap-tel-vm');
       if (r) r.classList.toggle('ap-open');
     });
+    // 相簿：點照片打開；打開後左右滑換同一夾的上一張／下一張，到頭輕輕晃一下
+    const alV = root.querySelector('.ap-view[data-app="album"]');
+    let alSw = null, alSwAt = 0;
+    alV.addEventListener('pointerdown', (e) => { alSw = albOpen ? { x: e.clientX, y: e.clientY } : null; });
+    alV.addEventListener('pointerup', (e) => {
+      if (!alSw) return;
+      const dx = e.clientX - alSw.x, dy = e.clientY - alSw.y;
+      alSw = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) { alSwAt = Date.now(); albStep(dx < 0 ? 1 : -1); }
+    });
+    alV.addEventListener('pointercancel', () => { alSw = null; });
+    alV.addEventListener('click', (e) => {
+      if (Date.now() - alSwAt < 350) return; // 剛滑完的那一下不算點
+      if (e.target.closest('.ap-al-back')) { albOpen = null; paintAlbum(); alV.querySelector('.ap-vs').scrollTop = albTop; return; }
+      const ph = e.target.closest('.ap-al-ph');
+      if (ph) { albTop = alV.querySelector('.ap-vs').scrollTop; albOpen = { id: ph.dataset.id }; paintAlbum(); alV.querySelector('.ap-vs').scrollTop = 0; }
+    });
+    alV.addEventListener('animationend', (e) => e.target.classList.remove('ap-nope'));
     root.querySelector('.ap-view[data-app="cam"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
       const r = e.target.closest('.ap-cm-row');
@@ -371,7 +394,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music', 'album']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -385,6 +408,7 @@
     if (id === 'food') paintFood();
     if (id === 'cam') paintCam();
     if (id === 'music') paintMusic();
+    if (id === 'album') { albOpen = focus && S().alb.photos.some((p) => p.id === focus) ? { id: focus } : null; paintAlbum(); focus = null; } // 從通知點進來：直接打開那張
     if (id === 'phone') { telTab = 'call'; paintPhone(); } // 每次打開都先在「通話」分頁（從通知點進來也是）
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
@@ -741,11 +765,67 @@
     root.querySelector('.ap-view[data-app="cam"] .ap-vs').innerHTML = `
       <div class="ap-meta">CAMERA · ${headDate()}</div>
       <div class="ap-mtitle"><span class="ap-mdot ap-cm-dot"></span>相機</div>
-      <div class="ap-cm-vf"><i></i><i></i><i></i><i></i></div>
+      ${camVf()}
       <div class="ap-cm-sec">沒拍到的瞬間</div>
       ${list.map((x) => `<div class="ap-cm-row" data-id="${x.id}"><div class="ap-cm-h"><span class="ap-cm-t">${esc(x.title)}</span><span class="ap-mw">${esc(x.time)}</span></div>`
         + `<div class="ap-cm-b">${esc(x.body)}</div></div>`).join('')}
       ${list.length ? '' : '<div class="ap-cm-empty">今天還沒有記下的瞬間。</div>'}`;
+  }
+
+  // 取景框：放他最近在相簿挑的那張（用那張自己的取景框位置）；有照片時四個角改米白（第 49 窗）
+  function camVf() {
+    const p = albPhoto(S().alb.last);
+    return p ? `<div class="ap-cm-vf ap-cm-has" style="${vfStyle(p)}"><i></i><i></i><i></i><i></i></div>` : '<div class="ap-cm-vf"><i></i><i></i><i></i><i></i></div>';
+  }
+
+  // ===== 相簿（第 49 窗果果確認的草圖：柴米油鹽燕麥紙；一夾一張卡；橄欖是它的記號）=====
+  // 照片檔放在酒館伺服器（Railway 硬碟），設定裡只記路徑；果果在酒館設定「📷 相簿」放照片
+  const ALB_MAX = 30;
+  let albOpen = null, albTop = 0, alShow = null; // alShow：設定頁相簿抽屜的重畫（他換了桌布、果果改了照片時用）
+  const albSrc = (p) => { const u = String(p?.path || ''); return u.startsWith('data:') || u.startsWith('/') || /^https?:/.test(u) ? u : '/' + u; };
+  const albPhoto = (id) => (id ? S().alb.photos.find((p) => p.id === id) || null : null);
+  const vfStyle = (p) => `background-image:url(&quot;${esc(albSrc(p))}&quot;);background-size:${p.vz || 100}% auto;background-position:50% ${p.vy ?? 50}%`;
+  // 資料夾照第一次出現的順序；沒有照片的夾自動收掉
+  function albSync() {
+    const A = S().alb;
+    A.photos.forEach((p) => { if (p.folder && !A.folders.includes(p.folder)) A.folders.push(p.folder); });
+    A.folders = A.folders.filter((f) => A.photos.some((p) => p.folder === f));
+    if (A.wall && !albPhoto(A.wall)) A.wall = '';
+    if (A.last && !albPhoto(A.last)) A.last = '';
+    return A;
+  }
+  const FOLD = `<span class="ap-al-fic">${ic('folder', 14)}</span>`;
+  const ALOCK = `<span class="ap-al-lk">${ic('lockon', 12)}</span>`;
+  function paintAlbum() {
+    const s = S(), A = albSync(), vs = root.querySelector('.ap-view[data-app="album"] .ap-vs');
+    const title = esc(nm({ id: 'album', n: '相簿' }, s));
+    const cur = albOpen && albPhoto(albOpen.id);
+    if (cur) {
+      const list = A.photos.filter((p) => p.folder === cur.folder), i = list.indexOf(cur);
+      vs.innerHTML = `
+        <div class="ap-al-top"><button type="button" class="ap-al-back">${ic('back', 13)}${esc(cur.folder)}</button><span class="ap-al-pos">${i + 1} / ${list.length}</span></div>
+        <div class="ap-al-pcard"><img class="ap-al-big" src="${esc(albSrc(cur))}" alt="" draggable="false">
+          ${A.wall === cur.id ? `<div class="ap-al-wall">${ic('lockon', 12)}目前的桌布${A.wallDay ? ' · ' + slash(A.wallDay) : ''}</div>` : ''}</div>
+        ${cur.note ? `<div class="ap-al-note"><div class="ap-al-nt">${esc(cur.note)}</div>${cur.noteDay ? `<div class="ap-al-nd">${slash(cur.noteDay)}</div>` : ''}</div>` : ''}`;
+      return;
+    }
+    albOpen = null;
+    vs.innerHTML = `
+      <div class="ap-meta">ALBUM · 相簿</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-al-dot"></span>${title}</div>
+      ${A.folders.map((f) => { const ps = A.photos.filter((p) => p.folder === f);
+        return `<div class="ap-al-card"><div class="ap-al-hd">${FOLD}<span class="ap-al-fn">${esc(f)}</span><span class="ap-al-cnt">${ps.length} 張</span></div><div class="ap-al-grid">`
+          + ps.map((p) => `<button type="button" class="ap-al-ph" data-id="${p.id}" style="background-image:url(&quot;${esc(albSrc(p))}&quot;)" aria-label="照片">${A.wall === p.id ? ALOCK : ''}${p.note ? '<span class="ap-al-md"></span>' : ''}</button>`).join('')
+          + '</div></div>'; }).join('') || '<div class="ap-mempty">到酒館設定「📷 相簿」放照片。</div>'}`;
+  }
+  // 同一夾裡換上一張／下一張；到頭了照片卡輕輕晃一下
+  function albStep(d) {
+    const cur = albOpen && albPhoto(albOpen.id);
+    if (!cur) return;
+    const list = S().alb.photos.filter((p) => p.folder === cur.folder), nx = list[list.indexOf(cur) + d];
+    if (nx) { albOpen = { id: nx.id }; paintAlbum(); return; }
+    const c = root.querySelector('.ap-al-pcard');
+    if (c) { c.classList.remove('ap-nope'); void c.offsetWidth; c.classList.add('ap-nope'); }
   }
 
   // ===== 音樂（第 48 窗果果確認的草圖：灰白紙＝行動小書房；酒紅是它的記號；歌單摺起來、點了展開）=====
@@ -892,7 +972,7 @@
   function paint() {
     const s = S(), L = s.lock;
     const scr = root.querySelector('.ap-screen');
-    scr.classList.toggle('ap-nowall', !s.lockWall);
+    scr.classList.toggle('ap-nowall', !s.lockWall && !lockAlb(s));
     wallTo(root, s, 'lock');
     paintHome();
     root.querySelector('.ap-carrier').textContent = s.carrier;
@@ -931,14 +1011,20 @@
   }
 
   // 桌布：上層照片可以放大、上下左右移（用螢幕的 %，不受照片大小影響）；移開露出的地方用模糊的同一張照片墊底
-  function wallTo(box, s, kind) {
-    const k = WK[kind];
-    const url = s[k.img] ? `url("${s[k.img]}")` : '';
+  // 鎖定畫面：他在相簿挑了照片就用那張（和那張自己的位置）；設定頁的預覽維持果果自己選的（第 49 窗）
+  function lockAlb(s) { const p = s.alb?.wall && (s.alb.photos || []).find((x) => x.id === s.alb.wall); return p ? { img: albSrc(p), z: p.z, x: p.x, y: p.y } : null; }
+  function wallTo(box, s, kind, own) {
+    const k = WK[kind], al = kind === 'lock' && !own && lockAlb(s);
+    if (al) { wallPut(box, kind, al.img, al.z, al.x, al.y); return; }
+    wallPut(box, kind, s[k.img], s[k.z], s[k.x], s[k.y]);
+  }
+  function wallPut(box, kind, img, z, x, y) {
+    const url = img ? `url("${img}")` : '';
     const b = box.querySelector(`.ap-blur[data-w="${kind}"]`), w = box.querySelector(`.ap-wall[data-w="${kind}"]`);
     if (!b || !w) return;
     b.style.backgroundImage = url;
     w.style.backgroundImage = url;
-    w.style.transform = `translate(${s[k.x] || 0}%, ${s[k.y] || 0}%) scale(${(s[k.z] || 100) / 100})`;
+    w.style.transform = `translate(${x || 0}%, ${y || 0}%) scale(${(z || 100) / 100})`;
   }
 
   function badge() {
@@ -1047,13 +1133,15 @@
     const telNow = { day: s.tel.day, calls: s.tel.calls.map((x) => ({ name: x.name, type: x.type, time: x.time })), vm: s.tel.vm.map((x) => ({ id: x.id, from: x.from, keep: !!x.keep })) };
     const camNow = { day: s.cam.day, items: s.cam.items.map((x) => ({ id: x.id, title: x.title })) }; // 只給標題，用來避免重複
     const diaryNow = { recent: s.diary.items.slice(-3).map((x) => ({ day: x.day, body: x.body })), draft: s.diary.draft }; // 只給最近幾篇，越寫越多也不會變慢
+    const A = albSync(), albDay = nowDay();
+    const albNow = A.photos.length ? { folders: A.folders, wall: A.wall, wallChangedToday: !!A.wall && A.wallDay === albDay, photos: A.photos.map((p) => ({ id: p.id, folder: p.folder, desc: p.desc, note: p.note || undefined })) } : null;
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow };
     const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
     const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話、音樂）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話、音樂、相簿）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -1128,10 +1216,15 @@ ${JSON.stringify(now)}
    - now：他現在在聽的歌，title 歌名、artist 歌手；優先照最近劇情狀態欄的 🎧，看不出來就照他的習慣選；沒在聽就都給空字串。
    - add：這次放進歌單的歌 0～2 首，沒有就給 []。list 寫 music.lists 裡的歌單名字（照抄）；只放劇情裡聽到、提到的，或很像他會放進去的歌，一定要是真的存在的歌；mur 是一句心聲（為什麼放進來，20 字內），不是每首都要有，沒有就給空字串；mur 不要寫歌詞，只寫他自己的話。歌單裡已經有的不要再放；full 是 true 的歌單已經滿了，不能再放。歌單是空的時候，小抄裡寫到的歌可以一次放進來（最多 6 首）。
    - newList：他很少開新歌單，只有劇情裡有理由（或想放的歌單滿了）才開，寫新歌單的名字（12 字內），這次 add 可以放進去；沒有就給空字串。${musM.lists.length >= 6 ? '（歌單已經 6 個，不能再開。）' : ''}
-15. 全部用繁體中文、台灣用語。
+${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看不到圖，photos 的 desc 是照片內容的說明，照說明判斷。下面都可以不做，不用每次都動：
+   - wall：想把哪一張換成他的鎖定畫面，寫它的 id，照他今天的心情和最近的劇情挑；不換就給空字串。${albNow.wallChangedToday ? '今天已經換過了，這次 wall 給空字串。' : '一天最多換一次。'}
+   - note：他偷偷寫在某一張照片下面的一句話（為什麼選它、看著它想到什麼），30 字內，用他的口吻，寫成 {"id":"p3","t":"…"}。每次最多 1 句，不是每次都要有，沒有就給 null；換桌布的話可以寫在那一張；已經有 note 的照片，除非他想改寫，不然寫別張。
+   - newFolder：他想開的新資料夾名字（12 字內），想把照片分類時才開，很少開；沒有就給空字串。
+   - move：要搬去別的資料夾的照片，寫成 [{"id":"p2","folder":"資料夾名字"}]，folder 只能是 album.folders 裡的、或這次 newFolder 的名字；沒有就給 []。
+` : ''}16. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}}}`;
     return { sys, prompt };
   }
 
@@ -1160,7 +1253,7 @@ ${JSON.stringify(now)}
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
     const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone', 'music'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone', 'music', 'album'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
@@ -1175,6 +1268,7 @@ ${JSON.stringify(now)}
     applyDiary(o.diary); // 拾光手記不跳通知（果果說日記不用）
     applyCam(o.cam, isoDate(o.date)); // 相機不發鎖屏通知（之後用主畫面小點）
     putNote(applyMusic(o.music), 2); // 音樂：正在播放換歌才跳一則
+    putNote(applyAlbum(o.album, isoDate(o.date)), 1); // 相簿：他留了一句話才跳一則；換桌布不跳（一打開就看到）
     putNote(telNotice(applyPhone(o.phone, isoDate(o.date))), 2); // 電話：每次最多 1 則（新語音優先，其次未接）
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
@@ -1466,6 +1560,28 @@ ${JSON.stringify(now)}
     C.items = C.items.slice(-12);
     return it;
   }
+  // 相簿：換鎖定畫面（一天最多一次）、留一句話（每次最多一句）、開新資料夾、搬照片（第 49 窗）
+  function applyAlbum(o, day) {
+    const A = albSync();
+    if (!o || typeof o !== 'object' || !A.photos.length) return null;
+    const d = day || nowDay(), find = (id) => A.photos.find((p) => p.id === clean(id, 12));
+    const nf = clean(o.newFolder, 12);
+    const okF = (f) => !!f && (A.folders.includes(f) || f === nf);
+    arr(o.move).forEach((m) => { const p = m && find(m.id), f = m && clean(m.folder, 12); if (p && okF(f)) p.folder = f; });
+    let walled = false;
+    const w = typeof o.wall === 'string' && find(o.wall);
+    if (w && A.wallDay !== d) { A.wall = w.id; A.wallDay = d; A.last = w.id; walled = true; }
+    let note = null;
+    const nt = o.note && typeof o.note === 'object' ? o.note : null, np = nt && find(nt.id), tx = nt && clean(nt.t, 32);
+    if (np && tx && tx !== np.note) {
+      np.note = tx; np.noteDay = d;
+      if (!walled) A.last = np.id;
+      note = { app: 'album', id: np.id, from: '相簿・' + np.folder, text: tx, when: '現在', mine: true };
+    }
+    albSync();
+    if (alShow) alShow();
+    return note;
+  }
   // 日記的通知不露內容（要臉部解鎖才看得到）
   const diaryNotice = (x) => x && { app: 'diary', id: x.id, from: dayTitle(x.day), text: '輕觸以臉部解鎖查看', when: '現在', mine: false };
 
@@ -1529,20 +1645,108 @@ ${JSON.stringify(now)}
       const s = S();
       mini.hidden = !s[k.img];
       zr.value = s[k.z] || 100; yr.value = s[k.y] || 0; xr.value = s[k.x] || 0;
-      wallTo(dr, s, kind);
+      wallTo(dr, s, kind, true);
       sumEl.textContent = s[k.img] ? '已選照片' : emptyText;
       if (root && !root.hidden) paint();
     };
     show();
-    const onSlide = () => { const s = S(); s[k.z] = +zr.value; s[k.y] = +yr.value; s[k.x] = +xr.value; wallTo(dr, s, kind); if (root && !root.hidden) wallTo(root, s, kind); save(); };
+    const onSlide = () => { const s = S(); s[k.z] = +zr.value; s[k.y] = +yr.value; s[k.x] = +xr.value; wallTo(dr, s, kind, true); if (root && !root.hidden) wallTo(root, s, kind); save(); };
     [zr, yr, xr].forEach((el) => el.addEventListener('input', onSlide));
     dr.querySelector('.ap-reset').addEventListener('click', () => { const s = S(); s[k.z] = 100; s[k.y] = 0; s[k.x] = 0; save(); show(); });
     dr.querySelector('.ap-pick input').addEventListener('change', async (e) => {
       const f = e.target.files[0]; if (!f) return;
-      try { S()[k.img] = await shrink(f); save(); show(); } catch (err) { alert('照片讀不進來，換一張試試'); }
+      try { const s = S(); s[k.img] = await shrink(f); if (kind === 'lock' && s.alb) s.alb.wall = ''; save(); show(); if (alShow) alShow(); } catch (err) { alert('照片讀不進來，換一張試試'); }
       e.target.value = '';
     });
     dr.querySelector('.ap-del').addEventListener('click', () => { const s = S(); delete s[k.img]; s[k.z] = 100; s[k.y] = 0; s[k.x] = 0; save(); show(); });
+  }
+
+  // 照片存進酒館自己的伺服器（聊天傳圖用的那個資料夾，Railway 硬碟上）；回傳路徑
+  async function albUpload(dataUrl) {
+    const c = ctx(), headers = (typeof c.getRequestHeaders === 'function' ? c.getRequestHeaders() : null) || { 'Content-Type': 'application/json' };
+    const r = await fetch('/api/images/upload', { method: 'POST', headers, body: JSON.stringify({ image: String(dataUrl).split(',')[1], format: 'jpg', ch_name: 'anan_phone', filename: 'p' + Date.now() }) });
+    if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 80); throw new Error(`伺服器回 ${r.status}${tx ? '：' + tx : ''}`); }
+    const j = await r.json().catch(() => ({}));
+    if (!j.path) throw new Error('伺服器沒有回照片路徑');
+    return j.path;
+  }
+  // 刪照片時順便把伺服器上的檔案拿掉（失敗也沒關係，只是留一個小檔案）
+  function albUnlink(path) {
+    if (!path || String(path).startsWith('data:')) return;
+    const c = ctx(), headers = (typeof c.getRequestHeaders === 'function' ? c.getRequestHeaders() : null) || { 'Content-Type': 'application/json' };
+    fetch('/api/images/delete', { method: 'POST', headers, body: JSON.stringify({ path }) }).catch(() => {});
+  }
+  // 設定頁「📷 相簿」：上面是照片清單，下面是新增／編輯（鎖定畫面位置＋取景框位置＋說明＋資料夾）
+  function bindAlbum(dr, sumEl, box) {
+    const q = (c) => dr.querySelector(c);
+    const NEWF = '__new__';
+    let ed = null; // 正在編的那張：{ id, img（新選的照片 dataURL）, path, z, x, y, vz, vy }
+    const blank = () => ({ id: '', img: '', path: '', z: 100, x: 0, y: 0, vz: 100, vy: 50 });
+    const msg = (t) => { q('.ap-al-msg').textContent = t || ''; };
+    const showEd = () => {
+      const src = ed.img || (ed.path ? albSrc(ed) : '');
+      wallPut(dr, 'alb', src, ed.z, ed.x, ed.y);
+      q('.ap-al-vf').style.cssText = src ? `background-image:url("${src}");background-size:${ed.vz}% auto;background-position:50% ${ed.vy}%` : '';
+      q('.ap-al-z').value = ed.z; q('.ap-al-y').value = ed.y; q('.ap-al-x').value = ed.x; q('.ap-al-vz').value = ed.vz; q('.ap-al-vy').value = ed.vy;
+      q('.ap-al-edt').textContent = ed.id ? '編輯照片' : '新增照片';
+      q('.ap-al-rmv').hidden = !ed.id;
+    };
+    const fillFolders = (pick) => {
+      const A = albSync(), sel = q('.ap-al-fold');
+      sel.innerHTML = A.folders.map((f) => `<option>${esc(f)}</option>`).join('') + `<option value="${NEWF}">＋ 新資料夾</option>`;
+      sel.value = pick && A.folders.includes(pick) ? pick : A.folders[0] || NEWF;
+      q('.ap-al-newf').hidden = sel.value !== NEWF;
+    };
+    const reset = () => { ed = blank(); q('.ap-al-desc').value = ''; q('.ap-al-newf').value = ''; fillFolders(); showEd(); };
+    alShow = () => {
+      const A = albSync();
+      sumEl.textContent = `${A.photos.length} / ${ALB_MAX} 張`;
+      q('.ap-al-list').innerHTML = A.photos.map((p) => `<div class="ap-al-row"><span class="ap-al-th" style="background-image:url(&quot;${esc(albSrc(p))}&quot;)"></span>`
+        + `<span class="ap-al-tx"><small>${esc(p.folder)}</small><span>${esc(p.desc)}</span></span><div class="menu_button ap-al-edit" data-id="${p.id}">編輯</div></div>`).join('');
+      const own = box.querySelector('.ap-alwall'); if (own) own.hidden = !A.wall;
+      if (root && !root.hidden) { paint(); if (inApp() && !root.querySelector('.ap-view[data-app="album"]').hidden) paintAlbum(); }
+    };
+    q('.ap-al-list').addEventListener('click', (e) => {
+      const b = e.target.closest('.ap-al-edit'); if (!b) return;
+      const p = albPhoto(b.dataset.id); if (!p) return;
+      ed = { id: p.id, img: '', path: p.path, z: p.z ?? 100, x: p.x ?? 0, y: p.y ?? 0, vz: p.vz ?? 100, vy: p.vy ?? 50 };
+      q('.ap-al-desc').value = p.desc || ''; q('.ap-al-newf').value = ''; fillFolders(p.folder); showEd(); msg('');
+    });
+    [['.ap-al-z', 'z'], ['.ap-al-y', 'y'], ['.ap-al-x', 'x'], ['.ap-al-vz', 'vz'], ['.ap-al-vy', 'vy']].forEach(([c, k]) => q(c).addEventListener('input', (e) => { ed[k] = +e.target.value; showEd(); }));
+    q('.ap-al-fold').addEventListener('change', (e) => { q('.ap-al-newf').hidden = e.target.value !== NEWF; });
+    q('.ap-al-pick input').addEventListener('change', async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try { ed.img = await shrink(f); msg(''); showEd(); } catch (err) { msg('照片讀不進來，換一張試試'); }
+      e.target.value = '';
+    });
+    q('.ap-al-cancel').addEventListener('click', () => { reset(); msg(''); });
+    q('.ap-al-rmv').addEventListener('click', () => {
+      const A = S().alb, p = albPhoto(ed.id); if (!p) return;
+      if (!confirm('確定要刪掉這張照片嗎？他寫在上面的話也會一起不見。')) return;
+      A.photos = A.photos.filter((x) => x.id !== p.id);
+      S().notes = S().notes.filter((x) => !(x.app === 'album' && x.id === p.id));
+      albUnlink(p.path); save(); reset(); alShow(); msg('刪掉了');
+    });
+    q('.ap-al-save').addEventListener('click', async () => {
+      const A = S().alb, sel = q('.ap-al-fold');
+      const folder = clean(sel.value === NEWF ? q('.ap-al-newf').value : sel.value, 12), desc = clean(q('.ap-al-desc').value, 40);
+      if (!ed.img && !ed.path) { msg('先按「選擇照片」'); return; }
+      if (!desc) { msg('寫一句說明，他才知道這張是什麼'); return; }
+      if (!folder) { msg('幫新資料夾取個名字'); return; }
+      if (!ed.id && A.photos.length >= ALB_MAX) { msg(`已經 ${ALB_MAX} 張了，先刪掉一張再放`); return; }
+      let path = ed.path;
+      if (ed.img) {
+        msg('存進酒館中…');
+        try { path = await albUpload(ed.img); }
+        catch (err) { console.warn('[anan_phone] 相簿上傳失敗', err); msg(''); alert(`照片存不進酒館（${err.message}）\n請把這個畫面截圖給小克`); return; }
+      }
+      const vals = { path, folder, desc, z: ed.z, x: ed.x, y: ed.y, vz: ed.vz, vy: ed.vy };
+      const old = ed.id && albPhoto(ed.id);
+      if (old) { if (ed.img && old.path !== path) albUnlink(old.path); Object.assign(old, vals); }
+      else A.photos.push({ id: 'p' + (++A.seq), ...vals });
+      save(); reset(); alShow(); msg('存好了');
+    });
+    reset(); alShow();
   }
 
   function settingsPanel() {
@@ -1559,24 +1763,57 @@ ${JSON.stringify(now)}
             <label class="checkbox_label"><input type="checkbox" class="ap-fabchk"> 顯示小手機懸浮球</label>
             <div class="menu_button ap-open">打開小手機</div>
           </div>
-          ${drawer('lock', '🔒 鎖定畫面桌布', wallBlock('lock', '<span>時間＋小工具</span><span>摘句</span>'))}
-          ${drawer('home', '🏠 主畫面', `
-          <div class="ap-row ap-sub">主畫面桌布（沒選照片時是深灰藍）</div>
+          ${drawer('look', '🎨 外觀', `
+          <div class="ap-blk" data-b="lock">
+          <div class="ap-row ap-sub">🔒 鎖定畫面桌布<small class="ap-subsum" data-s="lock"></small></div>
+          <div class="ap-row ap-alwall" hidden>現在鎖定畫面是他在相簿挑的照片；在這裡選照片，會換回妳選的。</div>
+          ${wallBlock('lock', '<span>時間＋小工具</span><span>摘句</span>')}</div>
+          <div class="ap-blk" data-b="home">
+          <div class="ap-row ap-sub">🏠 主畫面桌布（沒選照片時是深灰藍）<small class="ap-subsum" data-s="home"></small></div>
           ${wallBlock('home', '<span class="ap-ghost"></span><span>常駐四格</span>', '<div class="ap-htint"></div>')}
-          <div class="ap-sl"><span>濾鏡</span><input type="range" class="ap-tint" min="0" max="85" step="1"><b class="ap-tintv"></b></div>
+          <div class="ap-sl"><span>濾鏡</span><input type="range" class="ap-tint" min="0" max="85" step="1"><b class="ap-tintv"></b></div></div>
           <div class="ap-row ap-sub">App 名字（只存在妳的酒館，空白就用原本的名字）</div>
           ${RENAME.map(([id, def]) => `<div class="ap-nm"><span>${def}</span><input type="text" class="text_pole ap-name-in" data-id="${id}" maxlength="12" placeholder="${def}"></div>`).join('')}`)}
-          ${drawer('diary', '📖 拾光手記', `
+          ${drawer('apps', '📱 App 設定', `
+          <div class="ap-row ap-sub">📖 拾光手記<small class="ap-subsum" data-s="diary"></small></div>
           <div class="ap-row">開始的日子（這天是第一天，日記標題的「第 N 天」從這裡算）</div>
-          <div class="ap-row"><input type="date" class="text_pole ap-start"><div class="menu_button ap-start-clr">清掉</div></div>`)}
-          ${drawer('mus', '🎵 音樂', `
+          <div class="ap-row"><input type="date" class="text_pole ap-start"><div class="menu_button ap-start-clr">清掉</div></div>
+          <div class="ap-row ap-sub">🎵 音樂<small class="ap-subsum" data-s="mus"></small></div>
           <div class="ap-row">他固定的歌單（照順序，用、分開；最多 6 個，他自己開的會排在下面）</div>
-          <input type="text" class="text_pole ap-mus-fixed" maxlength="120" placeholder="例：示範歌單、示範歌單">`)}
-          ${drawer('tel', '📞 電話', `
+          <input type="text" class="text_pole ap-mus-fixed" maxlength="120" placeholder="例：示範歌單、示範歌單">
+          <div class="ap-row ap-sub">📞 電話<small class="ap-subsum" data-s="tel"></small></div>
           <div class="ap-row">我的最愛（照順序，用、分開；名字後面可以加符號）</div>
           <input type="text" class="text_pole ap-tel-favs" maxlength="200" placeholder="例：示範聯絡人、示範聯絡人">
           <div class="ap-row">最下面那一位（安靜地放在最愛下面，不能撥）</div>
           <input type="text" class="text_pole ap-tel-last" maxlength="12" placeholder="例：示範聯絡人">`)}
+          ${drawer('alb', '📷 相簿', `
+          <div class="ap-al-list"></div>
+          <div class="ap-al-ed">
+            <div class="ap-al-edt">新增照片</div>
+            <div class="ap-al-two">
+              <div class="ap-al-lkw"><div class="ap-al-lb">鎖定畫面位置</div>
+                <div class="ap-mini ap-al-mini"><div class="ap-blur" data-w="alb"></div><div class="ap-wall" data-w="alb"></div><div class="ap-mini-guide"><span>時間</span><span>摘句</span></div></div></div>
+              <div class="ap-al-vfw"><div class="ap-al-lb">取景框位置</div>
+                <div class="ap-al-vf"><i></i><i></i></div>
+                <div class="ap-sl"><span>大小</span><input type="range" class="ap-al-vz" min="100" max="250" step="1"></div>
+                <div class="ap-sl"><span>上下</span><input type="range" class="ap-al-vy" min="0" max="100" step="0.5"></div></div>
+            </div>
+            <div class="ap-sl"><span>大小</span><input type="range" class="ap-al-z" min="100" max="220" step="1"></div>
+            <div class="ap-sl"><span>上下</span><input type="range" class="ap-al-y" min="-35" max="35" step="0.5"></div>
+            <div class="ap-sl"><span>左右</span><input type="range" class="ap-al-x" min="-35" max="35" step="0.5"></div>
+            <div class="ap-al-lb">一句說明（只給他看）</div>
+            <input type="text" class="text_pole ap-al-desc" maxlength="40" placeholder="例：示範照片的說明">
+            <div class="ap-al-lb">放進哪一夾</div>
+            <select class="text_pole ap-al-fold"></select>
+            <input type="text" class="text_pole ap-al-newf" maxlength="12" placeholder="新資料夾的名字" hidden>
+            <div class="ap-row">
+              <label class="menu_button ap-al-pick">選擇照片<input type="file" accept="image/*" hidden></label>
+              <div class="menu_button ap-al-save">存好</div>
+              <div class="menu_button ap-al-cancel">取消</div>
+              <div class="menu_button ap-al-rmv" hidden>刪掉</div>
+            </div>
+            <div class="ap-row ap-al-msg"></div>
+          </div>`)}
           ${drawer('auto', '🔄 自動更新', `
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
@@ -1608,15 +1845,17 @@ ${JSON.stringify(now)}
     box.querySelector('.ap-open').addEventListener('click', open);
 
     // 桌布
-    bindWall(D('lock'), 'lock', sum('lock'), '沒有照片');
-    bindWall(D('home'), 'home', sum('home'), '深灰藍');
+    const blk = (b) => box.querySelector(`.ap-blk[data-b="${b}"]`);
+    const sub = (k) => box.querySelector(`.ap-subsum[data-s="${k}"]`);
+    bindWall(blk('lock'), 'lock', sub('lock'), '沒有照片');
+    bindWall(blk('home'), 'home', sub('home'), '深灰藍');
 
     // 主畫面的深灰藍濾鏡：越往右越深，字越清楚
     const tr = box.querySelector('.ap-tint'), tv = box.querySelector('.ap-tintv');
     const showTint = () => {
       const v = S().homeTint;
       tr.value = v; tv.textContent = v + '%';
-      D('home').querySelector('.ap-mini .ap-htint').style.opacity = v / 100;
+      blk('home').querySelector('.ap-mini .ap-htint').style.opacity = v / 100;
       if (root && !root.hidden) root.querySelector('.ap-home .ap-htint').style.opacity = v / 100;
     };
     showTint();
@@ -1630,23 +1869,25 @@ ${JSON.stringify(now)}
 
     // 拾光手記：開始的日子（果果自己填，不寫死在程式）
     const stIn = box.querySelector('.ap-start');
-    const showStart = () => { const v = S().start; stIn.value = dOf(v) ? v : ''; sum('diary').textContent = dOf(v) ? v.replace(/-/g, '/') + ' 開始' : '還沒填開始的日子'; };
+    const showStart = () => { const v = S().start; stIn.value = dOf(v) ? v : ''; sub('diary').textContent = dOf(v) ? v.replace(/-/g, '/') + ' 開始' : '還沒填開始的日子'; };
     showStart();
     stIn.addEventListener('change', () => { S().start = dOf(stIn.value) ? stIn.value : ''; save(); showStart(); if (root && !root.hidden && inApp()) paintDiary(); });
     box.querySelector('.ap-start-clr').addEventListener('click', () => { S().start = ''; save(); showStart(); });
 
     // 音樂：固定歌單（名字只存在酒館）
     const musIn = box.querySelector('.ap-mus-fixed');
-    const showMus = () => { const n = telList(S().mus.fixed).length; musIn.value = S().mus.fixed || ''; sum('mus').textContent = n ? `固定歌單 ${n} 個` : '還沒填歌單'; };
+    const showMus = () => { const n = telList(S().mus.fixed).length; musIn.value = S().mus.fixed || ''; sub('mus').textContent = n ? `固定歌單 ${n} 個` : '還沒填歌單'; };
     showMus();
     musIn.addEventListener('input', () => { S().mus.fixed = musIn.value; musSync(); save(); showMus(); if (root && !root.hidden && inApp()) paintMusic(); });
 
     // 電話：我的最愛＋最下面那一位（名字只存在酒館，不寫進程式）
     const favIn = box.querySelector('.ap-tel-favs'), lastIn = box.querySelector('.ap-tel-last');
-    const showTel = () => { const T = S().tel, n = telList(T.favs).length; favIn.value = T.favs || ''; lastIn.value = T.last || ''; sum('tel').textContent = n ? `我的最愛 ${n} 位` : '還沒填我的最愛'; };
+    const showTel = () => { const T = S().tel, n = telList(T.favs).length; favIn.value = T.favs || ''; lastIn.value = T.last || ''; sub('tel').textContent = n ? `我的最愛 ${n} 位` : '還沒填我的最愛'; };
     showTel();
     const telIn = () => { S().tel.favs = favIn.value; S().tel.last = lastIn.value.trim(); save(); showTel(); if (root && !root.hidden && inApp()) paintPhone(); };
     favIn.addEventListener('input', telIn); lastIn.addEventListener('input', telIn);
+
+    bindAlbum(D('alb'), sum('alb'), box);
 
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');

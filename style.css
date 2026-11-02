@@ -295,9 +295,9 @@
 @keyframes ap-flash2{0%,30%{background:var(--fl);box-shadow:-8px 0 0 var(--fl),8px 0 0 var(--fl)}100%{background:transparent;box-shadow:-8px 0 0 transparent,8px 0 0 transparent}}
 
 /* ===== 柴米油鹽一家人（日常物事、餵食指南）：燕麥底、收據／卡片、中標題深咖（第 46 窗）===== */
-.ap-view[data-app="shop"],.ap-view[data-app="food"]{background:#EFE6D6}
-.ap-view[data-app="shop"]::before,.ap-view[data-app="food"]::before{background:linear-gradient(#EFE6D6 72%,rgba(239,230,214,0))}
-.ap-view[data-app="shop"]::after,.ap-view[data-app="food"]::after{background:linear-gradient(rgba(239,230,214,0),#EFE6D6 65%)}
+.ap-view[data-app="shop"],.ap-view[data-app="food"],.ap-view[data-app="album"]{background:#EFE6D6}
+.ap-view[data-app="shop"]::before,.ap-view[data-app="food"]::before,.ap-view[data-app="album"]::before{background:linear-gradient(#EFE6D6 72%,rgba(239,230,214,0))}
+.ap-view[data-app="shop"]::after,.ap-view[data-app="food"]::after,.ap-view[data-app="album"]::after{background:linear-gradient(rgba(239,230,214,0),#EFE6D6 65%)}
 
 /* ===== 日常物事：收據條；陶土粉是它的記號 ===== */
 .ap-sh-dot{background:#DDA894;box-shadow:0 0 0 1.2px #8A6E50}
@@ -458,3 +458,52 @@
 .ap-mu-song.ap-open .ap-mu-mur{display:block}
 .ap-mu-empty,.ap-mu-none{font-size:13px;color:#8E8B84;margin:10px 0 4px;letter-spacing:.5px}
 .ap-mu-none{margin:4px 0 4px 24px}
+
+/* ===== 相簿（第 49 窗草圖 B 版）：柴米油鹽燕麥紙；一夾一張卡（同餵食指南摺頁卡）；橄欖是它的記號 ===== */
+.ap-al-dot{background:#BDBF8F;box-shadow:0 0 0 1.2px #767A47}
+.ap-al-card{background:#FBF7EF;border-radius:4px;outline:.5px solid #E2D6C2;margin:0 0 12px}
+.ap-al-hd{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:1px dashed #E2D6C2}
+.ap-al-fic{flex:none;display:flex;color:#767A47}
+.ap-al-fn{flex:1;min-width:0;font-size:13px;color:#5C4733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* 夾名＝中標題深咖 */
+.ap-al-cnt{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+.ap-al-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 12px}
+#ap-root .ap-al-ph{position:relative;display:block;aspect-ratio:1;border:0;padding:0;margin:0;border-radius:2px;background:#E2D6C2 center/cover no-repeat;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ap-al-lk{position:absolute;left:4px;bottom:3px;display:flex;color:#FBF7EF;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.35))} /* 目前的桌布 */
+.ap-al-md{position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:#BDBF8F;box-shadow:0 0 0 1.2px #767A47} /* 有他留的話 */
+.ap-al-top{display:flex;align-items:center;justify-content:space-between}
+#ap-root .ap-al-back{display:flex;align-items:center;gap:4px;border:0;background:none;padding:2px 0;margin:0;font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#7A766F;cursor:pointer}
+.ap-al-pos{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+.ap-al-pcard{background:#FBF7EF;outline:.5px solid #E2D6C2;border-radius:4px;margin:12px 0 0;padding:12px 12px 10px}
+.ap-al-pcard.ap-nope{animation:ap-nope .36s ease}
+.ap-al-big{display:block;width:58%;height:auto;margin:0 auto;border-radius:2px;-webkit-user-drag:none;pointer-events:none} /* 整張都看得到（不裁） */
+.ap-al-wall{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#767A47}
+.ap-al-note{margin:10px 0 0;padding:2px 0 2px 10px;border-left:1px solid #CFCBC2}
+.ap-al-nt{font-size:12.5px;line-height:1.8;color:#45423E;white-space:pre-line}
+.ap-al-nd{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;margin-top:2px}
+/* 相機取景框放了相簿照片：照片填滿、四個角改米白 */
+.ap-cm-vf.ap-cm-has{background-repeat:no-repeat;overflow:hidden}
+.ap-cm-vf.ap-cm-has i{border-color:#FBF7EF}
+@media (prefers-reduced-motion:reduce){.ap-al-pcard.ap-nope{animation:none}}
+
+/* 設定頁「📷 相簿」抽屜（樣子跟酒館走） */
+.ap-settings .ap-subsum{margin-left:auto;font-weight:normal;opacity:.8}
+.ap-settings .ap-sub{display:flex}
+.ap-settings .ap-al-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(128,128,128,.2)}
+.ap-settings .ap-al-th{flex:none;width:22px;aspect-ratio:9/16;border-radius:3px;background:#3e342c center/cover no-repeat}
+.ap-settings .ap-al-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.ap-settings .ap-al-tx small{opacity:.65;font-size:.85em}
+.ap-settings .ap-al-tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-settings .ap-al-ed{margin:10px 0 0;padding:10px;border-radius:8px;background:rgba(128,128,128,.1)}
+.ap-settings .ap-al-edt{font-weight:bold;margin-bottom:6px}
+.ap-settings .ap-al-two{display:flex;gap:12px;align-items:flex-start}
+.ap-settings .ap-al-lkw{flex:none;width:96px}
+.ap-settings .ap-al-mini{width:96px;margin:0}
+.ap-settings .ap-al-vfw{flex:1;min-width:0}
+.ap-settings .ap-al-lb{font-size:.9em;opacity:.75;margin:12px 0 4px}
+.ap-settings .ap-al-two .ap-al-lb{margin-top:0}
+.ap-settings .ap-al-vf{position:relative;height:62px;border-radius:5px;background:#3e342c;background-repeat:no-repeat;margin-bottom:8px}
+.ap-settings .ap-al-vf i{position:absolute;width:8px;height:8px;border:0 solid #FBF7EF}
+.ap-settings .ap-al-vf i:nth-child(1){top:5px;left:5px;border-top-width:1.2px;border-left-width:1.2px}
+.ap-settings .ap-al-vf i:nth-child(2){bottom:5px;right:5px;border-bottom-width:1.2px;border-right-width:1.2px}
+.ap-settings .ap-al-desc,.ap-settings .ap-al-fold,.ap-settings .ap-al-newf{width:100%;box-sizing:border-box;margin:0 0 4px}
+.ap-settings .ap-al-msg{font-size:.9em;opacity:.8;min-height:1em}
