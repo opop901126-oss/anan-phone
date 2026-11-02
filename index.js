@@ -1,4 +1,4 @@
-// 安安的小手機 v0.10.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記（照安安自己說的規則排版）
+// 安安的小手機 v0.11.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -18,6 +18,11 @@
     memo: '<path d="M6 3.5h9l3 3V20.5H6z"/><path d="M9 10h6M9 13.5h6M9 17h4"/>',
     web: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 2.5 14.5 0 17M12 3.5c-2.5 2.5-2.5 14.5 0 17"/>',
     phone: '<path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2C11 19.5 4.5 13 4.5 5.5a2 2 0 0 1 2-2z"/>',
+    // 電話 App 裡的小圖示（第 48 窗）：撥出、來電、未接（電話＋右上角的小箭頭／叉）、留著的書籤
+    tout: '<path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2C11 19.5 4.5 13 4.5 5.5a2 2 0 0 1 2-2z"/><path d="M15.5 3.5h5v5M20.5 3.5l-5.5 5.5"/>',
+    tin: '<path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2C11 19.5 4.5 13 4.5 5.5a2 2 0 0 1 2-2z"/><path d="M20.5 3.5L15 9M15 4.5V9h4.5"/>',
+    tmiss: '<path d="M6.5 3.5h3l1.5 4.5-2 1.5a11 11 0 0 0 5.5 5.5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2C11 19.5 4.5 13 4.5 5.5a2 2 0 0 1 2-2z"/><path d="M15.5 3.5l5 5M20.5 3.5l-5 5"/>',
+    mark: '<path d="M7 4h10v16l-5-4-5 4z"/>',
     cart: '<path d="M3.5 4.5h2.2l2 10.5h9.8l2-7.5H6.8"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="16.5" cy="19" r="1.3"/>',
     photo: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
     music: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
@@ -43,6 +48,8 @@
     web: ['瀏覽器', '#C9B9D6', '#7E6A92', 'web'], trivia: ['拾穗小集', '#C8A97E', '#9A7B52', 'wheat'],
     // 第二批（第 46 窗定的顏色）：日常物事＝陶土粉、餵食指南＝莓果粉、拾光手記＝深夜藍；框都是小點自己的同色系深一點
     shop: ['日常物事', '#DDA894', '#8A6E50', 'cart'], food: ['餵食指南', '#E6B3BE', '#A9677A', 'pin'], diary: ['拾光手記', '#4F5F7E', '#24324A', 'book'],
+    // 第三批（第 48 窗）：相機＝石墨灰
+    cam: ['相機', '#B9BDC2', '#5E646B', 'cam'], phone: ['電話', '#E6D3B8', '#A08463', 'phone'], // 電話＝米杏
   };
   const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
@@ -104,6 +111,8 @@
     if (!s.shop) s.shop = { seq: 0, cseq: 0, items: [], card: [], peek: [] }; // 日常物事：購物、家計、給小果的小卡（第 47 窗）
     if (!s.food) s.food = { seq: 0, items: [], peek: [] }; // 果果的餵食指南：一區一張卡的美食地圖
     if (!s.diary) s.diary = { seq: 0, items: [], draft: '' }; // 拾光手記：他的日記
+    if (!s.tel) s.tel = { day: '', seq: 0, calls: [], vm: [], favs: '', last: '' }; // 電話：通話紀錄（換新的一天清掉）、語音信箱（留著的不清）、最愛（果果在設定填）（第 48 窗）
+    if (!s.cam) s.cam = { day: '', seq: 0, items: [] }; // 相機：沒拍到的瞬間，劇情換新的一天整本換新（第 48 窗）
     if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
     return s;
   }
@@ -165,6 +174,8 @@
           <div class="ap-view" data-app="cal" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="shop" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="food" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="cam" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="phone" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="diary" hidden><div class="ap-dy-page"><div class="ap-vs"></div></div><div class="ap-dy-lock" hidden></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
@@ -181,7 +192,7 @@
       const nt = e.target.closest('.ap-note');
       if (!nt) return;
       unlock();
-      if (['memo', 'trivia'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
+      if (['memo', 'trivia'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -260,6 +271,18 @@
       if (r.classList.contains('ap-has')) r.classList.toggle('ap-open');
     });
     root.querySelector('.ap-view[data-app="food"]').addEventListener('animationend', (e) => e.target.classList.remove('ap-nope'));
+    root.querySelector('.ap-view[data-app="phone"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const t = e.target.closest('[data-pt]');
+      if (t) { telTab = t.dataset.pt; paintPhone(); root.querySelector('.ap-view[data-app="phone"] .ap-vs').scrollTop = 0; return; }
+      const r = e.target.closest('.ap-tel-vm');
+      if (r) r.classList.toggle('ap-open');
+    });
+    root.querySelector('.ap-view[data-app="cam"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const r = e.target.closest('.ap-cm-row');
+      if (r) r.classList.toggle('ap-open');
+    });
     root.querySelector('.ap-view[data-app="diary"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
       if (e.target.closest('.ap-dy-lock')) { faceUnlock(); return; }
@@ -338,7 +361,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -350,6 +373,8 @@
     if (id === 'cal') prepCal(focus); // 一打開選今天；從通知點進來就選那件事的那天
     if (id === 'shop') prepShop(focus); // 從通知點進來：先切到那筆所在的分頁
     if (id === 'food') paintFood();
+    if (id === 'cam') paintCam();
+    if (id === 'phone') { telTab = 'call'; paintPhone(); } // 每次打開都先在「通話」分頁（從通知點進來也是）
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
     if (id === 'diary') { paintDiary(); diaryLock(focus); root.querySelector('.ap-screen').classList.add('ap-lite'); return; } // 拾光手記：每次都先臉部解鎖
@@ -697,8 +722,55 @@
   }
 
   // ===== 長按刪除（只有果果能刪；平常看不到，截圖也乾淨）=====
+  // ===== 相機（第 48 窗果果確認的草圖：霧藍紙、空的取景框、沒拍到的瞬間）=====
+  // 取景框先空著（等相簿那一輪再決定放什麼）；新的在上面，點了原地展開
+  function paintCam() {
+    const C = S().cam;
+    const list = C.items.slice().sort((a, b) => b.seq - a.seq);
+    root.querySelector('.ap-view[data-app="cam"] .ap-vs').innerHTML = `
+      <div class="ap-meta">CAMERA · ${headDate()}</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-cm-dot"></span>相機</div>
+      <div class="ap-cm-vf"><i></i><i></i><i></i><i></i></div>
+      <div class="ap-cm-sec">沒拍到的瞬間</div>
+      ${list.map((x) => `<div class="ap-cm-row" data-id="${x.id}"><div class="ap-cm-h"><span class="ap-cm-t">${esc(x.title)}</span><span class="ap-mw">${esc(x.time)}</span></div>`
+        + `<div class="ap-cm-b">${esc(x.body)}</div></div>`).join('')}
+      ${list.length ? '' : '<div class="ap-cm-empty">今天還沒有記下的瞬間。</div>'}`;
+  }
+
+  // ===== 電話（第 48 窗果果確認的草圖：霧藍紙、「通話｜最愛」兩個分頁；米杏是它的記號）=====
+  let telTab = 'call';
+  const telList = (t) => String(t || '').split(/[,，、\n]/).map((x) => x.trim()).filter(Boolean);
+  const TEL_T = { out: ['tout', '撥出'], in: ['tin', '來電'], miss: ['tmiss', '未接'] };
+  function paintPhone() {
+    const T = S().tel, fav = telList(T.favs), last = String(T.last || '').trim();
+    const tabs = `<div class="ap-tabs ap-tel-tabs"><button type="button" class="ap-tab${telTab === 'call' ? ' ap-on' : ''}" data-pt="call">通話</button><button type="button" class="ap-tab${telTab === 'fav' ? ' ap-on' : ''}" data-pt="fav">最愛</button></div>`;
+    let body;
+    if (telTab === 'fav') {
+      body = `<div class="ap-tel-sec">我的最愛</div>`
+        + (fav.length ? fav.map((n) => `<div class="ap-tel-fav"><span class="ap-tel-n">${esc(n)}</span><span class="ap-tel-pi">${ic('phone', 15)}</span></div>`).join('')
+          : '<div class="ap-tel-empty">到酒館設定「📞 電話」填我的最愛。</div>')
+        + (last ? `<div class="ap-tel-last">${esc(last)}</div>` : '');
+    } else {
+      const byNew = (a, b) => (`${a.day || ''} ${a.time || ''} ${String(a.seq).padStart(6, '0')}` < `${b.day || ''} ${b.time || ''} ${String(b.seq).padStart(6, '0')}` ? 1 : -1);
+      const calls = T.calls.slice().sort(byNew), vm = T.vm.slice().sort(byNew);
+      body = `<div class="ap-tel-sec">今天</div>`
+        + (calls.length ? calls.map((x) => { const [k, w] = TEL_T[x.type] || TEL_T.in;
+          return `<div class="ap-tel-call${x.type === 'miss' ? ' ap-tel-miss' : ''}" data-id="${x.id}"><span class="ap-tel-ti">${ic(k, 15)}</span>`
+            + `<div class="ap-tel-mid"><div class="ap-tel-n">${esc(x.name)}</div><div class="ap-tel-sub">${w}${x.type !== 'miss' && x.dur ? '・' + esc(x.dur) : ''}</div></div><span class="ap-mw">${esc(x.time)}</span></div>`; }).join('')
+          : '<div class="ap-tel-empty">今天還沒有通話。</div>')
+        + `<div class="ap-tel-sec">語音信箱</div>`
+        + (vm.length ? vm.map((x) => `<div class="ap-tel-vm" data-id="${x.id}"><div class="ap-tel-vh"><span class="ap-tel-mk">${x.keep ? ic('mark', 13) : ''}</span>`
+          + `<span class="ap-tel-n">${esc(x.from)}</span><span class="ap-mw">${esc(x.day && x.day !== T.day ? slash(x.day) : x.time)}</span></div><div class="ap-tel-b">${esc(x.text)}</div></div>`).join('')
+          : '<div class="ap-tel-empty">沒有語音留言。</div>');
+    }
+    root.querySelector('.ap-view[data-app="phone"] .ap-vs').innerHTML = `
+      <div class="ap-meta">PHONE · ${headDate()}</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-tel-dot"></span>電話</div>
+      ${tabs}${body}`;
+  }
+
   let lp = null, lpAt = 0;
-  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft)';
+  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm';
   function lpStart(e) {
     const t = e.target.closest(LPT);
     if (e.target.closest('.ap-rm')) return;
@@ -732,10 +804,13 @@
     else if (t.classList.contains('ap-sh-crow')) { s.shop.card = s.shop.card.filter((x) => x.id !== id); s.shop.peek = s.shop.peek.filter((x) => x !== id); }
     else if (t.classList.contains('ap-fd-row')) { s.food.items = s.food.items.filter((x) => x.id !== id); s.food.peek = s.food.peek.filter((x) => x !== id); }
     else if (t.classList.contains('ap-dy-ent')) s.diary.items = s.diary.items.filter((x) => x.id !== id);
+    else if (t.classList.contains('ap-cm-row')) s.cam.items = s.cam.items.filter((x) => x.id !== id);
+    else if (t.classList.contains('ap-tel-call')) s.tel.calls = s.tel.calls.filter((x) => x.id !== id);
+    else if (t.classList.contains('ap-tel-vm')) s.tel.vm = s.tel.vm.filter((x) => x.id !== id);
     s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
     save();
     const app = t.closest('.ap-view')?.dataset.app;
-    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : paintMemo()));
+    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : app === 'cam' ? paintCam() : app === 'phone' ? paintPhone() : paintMemo()));
   }
 
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
@@ -925,14 +1000,16 @@
       ? { id: x.id, tab: 'bill', name: x.name, kind: x.kind, stamped: !!x.stamp } : { id: x.id, tab: 'buy', day: x.day, name: x.name, secret: !!x.secret })),
       card: s.shop.card.map((c) => ({ id: c.id, k: c.k, v: c.v, lock: !!c.lock })) };
     const foodNow = s.food.items.slice(-40).map((x) => ({ id: x.id, area: x.area, name: x.name, mark: x.mark, lock: x.lock || undefined, open: x.open || undefined }));
+    const telNow = { day: s.tel.day, calls: s.tel.calls.map((x) => ({ name: x.name, type: x.type, time: x.time })), vm: s.tel.vm.map((x) => ({ id: x.id, from: x.from, keep: !!x.keep })) };
+    const camNow = { day: s.cam.day, items: s.cam.items.map((x) => ({ id: x.id, title: x.title })) }; // 只給標題，用來避免重複
     const diaryNow = { recent: s.diary.items.slice(-3).map((x) => ({ day: x.day, body: x.body })), draft: s.diary.draft }; // 只給最近幾篇，越寫越多也不會變慢
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow };
     const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
     const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -994,10 +1071,19 @@ ${JSON.stringify(now)}
    - add：這次寫好的一篇，沒有就給 null。body 150 字內；time 像「23:40」。
    - draft：他打到一半還沒寫完的一句，30 字內；下次可以寫完放進 add、重寫，或給空字串。
    - 不要重複 diary.recent 裡已經寫過的內容。
-12. 全部用繁體中文、台灣用語。
+12. cam：「相機」，他記下「想拍、但沒拍到的瞬間」（他的手機相機是認識 ${me} 之後才換上主畫面的，怕錯過想拍的瞬間）。只寫最近劇情裡真的出現過的畫面，不要自己編；用他的口吻。
+   - add：這次記下的一則，最多 1 則，不一定每次都有，沒有就給 null。title 15 字內；body 30 字內，一句話：那時候想拍什麼、為什麼沒拍；time 是那個畫面發生的時間，像「15:20」。
+   - 劇情到了新的一天（日期跟 cam.day 不一樣），以前的會自動清掉；這次 add 的就是新的一天記的。
+   - 不要重複 cam 裡已經有的。
+13. phone：他的電話。他的習慣、聯絡人照小抄（小抄寫的是參考，不是台詞）。
+   - calls：這段劇情裡真的打過、接過、漏接的電話 0～3 通，沒有就給 []。name 照小抄裡存的名字；type 只能是 out（他撥出）、in（打來、他接了）、miss（他漏接）；time 像「15:20」；dur 是通話長度，像「3 分鐘」，miss 給空字串；mine：跟 ${me} 有關（她打來的、打給她的、在說她的事）才是 true。不要重複 phone.calls 裡已經有的。
+   - vm：語音信箱。add 是這次新的語音留言，只寫劇情裡真的有人留的，最多 1 則，沒有就給 []；from 是留言的人（照小抄的名字）；time 像「15:20」；text 是留言內容，40 字內，像手機的語音轉文字；keep：他捨不得刪、想一直留著的才是 true；mine 同上。phone.vm 是空的時候，小抄裡寫到他一直留著的舊留言可以一次放進來（最多 3 則），day 寫那天的日期（像「2026-01-12」），keep 給 true。
+   - vm 的 keep：phone.vm 裡已經有、他決定要留著的，寫它的 id，像 ["v2"]；沒有就給 []。
+   - 劇情到了新的一天（日期跟 phone.day 不一樣），通話紀錄和沒有留著的語音會自動清掉。${mute.length ? `這些人不會打來、也不會留言：${mute.join('、')}。` : ''}
+14. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}}}`;
     return { sys, prompt };
   }
 
@@ -1026,7 +1112,7 @@ ${JSON.stringify(now)}
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
     const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
@@ -1039,6 +1125,8 @@ ${JSON.stringify(now)}
     putNote(shopNotice(applyShop(o.shop)));
     putNote(applyFood(o.food));
     applyDiary(o.diary); // 拾光手記不跳通知（果果說日記不用）
+    applyCam(o.cam, isoDate(o.date)); // 相機不發鎖屏通知（之後用主畫面小點）
+    putNote(telNotice(applyPhone(o.phone, isoDate(o.date))), 2); // 電話：每次最多 1 則（新語音優先，其次未接）
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
   }
@@ -1257,6 +1345,60 @@ ${JSON.stringify(now)}
     D.items.push(it);
     return it;
   }
+  // 電話：換新的一天 → 通話清空、沒留著的語音清掉 → 他說要留著的標起來 → 加新的通話、語音（不會打來的人擋掉）
+  function applyPhone(o, day) {
+    const T = S().tel;
+    if (day && day !== T.day) { if (T.day) { T.calls = []; T.vm = T.vm.filter((x) => x.keep); } T.day = day; }
+    if (!o || typeof o !== 'object') return null;
+    const mute = muteList(), d = T.day || isoDate(new Date().toISOString());
+    let vmNew = null, miss = null;
+    const V = o.vm && typeof o.vm === 'object' ? o.vm : {};
+    (Array.isArray(V.keep) ? V.keep : []).forEach((id) => { const x = T.vm.find((v) => v.id === id); if (x) x.keep = true; });
+    (Array.isArray(o.calls) ? o.calls : []).slice(0, 3).forEach((c) => {
+      const name = clean(c?.name, 12), type = ['out', 'in', 'miss'].includes(c?.type) ? c.type : '', time = hm(c?.time) || S().lock.time || '';
+      if (!name || !type || mute.includes(name) || T.calls.some((x) => x.name === name && x.type === type && x.time === time)) return;
+      const it = { id: 'p' + (++T.seq), seq: T.seq, day: d, name, type, time, dur: type === 'miss' ? '' : clean(c.dur, 8), mine: c.mine === true };
+      T.calls.push(it);
+      if (type === 'miss') miss = it;
+    });
+    const adds = Array.isArray(V.add) ? V.add : V.add ? [V.add] : [];
+    adds.slice(0, T.vm.length ? 1 : 3).forEach((a) => {
+      const from = clean(a?.from, 12), text = cleanBody(a?.text, 44);
+      if (!from || !text || mute.includes(from) || T.vm.some((x) => x.from === from && x.text === text)) return;
+      const old = isoDate(a.day);
+      const it = { id: 'v' + (++T.seq), seq: T.seq, day: old && old < d ? old : d, from, time: hm(a.time) || (old && old < d ? '' : S().lock.time || ''), text, keep: a.keep === true, mine: a.mine === true };
+      T.vm.push(it);
+      if (it.day === d) vmNew = it; // 舊的留言（小抄裡的）不跳通知
+    });
+    T.calls = T.calls.slice(-20);
+    const keep = T.vm.filter((x) => x.keep).slice(-10), rest = T.vm.filter((x) => !x.keep).slice(-10);
+    T.vm = T.vm.filter((x) => keep.includes(x) || rest.includes(x));
+    return vmNew || miss;
+  }
+  // 電話的通知：程式從電話裡真的內容拿（語音＝留言內容、未接＝那通的時間）
+  function telNotice(x) {
+    if (!x) return null;
+    let when = '現在';
+    const a = hm(x.time), b = hm(S().lock.time);
+    if (a && b) { const d = (+b.slice(0, 2) * 60 + +b.slice(3)) - (+a.slice(0, 2) * 60 + +a.slice(3)); if (d >= 1) when = d < 60 ? `${d}分鐘前` : `${Math.floor(d / 60)}小時前`; }
+    return x.text != null
+      ? { app: 'phone', id: x.id, from: clean('語音留言・' + x.from, 20), text: clean(x.text, 50), when, mine: !!x.mine }
+      : { app: 'phone', id: x.id, from: clean('未接來電・' + x.name, 20), text: x.time, when, mine: !!x.mine };
+  }
+  // 相機：劇情換新的一天整本換新（沒有置頂）→ 加新的一則（亂寫的擋掉；同標題不重複）
+  function applyCam(o, day) {
+    const C = S().cam;
+    if (day && day !== C.day) { if (C.day) C.items = []; C.day = day; }
+    if (!o || typeof o !== 'object') return null;
+    const a = Array.isArray(o.add) ? o.add[0] : o.add;
+    if (!a || typeof a !== 'object') return null;
+    const title = clean(a.title, 16), body = cleanBody(a.body, 34);
+    if (!title || !body || C.items.some((x) => x.title === title)) return null;
+    const it = { id: 'c' + (++C.seq), seq: C.seq, title, body, time: hm(a.time) || S().lock.time || '' };
+    C.items.push(it);
+    C.items = C.items.slice(-12);
+    return it;
+  }
   // 日記的通知不露內容（要臉部解鎖才看得到）
   const diaryNotice = (x) => x && { app: 'diary', id: x.id, from: dayTitle(x.day), text: '輕觸以臉部解鎖查看', when: '現在', mine: false };
 
@@ -1360,6 +1502,11 @@ ${JSON.stringify(now)}
           ${drawer('diary', '📖 拾光手記', `
           <div class="ap-row">開始的日子（這天是第一天，日記標題的「第 N 天」從這裡算）</div>
           <div class="ap-row"><input type="date" class="text_pole ap-start"><div class="menu_button ap-start-clr">清掉</div></div>`)}
+          ${drawer('tel', '📞 電話', `
+          <div class="ap-row">我的最愛（照順序，用、分開；名字後面可以加符號）</div>
+          <input type="text" class="text_pole ap-tel-favs" maxlength="200" placeholder="例：示範聯絡人、示範聯絡人">
+          <div class="ap-row">最下面那一位（安靜地放在最愛下面，不能撥）</div>
+          <input type="text" class="text_pole ap-tel-last" maxlength="12" placeholder="例：示範聯絡人">`)}
           ${drawer('auto', '🔄 自動更新', `
           <label class="checkbox_label"><input type="checkbox" class="ap-autochk"> 開啟自動更新</label>
           <div class="ap-row">這是誰的手機：<b class="ap-owner"></b><div class="menu_button ap-own">設成現在的角色</div></div>
@@ -1417,6 +1564,13 @@ ${JSON.stringify(now)}
     showStart();
     stIn.addEventListener('change', () => { S().start = dOf(stIn.value) ? stIn.value : ''; save(); showStart(); if (root && !root.hidden && inApp()) paintDiary(); });
     box.querySelector('.ap-start-clr').addEventListener('click', () => { S().start = ''; save(); showStart(); });
+
+    // 電話：我的最愛＋最下面那一位（名字只存在酒館，不寫進程式）
+    const favIn = box.querySelector('.ap-tel-favs'), lastIn = box.querySelector('.ap-tel-last');
+    const showTel = () => { const T = S().tel, n = telList(T.favs).length; favIn.value = T.favs || ''; lastIn.value = T.last || ''; sum('tel').textContent = n ? `我的最愛 ${n} 位` : '還沒填我的最愛'; };
+    showTel();
+    const telIn = () => { S().tel.favs = favIn.value; S().tel.last = lastIn.value.trim(); save(); showTel(); if (root && !root.hidden && inApp()) paintPhone(); };
+    favIn.addEventListener('input', telIn); lastIn.addEventListener('input', telIn);
 
     // 自動更新的設定
     stEl = box.querySelector('.ap-st');

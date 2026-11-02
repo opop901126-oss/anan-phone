@@ -375,3 +375,53 @@
 .ap-dy-lock.ap-turn .ap-dy-cover{transform:rotateY(-160deg)}
 .ap-dy-lock.ap-gone{opacity:0}
 @media (prefers-reduced-motion:reduce){.ap-dy-cover,.ap-dy-lock{transition:none}.ap-dy-cur,.ap-fd-row.ap-nope{animation:none}}
+
+/* ===== 相機（第 48 窗果果確認的草圖：跟行事曆同一家＝霧藍紙；石墨灰是它的記號；取景框先空著）===== */
+.ap-view[data-app="cam"]{background:#E3E7EC}
+.ap-view[data-app="cam"]::before{background:linear-gradient(#E3E7EC 72%,rgba(227,231,236,0))}
+.ap-view[data-app="cam"]::after{background:linear-gradient(rgba(227,231,236,0),#E3E7EC 65%)}
+.ap-cm-dot{background:#B9BDC2;box-shadow:0 0 0 1.2px #5E646B}
+.ap-cm-vf{position:relative;height:150px;border:.5px solid #C9CFD6;border-radius:6px;background:#EDF0F3}
+.ap-cm-vf i{position:absolute;width:14px;height:14px;border:0 solid #5B7393}
+.ap-cm-vf i:nth-child(1){top:10px;left:10px;border-top-width:1.2px;border-left-width:1.2px}
+.ap-cm-vf i:nth-child(2){top:10px;right:10px;border-top-width:1.2px;border-right-width:1.2px}
+.ap-cm-vf i:nth-child(3){bottom:10px;left:10px;border-bottom-width:1.2px;border-left-width:1.2px}
+.ap-cm-vf i:nth-child(4){bottom:10px;right:10px;border-bottom-width:1.2px;border-right-width:1.2px}
+.ap-cm-sec{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#5B7393;margin:16px 0 2px;border-top:.5px solid #C9CFD6;padding-top:12px}
+.ap-cm-row{position:relative;padding:8px 0;cursor:pointer}
+.ap-cm-row+.ap-cm-row{border-top:.5px solid #C9CFD6}
+.ap-cm-h{display:flex;align-items:baseline;gap:10px}
+.ap-cm-t{flex:1;min-width:0;font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-cm-b{font-size:12.5px;line-height:1.8;color:#8E8B84;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ap-cm-row.ap-open .ap-cm-b{display:block;color:#45423E}
+.ap-cm-row.ap-open .ap-cm-t{white-space:normal}
+.ap-cm-row.ap-flash{animation:ap-kflash 1.8s ease;border-radius:2px}
+.ap-cm-empty{font-size:13px;color:#8E8B84;margin-top:12px;letter-spacing:.5px}
+
+/* ===== 電話（第 48 窗果果確認的草圖：霧藍紙同一家；米杏是它的記號：小點、分頁、書籤、最愛的小電話）===== */
+.ap-view[data-app="phone"]{background:#E3E7EC}
+.ap-view[data-app="phone"]::before{background:linear-gradient(#E3E7EC 72%,rgba(227,231,236,0))}
+.ap-view[data-app="phone"]::after{background:linear-gradient(rgba(227,231,236,0),#E3E7EC 65%)}
+.ap-tel-dot{background:#E6D3B8;box-shadow:0 0 0 1.2px #A08463}
+#ap-root .ap-tel-tabs .ap-tab.ap-on{color:#A08463;border-bottom-color:#A08463}
+.ap-tel-sec{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.12em;color:#5B7393;margin:12px 0 2px;border-top:.5px solid #C9CFD6;padding-top:12px}
+.ap-tel-n{font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-tel-call{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0}
+.ap-tel-call+.ap-tel-call,.ap-tel-vm+.ap-tel-vm,.ap-tel-fav+.ap-tel-fav{border-top:.5px solid #C9CFD6}
+.ap-tel-ti{flex:none;display:flex;color:#8E8B84}
+.ap-tel-miss .ap-tel-ti{color:#B5533C}
+.ap-tel-mid{flex:1;min-width:0;display:flex;flex-direction:column}
+.ap-tel-sub{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+.ap-tel-vm{position:relative;padding:8px 0;cursor:pointer}
+.ap-tel-vh{display:flex;align-items:baseline;gap:8px}
+.ap-tel-vh .ap-tel-n{flex:1}
+.ap-tel-mk{flex:none;width:13px;display:inline-flex;color:#A08463;align-self:center}
+.ap-tel-b{font-size:12.5px;line-height:1.8;color:#8E8B84;margin-top:2px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.ap-tel-vm.ap-open .ap-tel-b{display:block;color:#45423E}
+.ap-tel-vm.ap-open .ap-tel-n{white-space:normal}
+.ap-tel-fav{display:flex;align-items:center;gap:10px;padding:10px 0}
+.ap-tel-fav .ap-tel-n{flex:1}
+.ap-tel-pi{flex:none;display:flex;color:#A08463}
+.ap-tel-last{margin-top:28px;border-top:.5px solid #C9CFD6;padding:12px 0 4px;font-size:14.5px;letter-spacing:.5px;color:#8E8B84}
+.ap-tel-empty{font-size:13px;color:#8E8B84;margin:10px 0 4px;letter-spacing:.5px}
+.ap-tel-call.ap-flash,.ap-tel-vm.ap-flash{--fl:rgba(160,132,99,.16);animation:ap-flash2 1.8s ease;border-radius:2px}
