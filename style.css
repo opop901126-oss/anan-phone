@@ -425,3 +425,36 @@
 .ap-tel-last{margin-top:28px;border-top:.5px solid #C9CFD6;padding:12px 0 4px;font-size:14.5px;letter-spacing:.5px;color:#8E8B84}
 .ap-tel-empty{font-size:13px;color:#8E8B84;margin:10px 0 4px;letter-spacing:.5px}
 .ap-tel-call.ap-flash,.ap-tel-vm.ap-flash{--fl:rgba(160,132,99,.16);animation:ap-flash2 1.8s ease;border-radius:2px}
+
+/* ===== 音樂（第 48 窗果果確認的草圖：灰白紙＝行動小書房；酒紅是它的記號：小點、跳動的小直條、歌單音符、心聲小點）===== */
+.ap-mu-mdot{background:#A9636E;box-shadow:0 0 0 1.2px #6E3540}
+.ap-mu-now{display:flex;align-items:center;gap:12px;padding:10px 0 6px}
+.ap-mu-eq{flex:none;display:flex;align-items:flex-end;gap:2px;height:16px;width:13px}
+.ap-mu-eq i{width:3px;height:9px;background:#6E3540;border-radius:1px;animation:ap-mu-eq .85s ease-in-out infinite}
+.ap-mu-eq i:nth-child(2){animation-duration:1.1s;animation-delay:-.4s}
+.ap-mu-eq i:nth-child(3){animation-duration:.7s;animation-delay:-.2s}
+@keyframes ap-mu-eq{0%,100%{height:4px}50%{height:15px}}
+@media (prefers-reduced-motion:reduce){.ap-mu-eq i{animation:none;height:9px}}
+.ap-mu-nw{flex:1;min-width:0}
+.ap-mu-nt{font-size:15px;font-weight:500;letter-spacing:.5px;color:#2F3F55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-mu-na{font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-mu-pl{padding:8px 0}
+.ap-mu-pl+.ap-mu-pl{border-top:.5px solid #CFCBC2}
+.ap-mu-ph{position:relative;display:flex;align-items:center;gap:8px;cursor:pointer}
+.ap-mu-ic{flex:none;display:flex;color:#6E3540}
+.ap-mu-pn{flex:1;min-width:0;font-size:14.5px;font-weight:500;letter-spacing:.5px;color:#2F3F55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-mu-ch{flex:none;width:7px;height:7px;border-right:1.2px solid #8E8B84;border-bottom:1.2px solid #8E8B84;transform:translateY(-2px) rotate(45deg);margin:0 3px 0 2px;transition:transform .2s}
+.ap-mu-pl.ap-open .ap-mu-ch{transform:translateY(2px) rotate(-135deg)}
+.ap-mu-songs{display:none;margin-top:6px}
+.ap-mu-pl.ap-open .ap-mu-songs{display:block}
+.ap-mu-song{position:relative;padding:5px 0}
+.ap-mu-song:has(.ap-mu-mur){cursor:pointer}
+.ap-mu-sh{display:flex;align-items:baseline;gap:8px;min-width:0}
+.ap-mu-no{flex:none;width:16px;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
+.ap-mu-st{min-width:0;font-size:13px;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-mu-sa{flex:none;max-width:40%;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-mu-dot{flex:none;width:5px;height:5px;border-radius:50%;background:#A9636E;box-shadow:0 0 0 1px #6E3540;align-self:center}
+.ap-mu-mur{display:none;margin:2px 0 2px 24px;padding-left:9px;border-left:1px solid #CFCBC2;font-size:12.5px;line-height:1.8;color:#45423E;white-space:pre-line}
+.ap-mu-song.ap-open .ap-mu-mur{display:block}
+.ap-mu-empty,.ap-mu-none{font-size:13px;color:#8E8B84;margin:10px 0 4px;letter-spacing:.5px}
+.ap-mu-none{margin:4px 0 4px 24px}

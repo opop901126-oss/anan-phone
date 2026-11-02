@@ -1,4 +1,4 @@
-// 安安的小手機 v0.11.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話（照安安自己說的規則排版）
+// 安安的小手機 v0.12.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -50,6 +50,7 @@
     shop: ['日常物事', '#DDA894', '#8A6E50', 'cart'], food: ['餵食指南', '#E6B3BE', '#A9677A', 'pin'], diary: ['拾光手記', '#4F5F7E', '#24324A', 'book'],
     // 第三批（第 48 窗）：相機＝石墨灰
     cam: ['相機', '#B9BDC2', '#5E646B', 'cam'], phone: ['電話', '#E6D3B8', '#A08463', 'phone'], // 電話＝米杏
+    music: ['音樂', '#A9636E', '#6E3540', 'music'], // 音樂＝酒紅（第 48 窗）
   };
   const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
@@ -111,6 +112,7 @@
     if (!s.shop) s.shop = { seq: 0, cseq: 0, items: [], card: [], peek: [] }; // 日常物事：購物、家計、給小果的小卡（第 47 窗）
     if (!s.food) s.food = { seq: 0, items: [], peek: [] }; // 果果的餵食指南：一區一張卡的美食地圖
     if (!s.diary) s.diary = { seq: 0, items: [], draft: '' }; // 拾光手記：他的日記
+    if (!s.mus) s.mus = { seq: 0, fixed: '', lists: [], now: { t: '', a: '' }, last: '' }; // 音樂：固定歌單（果果在設定填）＋他開的歌單、正在播放（第 48 窗）
     if (!s.tel) s.tel = { day: '', seq: 0, calls: [], vm: [], favs: '', last: '' }; // 電話：通話紀錄（換新的一天清掉）、語音信箱（留著的不清）、最愛（果果在設定填）（第 48 窗）
     if (!s.cam) s.cam = { day: '', seq: 0, items: [] }; // 相機：沒拍到的瞬間，劇情換新的一天整本換新（第 48 窗）
     if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
@@ -176,6 +178,7 @@
           <div class="ap-view" data-app="food" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="cam" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="phone" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view" data-app="music" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="diary" hidden><div class="ap-dy-page"><div class="ap-vs"></div></div><div class="ap-dy-lock" hidden></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
@@ -192,7 +195,7 @@
       const nt = e.target.closest('.ap-note');
       if (!nt) return;
       unlock();
-      if (['memo', 'trivia'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
+      if (['memo', 'trivia', 'music'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -271,6 +274,13 @@
       if (r.classList.contains('ap-has')) r.classList.toggle('ap-open');
     });
     root.querySelector('.ap-view[data-app="food"]').addEventListener('animationend', (e) => e.target.classList.remove('ap-nope'));
+    root.querySelector('.ap-view[data-app="music"]').addEventListener('click', (e) => {
+      if (lpEat(e)) return;
+      const h = e.target.closest('.ap-mu-ph');
+      if (h) { const id = h.dataset.id; musOpen.has(id) ? musOpen.delete(id) : musOpen.add(id); h.parentElement.classList.toggle('ap-open'); return; }
+      const r = e.target.closest('.ap-mu-song');
+      if (r && r.querySelector('.ap-mu-mur')) r.classList.toggle('ap-open');
+    });
     root.querySelector('.ap-view[data-app="phone"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
       const t = e.target.closest('[data-pt]');
@@ -361,7 +371,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -374,6 +384,7 @@
     if (id === 'shop') prepShop(focus); // 從通知點進來：先切到那筆所在的分頁
     if (id === 'food') paintFood();
     if (id === 'cam') paintCam();
+    if (id === 'music') paintMusic();
     if (id === 'phone') { telTab = 'call'; paintPhone(); } // 每次打開都先在「通話」分頁（從通知點進來也是）
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
@@ -737,6 +748,35 @@
       ${list.length ? '' : '<div class="ap-cm-empty">今天還沒有記下的瞬間。</div>'}`;
   }
 
+  // ===== 音樂（第 48 窗果果確認的草圖：灰白紙＝行動小書房；酒紅是它的記號；歌單摺起來、點了展開）=====
+  const musOpen = new Set();
+  // 固定歌單照設定順序排在最上面；設定拿掉的固定歌單不刪歌，變成一般歌單（不會丟資料）
+  function musSync() {
+    const M = S().mus, names = telList(M.fixed).slice(0, 6);
+    M.lists.forEach((l) => { l.fixed = names.includes(l.name); });
+    names.forEach((n) => { if (!M.lists.some((l) => l.name === n)) M.lists.push({ id: 'L' + (++M.seq), name: n, fixed: true, songs: [] }); });
+    M.lists.sort((a, b) => (a.fixed === b.fixed ? (a.fixed ? names.indexOf(a.name) - names.indexOf(b.name) : 0) : a.fixed ? -1 : 1));
+    return M;
+  }
+  const musFrom = (M, t) => (t ? (M.lists.find((l) => l.songs.some((x) => x.t === t)) || {}).name || '' : '');
+  function paintMusic() {
+    const M = musSync(), N = M.now || {}, from = musFrom(M, N.t);
+    const now = N.t
+      ? `<div class="ap-mu-now"><span class="ap-mu-eq"><i></i><i></i><i></i></span><div class="ap-mu-nw"><div class="ap-mu-nt">${esc(N.t)}</div>`
+        + `<div class="ap-mu-na">${esc([N.a, from && '來自：' + from].filter(Boolean).join('・'))}</div></div></div>`
+      : '<div class="ap-mu-empty">沒有在播放</div>';
+    const lists = M.lists.map((l) => `<div class="ap-mu-pl${musOpen.has(l.id) ? ' ap-open' : ''}"><div class="ap-mu-ph" data-id="${l.id}"${l.fixed ? '' : ' data-own="1"'}>`
+      + `<span class="ap-mu-ic">${ic('music', 14)}</span><span class="ap-mu-pn">${esc(l.name)}</span><span class="ap-mw">${l.songs.length} 首</span><span class="ap-mu-ch"></span></div>`
+      + `<div class="ap-mu-songs">${l.songs.length ? l.songs.map((x, i) => `<div class="ap-mu-song" data-id="${x.id}"><div class="ap-mu-sh"><span class="ap-mu-no">${String(i + 1).padStart(2, '0')}</span>`
+        + `<span class="ap-mu-st">${esc(x.t)}</span><span class="ap-mu-sa">${esc(x.a)}</span>${x.mur ? '<span class="ap-mu-dot"></span>' : ''}</div>`
+        + `${x.mur ? `<div class="ap-mu-mur">${esc(x.mur)}</div>` : ''}</div>`).join('') : '<div class="ap-mu-none">還沒有歌。</div>'}</div></div>`).join('');
+    root.querySelector('.ap-view[data-app="music"] .ap-vs').innerHTML = `
+      <div class="ap-meta">MUSIC · ${headDate()}</div>
+      <div class="ap-mtitle"><span class="ap-mdot ap-mu-mdot"></span>音樂</div>
+      <div class="ap-msec">正在播放</div>${now}
+      <div class="ap-msec">歌單</div>${lists || '<div class="ap-mu-empty">到酒館設定「🎵 音樂」填他的歌單。</div>'}`;
+  }
+
   // ===== 電話（第 48 窗果果確認的草圖：霧藍紙、「通話｜最愛」兩個分頁；米杏是它的記號）=====
   let telTab = 'call';
   const telList = (t) => String(t || '').split(/[,，、\n]/).map((x) => x.trim()).filter(Boolean);
@@ -770,7 +810,7 @@
   }
 
   let lp = null, lpAt = 0;
-  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm';
+  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm, .ap-mu-song, .ap-mu-ph[data-own]';
   function lpStart(e) {
     const t = e.target.closest(LPT);
     if (e.target.closest('.ap-rm')) return;
@@ -807,10 +847,12 @@
     else if (t.classList.contains('ap-cm-row')) s.cam.items = s.cam.items.filter((x) => x.id !== id);
     else if (t.classList.contains('ap-tel-call')) s.tel.calls = s.tel.calls.filter((x) => x.id !== id);
     else if (t.classList.contains('ap-tel-vm')) s.tel.vm = s.tel.vm.filter((x) => x.id !== id);
+    else if (t.classList.contains('ap-mu-song')) s.mus.lists.forEach((l) => { l.songs = l.songs.filter((x) => x.id !== id); });
+    else if (t.classList.contains('ap-mu-ph')) { s.mus.lists = s.mus.lists.filter((l) => l.fixed || l.id !== id); musOpen.delete(id); }
     s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
     save();
     const app = t.closest('.ap-view')?.dataset.app;
-    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : app === 'cam' ? paintCam() : app === 'phone' ? paintPhone() : paintMemo()));
+    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : app === 'cam' ? paintCam() : app === 'phone' ? paintPhone() : app === 'music' ? paintMusic() : paintMemo()));
   }
 
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
@@ -1000,16 +1042,18 @@
       ? { id: x.id, tab: 'bill', name: x.name, kind: x.kind, stamped: !!x.stamp } : { id: x.id, tab: 'buy', day: x.day, name: x.name, secret: !!x.secret })),
       card: s.shop.card.map((c) => ({ id: c.id, k: c.k, v: c.v, lock: !!c.lock })) };
     const foodNow = s.food.items.slice(-40).map((x) => ({ id: x.id, area: x.area, name: x.name, mark: x.mark, lock: x.lock || undefined, open: x.open || undefined }));
+    const musM = musSync();
+    const musNow = { now: musM.now.t ? `${musM.now.t} — ${musM.now.a}` : '', lists: musM.lists.map((l) => ({ name: l.name, full: l.songs.length >= 30, songs: l.songs.map((x) => x.t) })) };
     const telNow = { day: s.tel.day, calls: s.tel.calls.map((x) => ({ name: x.name, type: x.type, time: x.time })), vm: s.tel.vm.map((x) => ({ id: x.id, from: x.from, keep: !!x.keep })) };
     const camNow = { day: s.cam.day, items: s.cam.items.map((x) => ({ id: x.id, title: x.title })) }; // 只給標題，用來避免重複
     const diaryNow = { recent: s.diary.items.slice(-3).map((x) => ({ day: x.day, body: x.body })), draft: s.diary.draft }; // 只給最近幾篇，越寫越多也不會變慢
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow };
     const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
     const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話、音樂）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -1080,10 +1124,14 @@ ${JSON.stringify(now)}
    - vm：語音信箱。add 是這次新的語音留言，只寫劇情裡真的有人留的，最多 1 則，沒有就給 []；from 是留言的人（照小抄的名字）；time 像「15:20」；text 是留言內容，40 字內，像手機的語音轉文字；keep：他捨不得刪、想一直留著的才是 true；mine 同上。phone.vm 是空的時候，小抄裡寫到他一直留著的舊留言可以一次放進來（最多 3 則），day 寫那天的日期（像「2026-01-12」），keep 給 true。
    - vm 的 keep：phone.vm 裡已經有、他決定要留著的，寫它的 id，像 ["v2"]；沒有就給 []。
    - 劇情到了新的一天（日期跟 phone.day 不一樣），通話紀錄和沒有留著的語音會自動清掉。${mute.length ? `這些人不會打來、也不會留言：${mute.join('、')}。` : ''}
-14. 全部用繁體中文、台灣用語。
+14. music：他的音樂。
+   - now：他現在在聽的歌，title 歌名、artist 歌手；優先照最近劇情狀態欄的 🎧，看不出來就照他的習慣選；沒在聽就都給空字串。
+   - add：這次放進歌單的歌 0～2 首，沒有就給 []。list 寫 music.lists 裡的歌單名字（照抄）；只放劇情裡聽到、提到的，或很像他會放進去的歌，一定要是真的存在的歌；mur 是一句心聲（為什麼放進來，20 字內），不是每首都要有，沒有就給空字串；mur 不要寫歌詞，只寫他自己的話。歌單裡已經有的不要再放；full 是 true 的歌單已經滿了，不能再放。歌單是空的時候，小抄裡寫到的歌可以一次放進來（最多 6 首）。
+   - newList：他很少開新歌單，只有劇情裡有理由（或想放的歌單滿了）才開，寫新歌單的名字（12 字內），這次 add 可以放進去；沒有就給空字串。${musM.lists.length >= 6 ? '（歌單已經 6 個，不能再開。）' : ''}
+15. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}}}`;
     return { sys, prompt };
   }
 
@@ -1112,7 +1160,7 @@ ${JSON.stringify(now)}
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
     const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone', 'music'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
@@ -1126,6 +1174,7 @@ ${JSON.stringify(now)}
     putNote(applyFood(o.food));
     applyDiary(o.diary); // 拾光手記不跳通知（果果說日記不用）
     applyCam(o.cam, isoDate(o.date)); // 相機不發鎖屏通知（之後用主畫面小點）
+    putNote(applyMusic(o.music), 2); // 音樂：正在播放換歌才跳一則
     putNote(telNotice(applyPhone(o.phone, isoDate(o.date))), 2); // 電話：每次最多 1 則（新語音優先，其次未接）
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
@@ -1345,6 +1394,24 @@ ${JSON.stringify(now)}
     D.items.push(it);
     return it;
   }
+  // 音樂：開新歌單 → 加歌（滿 30 首不能加；同歌單同名擋）→ 正在播放（換歌才回傳通知）
+  function applyMusic(o) {
+    const M = musSync();
+    if (!o || typeof o !== 'object') return null;
+    const nl = clean(o.newList, 12);
+    if (nl && M.lists.length < 6 && !M.lists.some((l) => l.name === nl)) M.lists.push({ id: 'L' + (++M.seq), name: nl, fixed: false, songs: [] });
+    const empty = M.lists.every((l) => !l.songs.length);
+    (Array.isArray(o.add) ? o.add : o.add ? [o.add] : []).slice(0, empty ? 6 : 2).forEach((a) => {
+      const l = M.lists.find((x) => x.name === clean(a?.list, 12)), t = clean(a?.title, 24), ar = clean(a?.artist, 16);
+      if (!l || !t || l.songs.length >= 30 || l.songs.some((x) => x.t === t)) return;
+      l.songs.push({ id: 'm' + (++M.seq), t, a: ar, mur: clean(a.mur, 24) });
+    });
+    const t = clean(o.now?.title, 24), a = clean(o.now?.artist, 16);
+    M.now = { t, a: t ? a : '' };
+    if (!t || t === M.last) { if (!t) M.last = ''; return null; }
+    M.last = t;
+    return { app: 'music', from: clean('正在播放・' + t, 20), text: a, when: '現在', mine: false };
+  }
   // 電話：換新的一天 → 通話清空、沒留著的語音清掉 → 他說要留著的標起來 → 加新的通話、語音（不會打來的人擋掉）
   function applyPhone(o, day) {
     const T = S().tel;
@@ -1502,6 +1569,9 @@ ${JSON.stringify(now)}
           ${drawer('diary', '📖 拾光手記', `
           <div class="ap-row">開始的日子（這天是第一天，日記標題的「第 N 天」從這裡算）</div>
           <div class="ap-row"><input type="date" class="text_pole ap-start"><div class="menu_button ap-start-clr">清掉</div></div>`)}
+          ${drawer('mus', '🎵 音樂', `
+          <div class="ap-row">他固定的歌單（照順序，用、分開；最多 6 個，他自己開的會排在下面）</div>
+          <input type="text" class="text_pole ap-mus-fixed" maxlength="120" placeholder="例：示範歌單、示範歌單">`)}
           ${drawer('tel', '📞 電話', `
           <div class="ap-row">我的最愛（照順序，用、分開；名字後面可以加符號）</div>
           <input type="text" class="text_pole ap-tel-favs" maxlength="200" placeholder="例：示範聯絡人、示範聯絡人">
@@ -1564,6 +1634,12 @@ ${JSON.stringify(now)}
     showStart();
     stIn.addEventListener('change', () => { S().start = dOf(stIn.value) ? stIn.value : ''; save(); showStart(); if (root && !root.hidden && inApp()) paintDiary(); });
     box.querySelector('.ap-start-clr').addEventListener('click', () => { S().start = ''; save(); showStart(); });
+
+    // 音樂：固定歌單（名字只存在酒館）
+    const musIn = box.querySelector('.ap-mus-fixed');
+    const showMus = () => { const n = telList(S().mus.fixed).length; musIn.value = S().mus.fixed || ''; sum('mus').textContent = n ? `固定歌單 ${n} 個` : '還沒填歌單'; };
+    showMus();
+    musIn.addEventListener('input', () => { S().mus.fixed = musIn.value; musSync(); save(); showMus(); if (root && !root.hidden && inApp()) paintMusic(); });
 
     // 電話：我的最愛＋最下面那一位（名字只存在酒館，不寫進程式）
     const favIn = box.querySelector('.ap-tel-favs'), lastIn = box.querySelector('.ap-tel-last');
