@@ -31,9 +31,9 @@
     bolt: '<path d="M13 3L6 13.5h5L10 21l7-10.5h-5z"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
-    lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>',
-    lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/>',
-    pin: '<path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z"/>',
+    lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15.5" r="1.1"/>',
+    lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/><circle cx="12" cy="15.5" r="1.1"/>',
+    pin: '<path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z"/>', // 跟主畫面那顆圖釘同一個樣子
     face: '<path d="M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5"/><path d="M9 9.5v1.5M15 9.5v1.5M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.6 3.6 0 0 0 5 0"/>',
   };
   const ic = (k, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || P.memo}</svg>`;
@@ -570,8 +570,8 @@
     save();
     keepScroll(app, app === 'shop' ? paintShop : paintFood);
   }
-  const STAR = '<svg class="ap-fd-mk" viewBox="0 0 24 24" width="12" height="12" aria-label="星星"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.5l6.1-.7z" fill="#E2B23F"/></svg>';
-  const HEART = '<svg class="ap-fd-mk" viewBox="0 0 24 24" width="12" height="12" aria-label="愛心"><path d="M12 20.5s-7.8-4.7-7.8-10.3A4.3 4.3 0 0 1 12 7.7a4.3 4.3 0 0 1 7.8 2.5c0 5.6-7.8 10.3-7.8 10.3z" fill="#C2564F"/></svg>';
+  const STAR = '<svg class="ap-fd-ico" viewBox="0 0 24 24" width="12" height="12" aria-label="星星"><path d="M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.5l6.1-.7z" fill="#E2B23F"/></svg>';
+  const HEART = '<svg class="ap-fd-ico" viewBox="0 0 24 24" width="12" height="12" aria-label="愛心"><path d="M12 20.5s-7.8-4.7-7.8-10.3A4.3 4.3 0 0 1 12 7.7a4.3 4.3 0 0 1 7.8 2.5c0 5.6-7.8 10.3-7.8 10.3z" fill="#C2564F"/></svg>';
 
   // ===== 日常物事（第 46 窗定案：柴米油鹽的燕麥底＋收據條；陶土粉是它的記號）=====
   let shopTab = 'buy'; // buy 購物、bill 家計、her 小果
@@ -587,29 +587,36 @@
     const tabs = `<div class="ap-tabs ap-sh-tabs">${[['buy', '購物'], ['bill', '家計'], ['her', '小果']].map(([k, t]) =>
       `<button type="button" class="ap-tab${shopTab === k ? ' ap-on' : ''}" data-st="${k}">${t}</button>`).join('')}</div>`;
     let body;
+    const lk = (hid) => `<span class="ap-sh-lk">${ic(hid ? 'lockon' : 'lockoff', 15)}</span>`;
     if (shopTab === 'her') {
-      // 小果：一張小卡，左邊項目、右邊內容；他更新時是改那一格或多一格
-      body = H.card.length ? `<div class="ap-sh-card"><span class="ap-sh-cdot"></span>${H.card.map((c) => {
-        const hid = c.lock && !c.seen, open = c.lock && c.seen;
-        return `<div class="ap-sh-crow${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${c.id}"><span class="ap-sh-ck">${esc(c.k)}</span>`
-          + `<span class="ap-sh-cv">${c.lock ? `<span class="ap-sh-lk">${ic(hid ? 'lockon' : 'lockoff', 13)}</span>` : ''}<span class="ap-sh-ct">${esc(c.v)}</span></span></div>`;
+      // 小果：一張小卡（照 46 草圖：上面「小果的尺寸」，左邊項目、右邊內容）；他更新時是改那一格或多一格
+      body = H.card.length ? `<div class="ap-sh-card"><span class="ap-sh-cdot"></span><div class="ap-sh-ctitle">小果的尺寸</div>${H.card.map((c) => {
+        const hid = c.lock && !c.seen;
+        return `<div class="ap-sh-crow${hid ? ' ap-hid' : ''}" data-id="${c.id}"><span class="ap-sh-ck">${esc(c.k)}</span>`
+          + `<span class="ap-sh-cv">${c.lock ? lk(hid) : ''}${hid ? '<span class="ap-sh-bl"></span>' : `<span class="ap-sh-ct">${esc(c.v)}</span>`}</span></div>`;
       }).join('')}</div>` : '<div class="ap-mempty">還沒有寫下什麼。</div>';
+    } else if (shopTab === 'bill') {
+      // 家計：跟購物一樣一天一張收據（上面「— 10/31 —」），右邊只放價錢；處理好的在名字後面蓋「買」或「繳」、字變淡＋淡淡的劃線
+      const list = H.items.filter((x) => x.tab === 'bill' && shopShow(x, n));
+      const days = [...new Set(list.map((x) => x.day))].sort().reverse();
+      const row = (x) => `<div class="ap-sh-row${x.stamp ? ' ap-done' : ''}" data-id="${x.id}">`
+        + `<span class="ap-sh-nm">${esc(x.name)}</span>${x.stamp ? `<span class="ap-sh-stamp">${esc(x.stamp)}</span>` : ''}<span class="ap-sh-pr">${esc(x.price || '')}</span></div>`;
+      body = days.map((d) => `<div class="ap-sh-rc"><div class="ap-sh-rd">— ${slash(d)} —</div>${list.filter((x) => x.day === d).map(row).join('')}</div>`).join('')
+        || '<div class="ap-mempty">家計清單是空的。</div>';
     } else {
-      // 購物、家計：一天一張收據（上面「— 10/31 —」），新的日子在上面，同一張裡照寫下的順序
-      const list = H.items.filter((x) => x.tab === shopTab && shopShow(x, n));
+      // 購物：一天一張收據（上面「— 10/31 —」），每筆右邊是時間；偷偷買給小果的上鎖
+      const list = H.items.filter((x) => x.tab === 'buy' && shopShow(x, n));
       const days = [...new Set(list.map((x) => x.day))].sort().reverse();
       const row = (x) => {
-        const hid = x.secret && !x.seen, open = x.secret && x.seen;
-        const right = x.price || (x.tab === 'buy' ? x.time : '');
-        return `<div class="ap-sh-row${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}${x.stamp ? ' ap-done' : ''}" data-id="${x.id}">`
-          + `${x.secret ? `<span class="ap-sh-lk">${ic(hid ? 'lockon' : 'lockoff', 13)}</span>` : ''}<span class="ap-sh-nm">${esc(x.name)}</span>`
-          + `<span class="ap-sh-pr">${esc(right)}</span>${x.stamp ? `<span class="ap-sh-stamp">${esc(x.stamp)}</span>` : ''}</div>`;
+        const hid = x.secret && !x.seen;
+        return `<div class="ap-sh-row${hid ? ' ap-hid' : ''}" data-id="${x.id}">${x.secret ? lk(hid) : ''}`
+          + `${hid ? '<span class="ap-sh-bl"></span>' : `<span class="ap-sh-nm">${esc(x.name)}</span>`}<span class="ap-sh-pr">${x.price ? `<b>${esc(x.price)}</b>` : ''}${esc(x.time || '')}</span></div>`;
       };
       body = days.map((d) => `<div class="ap-sh-rc"><div class="ap-sh-rd">— ${slash(d)} —</div>${list.filter((x) => x.day === d).map(row).join('')}</div>`).join('')
-        || `<div class="ap-mempty">${shopTab === 'buy' ? '這個月還沒有購物紀錄。' : '家計清單是空的。'}</div>`;
+        || '<div class="ap-mempty">這個月還沒有購物紀錄。</div>';
     }
     root.querySelector('.ap-view[data-app="shop"] .ap-vs').innerHTML = `
-      <div class="ap-meta">SHOP · ${headDate()}</div>
+      <div class="ap-meta">SHOP · 購物紀錄</div>
       <div class="ap-mtitle"><span class="ap-mdot ap-sh-dot"></span>日常物事</div>
       ${tabs}${body}`;
   }
@@ -621,18 +628,17 @@
     const areas = [];
     F.items.forEach((x) => { const a = areas.find((g) => g.area === x.area); a ? a.items.unshift(x) : areas.push({ area: x.area, items: [x] }); }); // 區照第一次出現的順序；區裡新的在上面
     const row = (x) => {
-      const tl = fdLate(x, n), hid = x.lock === 'tap' && !x.seen, done = (x.lock === 'tap' && x.seen) || (x.lock === 'date' && !tl);
-      const lockIc = tl || hid ? `<span class="ap-fd-lk">${ic('lockon', 13)}</span>` : done ? `<span class="ap-fd-lk">${ic('lockoff', 13)}</span>` : '';
-      const shut = tl || hid;
-      return `<div class="ap-fd-row${tl ? ' ap-tl' : ''}${hid ? ' ap-hid' : ''}${done ? ' ap-peeked' : ''}${x.note && !shut ? ' ap-has' : ''}" data-id="${x.id}">`
-        + `<div class="ap-fd-h">${lockIc}<span class="ap-fd-nm">${esc(x.name)}</span>${shut ? '' : x.mark === 'heart' ? HEART : STAR}`
-        + `${tl ? `<span class="ap-fd-when">${slash(x.open)} 打開</span>` : ''}</div>${x.note && !shut ? `<div class="ap-fd-note">${esc(x.note)}</div>` : ''}</div>`;
+      const tl = fdLate(x, n), hid = x.lock === 'tap' && !x.seen, shut = tl || hid; // 解開之後就跟一般的一樣
+      const mark = shut ? `<span class="ap-fd-lk">${ic('lockon', 15)}</span>` : `<span class="ap-fd-mk">${x.mark === 'heart' ? HEART : STAR}</span>`;
+      const name = shut ? '<span class="ap-fd-bl"></span>' : `<span class="ap-fd-nm">${esc(x.name)}</span>`;
+      return `<div class="ap-fd-row${tl ? ' ap-tl' : ''}${hid ? ' ap-hid' : ''}${x.note && !shut ? ' ap-has' : ''}" data-id="${x.id}">`
+        + `<div class="ap-fd-h">${mark}${name}${tl ? `<span class="ap-fd-when">${slash(x.open)} 打開</span>` : ''}</div>${x.note && !shut ? `<div class="ap-fd-note">${esc(x.note)}</div>` : ''}</div>`;
     };
-    const pin = `<svg class="ap-fd-pin" viewBox="0 0 24 24" width="15" height="15" fill="rgba(79,138,94,.15)" stroke="#4F8A5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P.pin}</svg>`;
+    const pin = `<svg class="ap-fd-pin" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#A9677A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>`; // App 裡面：地圖標記（46 草圖那顆）；通知用主畫面那種圖釘
     root.querySelector('.ap-view[data-app="food"] .ap-vs').innerHTML = `
-      <div class="ap-meta">FOOD · 美食地圖</div>
+      <div class="ap-meta">MAP · 美食地圖</div>
       <div class="ap-mtitle"><span class="ap-mdot ap-fd-dot"></span>${esc(nm({ id: 'food', n: '餵食指南' }, s))}</div>
-      ${areas.map((g) => `<div class="ap-fd-card"><div class="ap-fd-hd">${pin}<span class="ap-fd-area">${esc(g.area)}</span><span class="ap-fd-cnt">${g.items.length} 間</span></div>${g.items.map(row).join('')}</div>`).join('')
+      ${areas.map((g) => `<div class="ap-fd-card"><div class="ap-fd-hd">${pin}<span class="ap-fd-area">${esc(g.area)}</span><span class="ap-fd-cnt">${g.items.length} 間</span></div><div class="ap-fd-list">${g.items.map(row).join('')}</div></div>`).join('')
         || '<div class="ap-mempty">還沒有標上任何一間。</div>'}`;
   }
 
@@ -661,10 +667,10 @@
   function paintDiary() {
     const D = S().diary, hasStart = !!dOf(S().start);
     const list = D.items.slice().sort((a, b) => (`${a.day} ${String(+a.id.slice(1)).padStart(6, '0')}` < `${b.day} ${String(+b.id.slice(1)).padStart(6, '0')}` ? 1 : -1));
-    const draft = D.draft ? `<div class="ap-dy-ent ap-dy-draft"><div class="ap-dy-h"><span class="ap-dy-t">${esc(dayTitle(nowDay()))}</span><span class="ap-dy-d">草稿</span></div>`
+    const draft = D.draft ? `<div class="ap-dy-ent ap-dy-draft"><div class="ap-dy-h"><span class="ap-dy-t">${esc(dayTitle(nowDay()))}</span><span class="ap-dy-d">${esc(slash(nowDay()) ? slash(nowDay()) + ' · ' : '')}草稿</span></div>`
       + `<div class="ap-dy-b">${esc(D.draft)}<i class="ap-dy-cur"></i></div></div>` : '';
     root.querySelector('.ap-view[data-app="diary"] .ap-vs').innerHTML = `
-      <div class="ap-meta">DIARY · ${headDate()}</div>
+      <div class="ap-meta">DIARY · 拾光手記</div>
       <div class="ap-mtitle"><span class="ap-mdot ap-dy-dot"></span>拾光手記</div>
       ${draft}${list.map((x) => `<div class="ap-dy-ent" data-id="${x.id}"><div class="ap-dy-h"><span class="ap-dy-t">${esc(dayTitle(x.day))}</span>`
         + `<span class="ap-dy-d">${esc(hasStart ? slash(x.day) : x.time || '')}</span></div><div class="ap-dy-b">${esc(x.body)}</div></div>`).join('')}
@@ -676,7 +682,7 @@
     const L = root.querySelector('.ap-dy-lock');
     dyFocus = focus || null; dyBusy = false;
     L.className = 'ap-dy-lock';
-    L.innerHTML = `<div class="ap-dy-book"><div class="ap-dy-inner"></div><div class="ap-dy-cover"><span class="ap-dy-face">${ic('face', 34)}</span></div></div>`
+    L.innerHTML = `<div class="ap-dy-book"><div class="ap-dy-inner"></div><div class="ap-dy-cover"><span class="ap-dy-face">${ic('face', 28)}</span><span class="ap-dy-rule"></span></div></div>`
       + '<div class="ap-dy-name">拾光手記</div><div class="ap-dy-hint">輕觸以臉部解鎖</div>';
     L.hidden = false;
   }
@@ -1032,7 +1038,7 @@ ${JSON.stringify(now)}
     applyWeb(o.web);
     putNote(shopNotice(applyShop(o.shop)));
     putNote(applyFood(o.food));
-    putNote(diaryNotice(applyDiary(o.diary)), 4);
+    applyDiary(o.diary); // 拾光手記不跳通知（果果說日記不用）
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
   }
@@ -1198,7 +1204,7 @@ ${JSON.stringify(now)}
         const it = { id: 's' + (++H.seq), tab, name, price: clean(a.price, 10), day: n.day, time: hm(a.time) || S().lock.time || '' };
         if (tab === 'buy') { it.secret = a.secret === true; it.seen = false; } else { it.kind = a.kind === 'pay' ? 'pay' : 'buy'; it.stamp = ''; }
         H.items.push(it);
-        if (!it.secret && (!fresh || (tab === 'bill' && fresh.tab !== 'bill'))) fresh = it; // 通知：家計的待處理優先
+        if (!it.secret && !fresh) fresh = it; // 通知：這次第一筆新的（購物或家計都可以；偷偷買的不跳）
       });
       arr(o.card).slice(0, 4).forEach((c) => {
         const k = clean(c?.k, 8), v = clean(c?.v, 24);
