@@ -1014,7 +1014,7 @@
         const dk = lnDayKey(m.time); if (dk !== lastDay) { html += `<div class="ap-ln-day">${esc(lnRealDay(m.time))}</div>`; lastDay = dk; prev = null; }
         const mine = m.from === 'me', first = !mine && (!prev || prev.from !== 'him');
         const body = m.t === 'stk' ? lnStkHtml(m.v) : `<span class="ap-ln-b ${mine ? 'ap-ln-bme' : 'ap-ln-bhis'}">${esc(m.v)}</span>`;
-        const side = mine ? `<span class="ap-ln-sm">${m.read ? '已讀<br>' : ''}${lnHM(m.time)}</span>` : `<span class="ap-ln-sm ap-ln-sml">${lnHM(m.time)}</span>`;
+        const side = mine ? `<span class="ap-ln-sm">${m.read ? '<span class="ap-ln-rd">已讀</span>' : ''}${lnHM(m.time)}</span>` : `<span class="ap-ln-sm ap-ln-sml">${lnHM(m.time)}</span>`;
         html += mine ? `<div class="ap-ln-m ap-ln-me" data-id="${m.id}">${side}${body}</div>`
           : `<div class="ap-ln-m" data-id="${m.id}">${first ? lnAv(L.him.av, '安') : '<span class="ap-ln-avsp"></span>'}${body}${side}</div>`;
         prev = m;
@@ -1164,13 +1164,19 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
 【怎麼回】
 1. 這是 LINE 文字聊天，不是小說：只寫你打出去的訊息。不寫動作、旁白、心聲、*星號*、括號裡的動作，不寫狀態欄、好感或任何格式區塊。
 2. 回 ${her} 標了 ★ 的那幾則（這次要回的）。接得上話，不要整句重複她說的。
-3. 回 1～4 則，像真人打 LINE，想到一句送一句；則數和長短照你的個性決定（有時一則「嗯」就夠），每則 60 字以內。
+3. 回 1～4 則，像真人打 LINE，想到一句送一句。則數要跟著情境變，不要每次都一樣多：簡單的話、你在忙、或她該睡了，一兩則就好（有時一則「嗯」就夠）；聊得開心、真的有很多想說的，才三四則。每則 60 字以內。${lnRhythm(M)}
 4. 照現在的真實時間：深夜可以叫她早點睡、早上可以說早安；不要編出你們故事裡的大事件。
 5. 貼圖：每次最多 1 張，可以不傳，也可以整輪只回一張貼圖；只能從上面的名字裡挑，名字要一字不差。${her}的貼圖你也可以拿來逗她。
 6. 繁體中文。
 7. 只輸出 JSON，不要其他文字：
 {"msgs":[{"t":"text","v":"訊息"},{"t":"stk","v":"貼圖名字"}]}`;
     return { sys, prompt };
+  }
+  function lnRhythm(M) { // 他最近三輪都回一樣多則 → 提醒換個節奏（AI 很容易一直挑中間值）
+    const R = []; let n = 0;
+    for (let i = M.length - 1; i >= 0 && R.length < 3; i--) { if (M[i].from === 'him') n++; else if (n) { R.push(n); n = 0; } }
+    if (n && R.length < 3) R.push(n);
+    return R.length === 3 && R.every((x) => x === R[0]) ? `你最近三次都剛好回 ${R[0]} 則，這次換個節奏。` : '';
   }
   function lnParse(txt) {
     const o = parse(txt), K = new Set(S().line.stk.map((k) => k.name));

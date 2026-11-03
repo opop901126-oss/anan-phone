@@ -713,3 +713,4 @@
 .ap-badge.ap-badge-ln.ap-two{right:13px}
 @media (prefers-reduced-motion:reduce){.ap-ln-run{animation-duration:10s}}
 .ap-ln-m.ap-flash{animation:ap-kflash 1.8s ease;border-radius:6px}
+.ap-ln-rd{font-size:9.5px;letter-spacing:.5px;margin-bottom:1px}
