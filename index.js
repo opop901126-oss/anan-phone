@@ -996,7 +996,7 @@
         + `<div class="ap-ln-rt">${m ? `<span class="ap-mw">${esc(slash(m.day))}</span>` : ''}${u ? `<span class="ap-ln-ur">${u}</span>` : ''}</div></div>`; }).join('');
     const dad = lnDadName();
     if (lnTab === 'fam' && dad) { const D = L.dadMsgs, dm = D[D.length - 1];
-      body += `<div class="ap-ln-row ap-ln-dad" data-room="dad">${lnAv('', dad)}<div class="ap-ln-rb"><div class="ap-ln-nm">${esc(dad)}</div><div class="ap-ln-pv">${esc(dm ? dm.v : '')}</div></div></div>`; }
+      body += `<div class="ap-ln-row ap-ln-dad" data-room="dad">${lnAv(L.dad.av || '', dad)}<div class="ap-ln-rb"><div class="ap-ln-nm">${esc(dad)}</div><div class="ap-ln-pv">${esc(dm ? dm.v : '')}</div></div></div>`; }
     if (!body) body = `<div class="ap-tel-empty">${L.roster.length ? '這一頁還沒有人。' : '到酒館設定「💬 LINE」填聊天名單。'}</div>`;
     v.querySelector('.ap-vs').innerHTML = `<div class="ap-meta">LINE</div><div class="ap-mtitle"><span class="ap-mdot ap-ln-dot"></span>LINE</div>${pin}${tabs}<div class="ap-ln-list">${body}</div>`;
   }
@@ -2482,7 +2482,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
       box.querySelectorAll('.ap-ln-avr').forEach((r) => {
         const o = l[r.dataset.who], th = r.querySelector('.ap-ln-th');
         th.style.backgroundImage = o.av ? `url("${lnSrc(o.av)}")` : '';
-        th.textContent = o.av ? '' : (r.dataset.who === 'me' ? lnInit(l.me.name || '果') : '安');
+        th.textContent = o.av ? '' : (r.dataset.who === 'me' ? lnInit(l.me.name || '果') : r.dataset.who === 'dad' ? lnInit(lnDadName() || '爸') : '安');
         r.querySelector('.ap-ln-avdel').hidden = !o.av;
       });
       q('.ap-ln-ros').innerHTML = l.roster.map((x) => `
@@ -2625,6 +2625,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
           <input type="text" class="text_pole ap-ln-mename" maxlength="30" placeholder="例：示範名字">
           <div class="ap-row ap-ln-avr" data-who="me"><span class="ap-ln-th"></span>妳的頭像<div class="menu_button ap-ln-avpick">選擇照片</div><div class="menu_button ap-ln-avdel">移除</div></div>
           <div class="ap-row ap-ln-avr" data-who="him"><span class="ap-ln-th"></span>他的頭像<div class="menu_button ap-ln-avpick">選擇照片</div><div class="menu_button ap-ln-avdel">移除</div></div>
+          <div class="ap-row ap-ln-avr" data-who="dad"><span class="ap-ln-th"></span>爸的頭像<div class="menu_button ap-ln-avpick">選擇照片</div><div class="menu_button ap-ln-avdel">移除</div></div>
           <div class="ap-row">聊天名單（名字＋分類；他在劇情裡加的朋友也會出現在這裡）</div>
           <div class="ap-ln-ros"></div>
           <div class="ap-row"><div class="menu_button ap-ln-add">＋ 新增一位</div><small class="ap-ln-rosn"></small></div>
