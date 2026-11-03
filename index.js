@@ -1,4 +1,4 @@
-// 安安的小手機 v0.14.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋主畫面小點（照安安自己說的規則排版）
+// 安安的小手機 v0.15.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -55,6 +55,7 @@
     music: ['音樂', '#A9636E', '#6E3540', 'music'], // 音樂＝酒紅（第 48 窗）
     album: ['相簿', '#BDBF8F', '#767A47', 'photo'], // 相簿＝橄欖（第 49 窗）
     threads: ['Threads', '#D9A35E', '#9A6A2C', 'threads'], // Threads＝焦糖（第 50 窗；鵝黃心意專區）
+    secret: ['2026機密企劃', '#B5574B', '#7E3329', 'lock'], // 機密企劃＝封蠟紅（第 51 窗；跟「完」印章同色）
   };
   const ICOL = {}; // 圖示線條：都跟細框同色（第 45 窗：備忘錄改臻綠、LINE 改草綠，不再特別寫）
   const adot = (a) => { const x = APP[a] || APP.memo; return `<span class="ap-ad" style="background:${x[1]};box-shadow:0 0 0 1.2px ${x[2]}"></span>`; };
@@ -121,6 +122,7 @@
     if (!s.cam) s.cam = { day: '', seq: 0, items: [] }; // 相機：沒拍到的瞬間，劇情換新的一天整本換新（第 48 窗）
     if (!s.alb) s.alb = { seq: 0, folders: [], photos: [], wall: '', wallDay: '', last: '' }; // 相簿：照片檔放在酒館伺服器（Railway 硬碟），這裡只記路徑、資料夾、說明、位置（第 49 窗）
     if (!s.th) s.th = { seq: 0, cseq: 0, rseq: 0, him: '', me: '', posts: [] }; // Threads：他的脆（新的在前面，留 100 篇；圖存 Railway，第 50 窗）
+    if (!s.sec) s.sec = { pw: '', book: '', seq: 0, nseq: 0, peek: false, slip: '', items: [], bingo: {}, bk: null }; // 機密企劃：密碼、他寫的計畫、賓果準備筆記；賓果格子從世界書讀（bk＝上次讀到的，第 51 窗）
     if (!s.hdot) s.hdot = {}; // 主畫面 App 小點：有新東西的 App（點進去再出來就消失，第 50 窗）
     if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
     return s;
@@ -188,6 +190,7 @@
           <div class="ap-view" data-app="music" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="album" hidden><div class="ap-vs"></div></div>
           <div class="ap-view ap-th" data-app="threads" hidden><div class="ap-vs"></div><input type="file" accept="image/*" class="ap-th-file" hidden></div>
+          <div class="ap-view ap-sc" data-app="secret" hidden><div class="ap-vs"></div><div class="ap-sc-door" hidden></div></div>
           <div class="ap-view" data-app="diary" hidden><div class="ap-dy-page"><div class="ap-vs"></div></div><div class="ap-dy-lock" hidden></div></div>
           <div class="ap-bar"></div><div class="ap-barhit" aria-label="回主畫面"></div>
         </div>
@@ -354,6 +357,19 @@
       const r = e.target.closest('.ap-dy-ent:not(.ap-dy-draft)');
       if (r) r.classList.toggle('ap-open');
     });
+    root.querySelector('.ap-view[data-app="secret"]').addEventListener('click', (e) => {
+      const k = e.target.closest('.ap-sc-key');
+      if (k) { secKey(k.dataset.k); return; }
+      if (e.target.closest('.ap-sc-door')) return;
+      if (lpEat(e)) return;
+      const t = e.target.closest('.ap-tab');
+      if (t) { secTab = t.dataset.t; keepScroll('secret', paintSecret); root.querySelector('.ap-view[data-app="secret"] .ap-vs').scrollTop = 0; return; }
+      const hid = e.target.closest('.ap-sc-hid');
+      if (hid) { hid.classList.remove('ap-nope'); void hid.offsetWidth; hid.classList.add('ap-nope'); return; } // 還沒揭曉：輕輕晃一下
+      const c = e.target.closest('.ap-sc-card');
+      if (c) c.classList.toggle('ap-open');
+    });
+    root.querySelector('.ap-view[data-app="secret"]').addEventListener('animationend', (e) => e.target.classList.remove('ap-nope'));
     root.querySelector('.ap-view[data-app="memo"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
       const tab = e.target.closest('.ap-tab');
@@ -428,7 +444,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music', 'album', 'threads']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music', 'album', 'threads', 'secret']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -445,6 +461,7 @@
     if (id === 'music') paintMusic();
     if (id === 'album') { albOpen = focus && S().alb.photos.some((p) => p.id === focus) ? { id: focus } : null; paintAlbum(); focus = null; } // 從通知點進來：直接打開那張
     if (id === 'threads') { thIn = null; paintThreads(); }
+    if (id === 'secret') { secPin = ''; paintSecret(); secDoor(); secLoad().then(() => { if (!root.hidden && !root.querySelector('.ap-view[data-app="secret"]').hidden) keepScroll('secret', paintSecret); }); } // 機密企劃：重新整理酒館前輸入一次密碼就好
     if (id === 'phone') { telTab = 'call'; paintPhone(); } // 每次打開都先在「通話」分頁（從通知點進來也是）
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
@@ -926,7 +943,7 @@
   }
 
   let lp = null, lpAt = 0;
-  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm, .ap-mu-song, .ap-mu-ph[data-own], .ap-th-ph';
+  const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm, .ap-mu-song, .ap-mu-ph[data-own], .ap-th-ph, .ap-sc-card[data-id], .ap-sc-hid';
   function lpStart(e) {
     const t = e.target.closest(LPT);
     if (e.target.closest('.ap-rm')) return;
@@ -969,10 +986,11 @@
     else if (t.classList.contains('ap-tel-vm')) s.tel.vm = s.tel.vm.filter((x) => x.id !== id);
     else if (t.classList.contains('ap-mu-song')) s.mus.lists.forEach((l) => { l.songs = l.songs.filter((x) => x.id !== id); });
     else if (t.classList.contains('ap-mu-ph')) { s.mus.lists = s.mus.lists.filter((l) => l.fixed || l.id !== id); musOpen.delete(id); }
+    else if (t.classList.contains('ap-sc-card') || t.classList.contains('ap-sc-hid')) s.sec.items = s.sec.items.filter((x) => x.id !== id);
     s.notes = s.notes.filter((x) => x.id !== id); // 鎖定畫面上指到它的通知也拿掉
     save();
     const app = t.closest('.ap-view')?.dataset.app;
-    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : app === 'cam' ? paintCam() : app === 'phone' ? paintPhone() : app === 'music' ? paintMusic() : paintMemo()));
+    keepScroll(app, () => (app === 'web' ? paintWeb() : app === 'cal' ? paintCal() : app === 'shop' ? paintShop() : app === 'food' ? paintFood() : app === 'diary' ? paintDiary() : app === 'cam' ? paintCam() : app === 'phone' ? paintPhone() : app === 'music' ? paintMusic() : app === 'secret' ? paintSecret() : paintMemo()));
   }
 
 
@@ -1100,6 +1118,127 @@
     if (mineNote) notes.unshift(mineNote);
     while (T.posts.length > 100) { const old = T.posts.pop(); albUnlink(old.img); } // 第 101 篇：最舊的連圖一起刪（果果會自己截圖存 DC）
     return notes;
+  }
+
+  // ===== 2026機密企劃（第 51 窗：鵝黃心意專區第二張，紙跟 Threads 同一套；A 版分頁）=====
+  // 密碼在設定裡填（倉庫是公開的，不寫進程式）；重新整理酒館前輸入一次就好
+  // 賓果作戰筆記：格子從聊天室綁的世界書讀（標題「賓果卡」「賓果心意」），✨＝完成；他只寫準備筆記，不能自己打 ✨
+  const SEC_TABS = [['bingo', '賓果'], ['place', '地方'], ['sweet', '甜點'], ['wed', '婚禮'], ['sur', '驚喜'], ['prop', '求婚']];
+  const SEC_MAX = 20;
+  let secTab = 'bingo', secOpen = false, secPin = '', secBusy = false;
+  let secBG = { ok: false, why: '還沒讀過' }; // 這次打開酒館讀到的結果
+  let secShow = null; // 設定頁的狀態小字（設定頁打開時才有）
+  async function secLoad() {
+    const C = S().sec, c = ctx();
+    try {
+      const book = String(C.book || '').trim() || c.chatMetadata?.world_info || '';
+      if (!book) { secBG = { ok: false, why: '這個聊天室沒有綁世界書' }; return secBG; }
+      let load = c.loadWorldInfo;
+      if (typeof load !== 'function') { try { load = (await import('/scripts/world-info.js')).loadWorldInfo; } catch (e) { load = null; } }
+      if (typeof load !== 'function') { secBG = { ok: false, why: '這個酒館版本讀不到世界書' }; return secBG; }
+      const data = await load(book), E = Object.values(data?.entries || {});
+      if (!E.length) { secBG = { ok: false, why: `找不到世界書「${book}」` }; return secBG; }
+      const pick = (t) => E.find((e) => String(e.comment || '').trim() === t);
+      const card = pick('賓果卡'), heart = pick('賓果心意');
+      if (!card) { secBG = { ok: false, why: `「${book}」裡找不到標題「賓果卡」的條目` }; return secBG; }
+      const cells = [];
+      String(card.content || '').split('\n').forEach((ln) => { const m = ln.trim().match(/^(✨)?\s*([A-Y])\s*[｜|]\s*(.+)$/); if (m && !cells.some((x) => x.L === m[2])) cells.push({ L: m[2], t: m[3].trim().slice(0, 40), done: !!m[1] }); });
+      if (cells.length < 5) { secBG = { ok: false, why: '「賓果卡」裡讀不到格子（要像「A｜…」一行一格）' }; return secBG; }
+      cells.sort((a, b) => a.L.localeCompare(b.L));
+      const H = {}, lines = String(heart?.content || '').split('\n').map((x) => x.trim());
+      lines.forEach((ln, i) => { const m = ln.match(/^[^｜|]{1,6}[｜|]\s*([A-Y])\s/); if (m && lines[i + 1] && !/^[^｜|]{1,6}[｜|]\s*[A-Y]\s/.test(lines[i + 1])) H[m[1]] = lines[i + 1].slice(0, 80); });
+      secBG = { ok: true, book, why: '' };
+      C.bk = { cells, heart: H, at: Date.now() }; save(); // 存一份：換到別的聊天室打開也看得到
+    } catch (e) { console.warn('[anan_phone] 讀賓果卡失敗', e); secBG = { ok: false, why: '讀世界書的時候出錯了' }; }
+    if (secShow) secShow();
+    return secBG;
+  }
+  // 大門：沒解鎖過就蓋一層密碼鍵盤
+  function secDoor() {
+    const L = root.querySelector('.ap-sc-door'), C = S().sec, n = String(C.pw || '').length;
+    if (secOpen) { L.hidden = true; return; }
+    const dots = n ? Array.from({ length: n }, (_, i) => `<i class="${i < secPin.length ? 'ap-on' : ''}"></i>`).join('') : '';
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((k) => (k === '' ? '<span></span>'
+      : `<button type="button" class="ap-sc-key${k === 'del' ? ' ap-sc-kdel' : ''}" data-k="${k}">${k === 'del' ? '刪除' : k}</button>`)).join('');
+    L.innerHTML = `<div class="ap-sc-dtop"><span class="ap-sc-dlk">${ic('lockon', 30)}</span><div class="ap-sc-dname">二〇二六機密企劃</div><div class="ap-meta">CONFIDENTIAL</div>`
+      + (n ? `<div class="ap-sc-pins">${dots}</div></div><div class="ap-sc-keys">${keys}</div>` : '<div class="ap-sc-dhint">先到酒館設定「📱 App 設定」填密碼</div></div>');
+    L.hidden = false;
+  }
+  function secKey(k) {
+    const pw = String(S().sec.pw || '');
+    if (secBusy || !pw) return;
+    if (k === 'del') { secPin = secPin.slice(0, -1); secDoor(); return; }
+    if (secPin.length >= pw.length) return;
+    secPin += k; secDoor();
+    if (secPin.length < pw.length) return;
+    secBusy = true;
+    if (secPin === pw) {
+      setTimeout(() => {
+        secOpen = true; secBusy = false; secPin = '';
+        const C = S().sec; C.peek = true; save(); // 他下次更新會知道「她打開過」（不知道看了哪一頁）
+        const L = root.querySelector('.ap-sc-door'); L.classList.add('ap-gone');
+        setTimeout(() => { L.hidden = true; L.classList.remove('ap-gone'); }, 300);
+      }, 180);
+    } else {
+      setTimeout(() => { const P = root.querySelector('.ap-sc-pins'); if (P) { P.classList.add('ap-nope'); } setTimeout(() => { secPin = ''; secBusy = false; secDoor(); }, 380); }, 160);
+    }
+  }
+  const secCells = () => S().sec.bk?.cells || [];
+  function secCard(x) {
+    const done = x.done ? ' ap-done' : '', when = x.when ? `<span class="ap-sc-when">${esc(x.when)}</span>` : '';
+    if (x.tab === 'sur' && x.hid) return `<div class="ap-sc-hid" data-id="${x.id}">${when || '<span class="ap-sc-when">？</span>'}<span class="ap-sc-bar"></span></div>`;
+    return `<div class="ap-sc-card${done}" data-id="${x.id}"><div class="ap-sc-it">${when}<span>${esc(x.title)}</span>${x.done ? '<span class="ap-sc-stamp">完</span>' : ''}</div>`
+      + (x.body ? `<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(x.body)}</div>` : '') + '</div>';
+  }
+  function paintSecret() {
+    const C = S().sec, v = root.querySelector('.ap-view[data-app="secret"] .ap-vs');
+    const tabs = `<div class="ap-tabs ap-sc-tabs">${SEC_TABS.map(([k, n]) => `<button type="button" class="ap-tab${k === secTab ? ' ap-on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
+    let body = '';
+    if (secTab === 'bingo') {
+      const cells = secCells(), H = C.bk?.heart || {};
+      if (!cells.length) body = `<div class="ap-sc-empty">${esc(secBG.ok ? '賓果卡是空的' : '讀不到賓果卡（酒館設定裡有說明）')}</div>`;
+      else {
+        const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXY'.split('').map((L) => `<i class="${cells.find((x) => x.L === L)?.done ? 'ap-on' : ''}"></i>`).join('');
+        const left = cells.filter((x) => !x.done), noted = left.filter((x) => C.bingo[x.L]), rest = left.filter((x) => !C.bingo[x.L]);
+        body = `<div class="ap-sc-grid">${grid}</div>` + [...noted, ...rest].map((x) => `<div class="ap-sc-card"><div class="ap-sc-it"><span>${x.L}｜${esc(x.t)}</span></div>`
+          + (H[x.L] ? `<div class="ap-sc-hx">${esc(H[x.L])}</div>` : '') + (C.bingo[x.L] ? `<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(C.bingo[x.L])}</div>` : '') + '</div>').join('')
+          + (left.length ? '' : '<div class="ap-sc-empty">全部完成了</div>');
+      }
+    } else {
+      const list = C.items.filter((x) => x.tab === secTab).sort((a, b) => (a.done - b.done) || (+b.id.slice(1) - +a.id.slice(1)));
+      body = list.length ? list.map(secCard).join('') : '<div class="ap-sc-empty">這一頁還是空白的</div>';
+    }
+    v.innerHTML = `<div class="ap-meta">CONFIDENTIAL · ${esc(String(nowDay()).slice(0, 4) || '2026')}</div><div class="ap-mtitle"><span class="ap-mdot ap-sc-dot"></span>二〇二六機密企劃</div>`
+      + (C.slip ? `<div class="ap-sc-slip"><span class="ap-sc-tape"></span>${esc(C.slip)}</div>` : '') + tabs + body;
+  }
+  // 他寫的準備筆記：一句一行，太長就丟掉最舊的
+  const secAppend = (old, t) => { let lines = String(old || '').split('\n').filter(Boolean); lines.push(t); while (lines.join('\n').length > 400 && lines.length > 1) lines.shift(); return lines.join('\n'); };
+  function applySecret(o) {
+    const C = S().sec, peek = C.peek;
+    C.peek = false; // 這次已經告訴他了
+    if (!o || typeof o !== 'object') return;
+    if (peek && clean(o.slip, 40)) C.slip = clean(o.slip, 40); // 紙條：只有她打開過才寫；新的換掉舊的
+    const op = o.op; if (!op || typeof op !== 'object') return;
+    const day = nowDay(), act = String(op.act || '');
+    if (act === 'add') {
+      const tab = String(op.tab || ''), title = clean(op.title, 30);
+      if (!['place', 'sweet', 'wed', 'sur', 'prop'].includes(tab) || !title) return;
+      if (tab === 'prop' && C.items.some((x) => x.tab === 'prop')) return; // 求婚腳本只有一份
+      if (C.items.some((x) => x.tab === tab && x.title === title)) return;
+      let mine = C.items.filter((x) => x.tab === tab);
+      if (mine.length >= SEC_MAX) { const old = mine.filter((x) => x.done).sort((a, b) => +a.id.slice(1) - +b.id.slice(1))[0]; if (!old) return; C.items = C.items.filter((x) => x !== old); }
+      C.items.push({ id: 's' + (++C.seq), tab, title, body: clean(op.note, 120), day, when: tab === 'sur' || tab === 'prop' ? clean(op.when, 10) : '', done: tab !== 'sur' && op.done === true, hid: tab === 'sur' });
+    } else if (act === 'note') {
+      const t = clean(op.t || op.note, 80); if (!t) return;
+      const L = String(op.bingo || '').toUpperCase(), cell = L && secCells().find((x) => x.L === L);
+      if (cell) { if (cell.done) return; C.bingo[L] = secAppend(C.bingo[L], t); C.nseq++; return; } // 賓果：只寫準備筆記，不能打 ✨
+      const x = C.items.find((it) => it.id === op.id); if (!x || x.hid) return;
+      x.body = secAppend(x.body, t); C.nseq++;
+    } else if (act === 'done') {
+      const x = C.items.find((it) => it.id === op.id); if (x && !x.hid && !x.done) { x.done = true; C.nseq++; }
+    } else if (act === 'reveal') {
+      const x = C.items.find((it) => it.id === op.id && it.hid); if (x) { x.hid = false; C.nseq++; }
+    }
   }
 
   // ===== 拾穗小集（第 44 窗果果確認的草圖）=====
@@ -1307,13 +1446,16 @@
     const thNow = { today: thToday, recent: TH.posts.slice(0, 5).map((p) => ({ id: p.id, day: p.day, time: p.time, text: p.text, cap: p.cap, hasPhoto: !!p.img, like: p.like, cm: p.cm.map((c) => ({ id: c.id, who: thWhoP(c), t: c.t, re: c.re || undefined })) })) };
     const thLikes = TH.posts.filter((p) => p.liked && !p.likeSeen).map((p) => p.text.slice(0, 20));
     const thMine = TH.posts.flatMap((p) => p.cm.filter((c) => c.mine && !c.seen).map((c) => `${p.id} 的 ${c.id}「${c.t}」`));
+    const SC = s.sec, scCells = SC.bk?.cells || [], scLast = (t) => String(t || '').split('\n').filter(Boolean).pop() || '';
+    const scNow = { pages: Object.fromEntries(['place', 'sweet', 'wed', 'sur', 'prop'].map((k) => [k, SC.items.filter((x) => x.tab === k).map((x) => ({ id: x.id, title: x.title, done: x.done || undefined, hidden: x.hid || undefined, when: x.when || undefined, lastNote: scLast(x.body) || undefined }))])),
+      bingoLeft: scCells.filter((x) => !x.done).map((x) => ({ letter: x.L, title: x.t, lastNote: scLast(SC.bingo[x.L]) || undefined })) };
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow, threads: thNow };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow, threads: thNow, secret: scNow };
     const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
     const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
     const mute = muteList();
-    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話、音樂、相簿、Threads）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
+    const sys = `你負責替角色「${him}」更新他手機上的內容（鎖定畫面、行事曆、備忘錄、拾穗小集、瀏覽器、日常物事、餵食指南、拾光手記、相機、電話、音樂、相簿、Threads、機密企劃）。${me} 是他最重要的人。只輸出一個 JSON 物件，不要任何說明、不要狀態欄、不要 markdown。`;
     const prompt = `【${him} 的角色設定】
 ${card}
 ${memo ? `\n【他手機的小抄（聯絡人名字、App 的真實設定要照這個；個性和習慣是參考，不是台詞）】\n${memo}\n` : ''}
@@ -1397,10 +1539,19 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
    - post：這次發的一篇，最多 1 篇，不一定每次都有，沒有就給 null。${thToday >= 3 ? '今天已經發了 3 篇，這次 post 給 null。' : `今天已經發了 ${thToday} 篇（故事裡一天最多 3 篇）。`}text 80 字內；note 是文末註解（只寫註解裡的字，不用寫「註解」和括號），25 字內；cap 是這篇配的照片，用文字寫畫面（40 字內）；tag 平常留空（會用固定的標籤${TH.tag ? `「${TH.tag}」` : ''}），想寫特別的標籤才寫，10 字內；like 是愛心數（整數，像真的貼文）；cm 是留言 1～3 則：who 是留言的人（照小抄裡會留言的人，寫名字或帳號），t 30 字內，可以加顏文字；他自己回某則留言就多寫一則，who 寫「我」，re 寫那則在 cm 裡的位置（從 0 開始的數字）。
    - reply：回 threads.recent 裡已經有的留言，0～3 則，沒有就給 []。寫成 {"post":"h3","re":"c5","who":"我","t":"…"}：who 寫「我」＝他自己回，也可以是配角回；t 30 字內；不要回自己的留言，不要重複已經有的留言。${thMine.length ? `\n   - ${me} 剛剛在他的脆留言了：${thMine.join('、')}。他會看到，要不要回、怎麼回由他決定（有時他回、有時配角回、有時不回）。` : ''}${thLikes.length ? `\n   - ${me} 剛剛按了這幾篇的愛心：「${thLikes.join('」「')}」。他會知道，要不要有反應（手記、下一篇、回留言時提）由他決定，大多時候是默默知道。` : ''}
    - 不要重複 threads.recent 裡已經發過的內容。
-17. 全部用繁體中文、台灣用語。
+17. secret：「二〇二六機密企劃」，他手機裡唯一上鎖的資料夾，放他偷偷為 ${me} 準備的計畫，慢慢地、一點一點寫。頁面：place 想帶她去的地方、sweet 甜點練習簿、wed 婚紗與婚禮筆記、sur 還沒揭曉的驚喜、prop 求婚腳本（只有一份）；另外有「賓果作戰筆記」，格子是固定的（secret.bingoLeft 是還沒完成的格子）。
+   - op：這次最多動 1 處；不用每次都動，沒有就給 null。四種寫法：
+     {"act":"add","tab":"place","title":"","note":""}：在某一頁新增一條。title 20 字內；note 是準備筆記，60 字內，可以空。sur 要多寫 "when"（打算揭曉的日子，像 "3/28"），驚喜的內容 ${me} 打開也看不到。已經做完才補寫的（像已經發生過的事）加 "done":true。prop 已經有了就不能再加。
+     {"act":"note","id":"s3","t":""}，或 {"act":"note","bingo":"H","t":""}：在某一條、或某個還沒完成的賓果格子補一句準備筆記（40 字內），寫他真的在準備的進度；不要跟 lastNote 重複。
+     {"act":"done","id":"s3"}：某一條在劇情裡真的完成了才標。
+     {"act":"reveal","id":"s5"}：某個驚喜在劇情裡已經揭曉了，才打開。
+   - 賓果格子只能寫準備筆記，不能標完成（完成要看劇情）。${scCells.length ? '' : '這次讀不到賓果格子，不要寫 bingo。'}
+   - 某一頁已經 20 條、又沒有做完的可以清掉時，那一頁不能再加。
+${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知道她看了哪一頁、看了多少）。他會知道。要不要有反應、在哪裡反應（下面的紙條、Threads、手記…）由他決定，大多時候是默默知道。slip：想的話寫一句夾在企劃最上面的小紙條（20 字內，用他的口吻），不寫就給空字串。` : '   - slip 給空字串。'}
+18. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"slip":""}}`;
     return { sys, prompt };
   }
 
@@ -1427,6 +1578,7 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
     phone: (s) => s.tel.seq, music: (s) => s.mus.seq,
     album: (s) => JSON.stringify([s.alb.wall, s.alb.folders, s.alb.photos.map((p) => [p.folder, p.note || ''])]),
     threads: (s) => (s.th ? `${s.th.seq}/${s.th.rseq}` : ''),
+    secret: (s) => (s.sec ? `${s.sec.seq}/${s.sec.nseq}/${s.sec.slip}/${s.sec.items.filter((x) => x.hid).length}` : ''),
   };
   const hsig = (s) => Object.fromEntries(Object.entries(HSIG).map(([k, f]) => { try { return [k, String(f(s))]; } catch (e) { return [k, '']; } }));
   function apply(o) {
@@ -1455,6 +1607,7 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
     putNote(applyMusic(o.music), 2); // 音樂：正在播放換歌才跳一則
     putNote(applyAlbum(o.album, isoDate(o.date)), 1); // 相簿：他留了一句話才跳一則；換桌布不跳（一打開就看到）
     putNote(telNotice(applyPhone(o.phone, isoDate(o.date))), 2); // 電話：每次最多 1 則（新語音優先，其次未接）
+    applySecret(o.secret); // 機密企劃：不跳鎖定畫面通知（加密資料夾不會把內容秀在外面），只有主畫面小點
     applyThreads(o.threads).reverse().forEach((x) => putNote(x, x.mine ? 0 : 1)); // Threads：新貼文跳一則；回了果果的留言再跳一則（鵝黃線）
     s.unseen = true;
     s.unseenMine = s.notes.some((x) => x.mine) || nextEv()?.cat === 'her';
@@ -1777,6 +1930,7 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
     if (!isOwner()) { if (manual) status(!S().auto.owner ? '先按「設成現在的角色」' : !bound() ? '現在不是綁定的聊天室，不能更新' : `現在不是 ${S().auto.owner} 的聊天，不能更新`); return; }
     busy = true; status();
     try {
+      try { await secLoad(); } catch (e) { /* 讀不到就用上次存的 */ }
       const { sys, prompt } = buildPrompt();
       apply(parse(await askAI(sys, prompt)));
       const s = S(); s.auto.last = Date.now(); save();
@@ -1984,7 +2138,13 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
           <div class="ap-row">標籤（每篇帳號後面那個，平常固定用這個）</div>
           <input type="text" class="text_pole ap-th-tagin" maxlength="16" placeholder="例：示範標籤">
           <div class="ap-row">他的頭貼<span class="ap-th-avs"></span></div>
-          <div class="ap-row"><div class="menu_button ap-th-avpick">選擇照片</div><div class="menu_button ap-th-avdel">移除</div><input type="file" accept="image/*" class="ap-th-avfile" hidden></div>`)}
+          <div class="ap-row"><div class="menu_button ap-th-avpick">選擇照片</div><div class="menu_button ap-th-avdel">移除</div><input type="file" accept="image/*" class="ap-th-avfile" hidden></div>
+          <div class="ap-row ap-sub">🔒 2026機密企劃<small class="ap-subsum" data-s="sec"></small></div>
+          <div class="ap-row">密碼（只能用數字；重新整理酒館前輸入一次就好）</div>
+          <input type="password" class="text_pole ap-sc-pw" maxlength="8" inputmode="numeric" autocomplete="off" placeholder="例：0000">
+          <div class="ap-row">世界書名字（空白＝用聊天室綁的那本；裡面要有標題「賓果卡」「賓果心意」的條目）</div>
+          <input type="text" class="text_pole ap-sc-book" maxlength="60" placeholder="空白就好">
+          <div class="ap-row"><span class="ap-sc-bst"></span><div class="menu_button ap-sc-reload">重新讀一次</div></div>`)}
           ${drawer('alb', '📷 相簿', `
           <div class="ap-al-list"></div>
           <div class="ap-al-ed">
@@ -2101,6 +2261,19 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
       catch (err) { alert('頭貼放不上去：' + (err.message || err)); }
     });
     thAvDel.addEventListener('click', () => { const T = S().th; if (!T.av) return; albUnlink(T.av); T.av = ''; save(); showTh(); if (root && !root.hidden && inApp()) keepScroll('threads', paintThreads); });
+
+    // 機密企劃：密碼、世界書（名字和密碼只存在酒館）
+    const scPw = box.querySelector('.ap-sc-pw'), scBook = box.querySelector('.ap-sc-book'), scSt = box.querySelector('.ap-sc-bst');
+    secShow = () => {
+      const C = S().sec, n = C.items.length, cells = C.bk?.cells || [];
+      scSt.textContent = secBG.ok ? `讀到賓果卡 ✓（${cells.length} 格）` : secBG.why === '還沒讀過' ? (cells.length ? `上次讀到 ${cells.length} 格` : '還沒讀過賓果卡') : `讀不到賓果卡：${secBG.why}`;
+      sub('sec').textContent = `${C.pw ? '已設密碼' : '還沒設密碼'} · ${n} 條`;
+    };
+    scPw.value = S().sec.pw || ''; scBook.value = S().sec.book || ''; secShow();
+    scPw.addEventListener('input', () => { scPw.value = scPw.value.replace(/\D/g, ''); S().sec.pw = scPw.value; secOpen = false; secPin = ''; save(); secShow(); }); // 改密碼＝重新鎖上
+    scBook.addEventListener('change', () => { S().sec.book = scBook.value.trim(); save(); secLoad(); });
+    box.querySelector('.ap-sc-reload').addEventListener('click', () => { scSt.textContent = '讀取中…'; secLoad(); });
+    secLoad();
 
     bindAlbum(D('alb'), sum('alb'), box);
 
