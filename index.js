@@ -1,4 +1,4 @@
-// 安安的小手機 v0.15.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
+// 安安的小手機 v0.15.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -1218,9 +1218,8 @@
     C.peek = false; // 這次已經告訴他了
     if (!o || typeof o !== 'object') return;
     if (peek && clean(o.slip, 40)) C.slip = clean(o.slip, 40); // 紙條：只有她打開過才寫；新的換掉舊的
-    const op = o.op; if (!op || typeof op !== 'object') return;
-    const day = nowDay(), act = String(op.act || '');
-    if (act === 'add') {
+    const day = nowDay();
+    const add = (op) => {
       const tab = String(op.tab || ''), title = clean(op.title, 30);
       if (!['place', 'sweet', 'wed', 'sur', 'prop'].includes(tab) || !title) return;
       if (tab === 'prop' && C.items.some((x) => x.tab === 'prop')) return; // 求婚腳本只有一份
@@ -1228,7 +1227,15 @@
       let mine = C.items.filter((x) => x.tab === tab);
       if (mine.length >= SEC_MAX) { const old = mine.filter((x) => x.done).sort((a, b) => +a.id.slice(1) - +b.id.slice(1))[0]; if (!old) return; C.items = C.items.filter((x) => x !== old); }
       C.items.push({ id: 's' + (++C.seq), tab, title, body: clean(op.note, 120), day, when: tab === 'sur' || tab === 'prop' ? clean(op.when, 10) : '', done: tab !== 'sur' && op.done === true, hid: tab === 'sur' });
-    } else if (act === 'note') {
+    };
+    // 空的頁：這次可以各補 1 條（像音樂空歌單一次放好幾首；第 51 窗果果要的），之後回到每次最多 1 處
+    const empty = ['place', 'sweet', 'wed', 'sur', 'prop'].filter((k) => !C.items.some((x) => x.tab === k));
+    const seeded = new Set();
+    (Array.isArray(o.seed) ? o.seed : []).forEach((x) => { if (x && typeof x === 'object' && empty.includes(String(x.tab)) && !seeded.has(String(x.tab))) { seeded.add(String(x.tab)); add(x); } });
+    const op = o.op; if (!op || typeof op !== 'object') return;
+    const act = String(op.act || '');
+    if (act === 'add') add(op);
+    else if (act === 'note') {
       const t = clean(op.t || op.note, 80); if (!t) return;
       const L = String(op.bingo || '').toUpperCase(), cell = L && secCells().find((x) => x.L === L);
       if (cell) { if (cell.done) return; C.bingo[L] = secAppend(C.bingo[L], t); C.nseq++; return; } // 賓果：只寫準備筆記，不能打 ✨
@@ -1447,6 +1454,7 @@
     const thLikes = TH.posts.filter((p) => p.liked && !p.likeSeen).map((p) => p.text.slice(0, 20));
     const thMine = TH.posts.flatMap((p) => p.cm.filter((c) => c.mine && !c.seen).map((c) => `${p.id} 的 ${c.id}「${c.t}」`));
     const SC = s.sec, scCells = SC.bk?.cells || [], scLast = (t) => String(t || '').split('\n').filter(Boolean).pop() || '';
+    const scEmpty = ['place', 'sweet', 'wed', 'sur', 'prop'].filter((k) => !SC.items.some((x) => x.tab === k));
     const scNow = { pages: Object.fromEntries(['place', 'sweet', 'wed', 'sur', 'prop'].map((k) => [k, SC.items.filter((x) => x.tab === k).map((x) => ({ id: x.id, title: x.title, done: x.done || undefined, hidden: x.hid || undefined, when: x.when || undefined, lastNote: scLast(x.body) || undefined }))])),
       bingoLeft: scCells.filter((x) => !x.done).map((x) => ({ letter: x.L, title: x.t, lastNote: scLast(SC.bingo[x.L]) || undefined })) };
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
@@ -1547,11 +1555,12 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
      {"act":"reveal","id":"s5"}：某個驚喜在劇情裡已經揭曉了，才打開。
    - 賓果格子只能寫準備筆記，不能標完成（完成要看劇情）。${scCells.length ? '' : '這次讀不到賓果格子，不要寫 bingo。'}
    - 某一頁已經 20 條、又沒有做完的可以清掉時，那一頁不能再加。
-${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知道她看了哪一頁、看了多少）。他會知道。要不要有反應、在哪裡反應（下面的紙條、Threads、手記…）由他決定，大多時候是默默知道。slip：想的話寫一句夾在企劃最上面的小紙條（20 字內，用他的口吻），不寫就給空字串。` : '   - slip 給空字串。'}
+${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}。這次可以替每個空的頁各補 1 條，寫成跟 add 一樣的格式（不用寫 act），放進 seed 陣列；照他的角色設定和最近的劇情寫他真的會準備的事，不要編造重大劇情；已經發生過的事（像已經發生的求婚）加 "done":true。seed 不算在 op 的 1 處裡。不想補的頁可以不補。
+` : '   - seed 給 []。\n'}${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知道她看了哪一頁、看了多少）。他會知道。要不要有反應、在哪裡反應（下面的紙條、Threads、手記…）由他決定，大多時候是默默知道。slip：想的話寫一句夾在企劃最上面的小紙條（20 字內，用他的口吻），不寫就給空字串。` : '   - slip 給空字串。'}
 18. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"slip":""}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"seed":[],"slip":""}}`;
     return { sys, prompt };
   }
 
@@ -1962,6 +1971,7 @@ ${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知�
     if (!es || !E) return;
     es.on(E.MESSAGE_RECEIVED, onMessage);
     [E.MESSAGE_SENT, E.MESSAGE_DELETED, E.CHAT_CHANGED].forEach((t) => t && es.on(t, () => setTimeout(() => status(), 300)));
+    if (E.CHAT_CHANGED) es.on(E.CHAT_CHANGED, () => setTimeout(() => { if (ctx().chatMetadata?.world_info || S().sec.book) secLoad(); }, 600)); // 機密企劃：換到有綁世界書的聊天室（含剛打開酒館），自動重讀賓果卡
   }
 
   // ===== 設定頁：分成幾個小抽屜，一次只打開一個 =====
