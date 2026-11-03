@@ -1661,6 +1661,29 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
   }
   function close() { root.hidden = true; clearInterval(timer); }
 
+  // 貼圖自動去背（第 53 窗）：從四個邊開始，把跟角落同顏色、連在一起的背景變透明（角色外框裡面的白不會被挖掉）
+  function keyOut(c) {
+    const w = c.width, h = c.height, g = c.getContext('2d'), im = g.getImageData(0, 0, w, h), d = im.data;
+    const px = (x, y) => (y * w + x) * 4;
+    const cs = [px(0, 0), px(w - 1, 0), px(0, h - 1), px(w - 1, h - 1)];
+    if (cs.some((i) => d[i + 3] < 200)) return; // 本來就是透明背景，不動
+    const bg = [0, 1, 2].map((k) => cs.reduce((n, i) => n + d[i + k], 0) / 4);
+    const dist = (i) => Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
+    if (cs.some((i) => dist(i) > 40)) return; // 四個角顏色不一樣＝不是純色背景，不動
+    const T = 42, E = 90; // T 以內＝背景；T～E＝邊緣半透明（讓線條邊不會有藍邊）
+    const seen = new Uint8Array(w * h), q = [];
+    const push = (x, y) => { const k = y * w + x; if (!seen[k]) { seen[k] = 1; q.push(k); } };
+    for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+    for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+    while (q.length) {
+      const k = q.pop(), i = k * 4, dd = dist(i);
+      if (dd > E) continue;
+      if (dd <= T) d[i + 3] = 0; else { d[i + 3] = Math.round(255 * (dd - T) / (E - T)); continue; } // 邊緣：半透明但不再往裡面走
+      const x = k % w, y = (k - x) / w;
+      if (x > 0) push(x - 1, y); if (x < w - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < h - 1) push(x, y + 1);
+    }
+    g.putImageData(im, 0, 0);
+  }
   function shrink(file, max = 900, png = false) {
     return new Promise((res, rej) => {
       const img = new Image();
@@ -1668,6 +1691,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
         const w = Math.min(max, img.width), h = Math.round(img.height * (w / img.width));
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
+        if (png) keyOut(c); // 貼圖：純色背景自動去背
         URL.revokeObjectURL(img.src);
         res(png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.82)); // 貼圖用 png：去背的透明不會變白底
       };
