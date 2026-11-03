@@ -24,6 +24,8 @@
 .ap-screen.ap-nowall{background-image:radial-gradient(ellipse at 45% 55%,#e9d9c0 0%,#c9ad8a 32%,#7d6650 68%,#3e342c 100%)}
 .ap-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(22,26,32,.6) 0%,rgba(22,26,32,.1) 34%,rgba(22,26,32,0) 60%,rgba(22,26,32,.55) 100%)}
 .ap-glass{background:rgba(255,255,255,.15);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.22)}
+/* 通知卡、通知膠囊、清除：淡灰藍毛玻璃（第 52 窗；小方格、dock、資料夾維持上面的白透明） */
+.ap-note.ap-glass,.ap-pill.ap-glass,.ap-nclr.ap-glass{background:rgba(52,60,74,.45);-webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2);border-color:rgba(255,255,255,.28)}
 
 .ap-top{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:12px;font-family:"Noto Sans TC",sans-serif;z-index:3}
 .ap-notch{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:96px;height:25px;border-radius:14px;background:#111}
@@ -232,6 +234,7 @@
 .ap-wr:has(.ap-wmur):not(.ap-hid){cursor:pointer}
 .ap-wmur{display:none;flex:0 0 calc(100% - 25px);box-sizing:border-box;margin:-2px 0 2px 25px;padding-left:9px;border-left:1px solid #CFCBC2;font-size:12.5px;line-height:1.8;color:#45423E;white-space:pre-line}
 .ap-wr.ap-open .ap-wmur{display:block}
+.ap-wm.ap-seen,.ap-mu-dot.ap-seen{background:transparent} /* 心聲看過了：變空心，只剩框（第 52 窗） */
 
 /* ===== 行事曆（霧藍紙；深霧藍 #5B7393 是它自己的記號；臻綠／天藍／鵝黃是三種行程，第 45 窗）===== */
 .ap-view[data-app="cal"]{background:#E3E7EC}
@@ -593,6 +596,10 @@
 .ap-sc-when{flex:none;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84}
 .ap-sc-stamp{flex:none;width:22px;height:22px;border:1.3px solid #B5574B;border-radius:50%;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-family:"Noto Serif TC",serif;font-size:11px;line-height:1;color:#B5574B;transform:rotate(-12deg);margin-left:auto}
 .ap-sc-card.ap-done .ap-sc-it>span:not(.ap-sc-stamp){color:#8E8B84}
+/* 沒用上的驚喜：上面一截撕開的塗黑＋紅色虛線章（第 52 窗） */
+.ap-sc-card.ap-unused{padding-top:14px}
+.ap-sc-tear{position:absolute;top:0;left:13px;width:64px;height:7px;background:#3E3A35;border-radius:0 0 1px 1px;clip-path:polygon(0 0,100% 0,100% 40%,88% 100%,74% 45%,60% 100%,46% 50%,32% 100%,18% 45%,6% 100%,0 60%)}
+.ap-sc-unu{flex:none;width:30px;height:30px;border:1.2px dashed #B5574B;border-radius:50%;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-family:"Noto Serif TC",serif;font-style:normal;font-size:10px;line-height:1.05;color:#B5574B;transform:rotate(-12deg);text-align:center;margin-left:auto}
 .ap-sc-hid{display:flex;align-items:center;gap:10px;background:#FFFBF2;border-radius:4px;outline:.5px solid #E6D9BC;padding:11px 13px;margin:9px 0;cursor:pointer}
 .ap-sc-bar{display:inline-block;width:8.5em;height:1em;background:#3E3A35;border-radius:1px}
 .ap-sc-hid:nth-of-type(even) .ap-sc-bar{width:6.5em}

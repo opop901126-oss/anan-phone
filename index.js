@@ -1,4 +1,4 @@
-// 安安的小手機 v0.15.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
+// 安安的小手機 v0.15.2：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -128,6 +128,8 @@
     return s;
   }
   const save = () => ctx().saveSettingsDebounced();
+  // 心聲小點：果果點開看過一次＝記住，小點變空心（第 52 窗；瀏覽器、音樂）
+  const murSeen = (r, x, dot) => { if (!x || x.seen || !r.classList.contains('ap-open')) return; x.seen = true; save(); r.querySelector(dot)?.classList.add('ap-seen'); };
   const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
   const cn = (n) => (n <= 10 ? CN[n] : n < 20 ? '十' + CN[n - 10] : CN[Math.floor(n / 10)] + '十' + CN[n % 10]);
@@ -285,7 +287,7 @@
       const r = e.target.closest('.ap-wr');
       if (!r) return;
       if (r.classList.contains('ap-hid')) { peekWeb(r); return; } // 藏起來的：先解鎖，再點才看得到心聲
-      if (r.querySelector('.ap-wmur')) r.classList.toggle('ap-open');
+      if (r.querySelector('.ap-wmur')) { r.classList.toggle('ap-open'); murSeen(r, S().web.items.find((x) => x.id === r.dataset.id), '.ap-wm'); }
     });
     root.querySelector('.ap-view[data-app="cal"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
@@ -319,7 +321,7 @@
       const h = e.target.closest('.ap-mu-ph');
       if (h) { const id = h.dataset.id; musOpen.has(id) ? musOpen.delete(id) : musOpen.add(id); h.parentElement.classList.toggle('ap-open'); return; }
       const r = e.target.closest('.ap-mu-song');
-      if (r && r.querySelector('.ap-mu-mur')) r.classList.toggle('ap-open');
+      if (r && r.querySelector('.ap-mu-mur')) { r.classList.toggle('ap-open'); murSeen(r, S().mus.lists.flatMap((l) => l.songs).find((x) => x.id === r.dataset.id), '.ap-mu-dot'); }
     });
     root.querySelector('.ap-view[data-app="phone"]').addEventListener('click', (e) => {
       if (lpEat(e)) return;
@@ -555,7 +557,7 @@
     const row = (x) => {
       const hid = x.secret && !x.seen, open = x.secret && x.seen;
       // mur：他寫在這筆上的一句心聲（字尾淡紫小點；點了在下面展開）
-      return `<div class="ap-wr${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${x.id}"><span class="ap-wi">${ic(hid ? 'lockon' : open ? 'lockoff' : 'clock', 15)}</span><span class="ap-wq">${esc(x.q)}</span>${x.mur ? '<span class="ap-wm"></span>' : ''}<span class="ap-mw">${esc(x.time)}</span>${x.mur ? `<div class="ap-wmur">${esc(x.mur)}</div>` : ''}</div>`;
+      return `<div class="ap-wr${hid ? ' ap-hid' : ''}${open ? ' ap-peeked' : ''}" data-id="${x.id}"><span class="ap-wi">${ic(hid ? 'lockon' : open ? 'lockoff' : 'clock', 15)}</span><span class="ap-wq">${esc(x.q)}</span>${x.mur ? `<span class="ap-wm${x.seen ? ' ap-seen' : ''}"></span>` : ''}<span class="ap-mw">${esc(x.time)}</span>${x.mur ? `<div class="ap-wmur">${esc(x.mur)}</div>` : ''}</div>`;
     };
     root.querySelector('.ap-view[data-app="web"] .ap-vs').innerHTML = `
       <div class="ap-meta">WEB · 搜尋紀錄</div>
@@ -901,7 +903,7 @@
     const lists = M.lists.map((l) => `<div class="ap-mu-pl${musOpen.has(l.id) ? ' ap-open' : ''}"><div class="ap-mu-ph" data-id="${l.id}"${l.fixed ? '' : ' data-own="1"'}>`
       + `<span class="ap-mu-ic">${ic('music', 14)}</span><span class="ap-mu-pn">${esc(l.name)}</span><span class="ap-mw">${l.songs.length} 首</span><span class="ap-mu-ch"></span></div>`
       + `<div class="ap-mu-songs">${l.songs.length ? l.songs.map((x, i) => `<div class="ap-mu-song" data-id="${x.id}"><div class="ap-mu-sh"><span class="ap-mu-no">${String(i + 1).padStart(2, '0')}</span>`
-        + `<span class="ap-mu-st">${esc(x.t)}</span><span class="ap-mu-sa">${esc(x.a)}</span>${x.mur ? '<span class="ap-mu-dot"></span>' : ''}</div>`
+        + `<span class="ap-mu-st">${esc(x.t)}</span><span class="ap-mu-sa">${esc(x.a)}</span>${x.mur ? `<span class="ap-mu-dot${x.seen ? ' ap-seen' : ''}"></span>` : ''}</div>`
         + `${x.mur ? `<div class="ap-mu-mur">${esc(x.mur)}</div>` : ''}</div>`).join('') : '<div class="ap-mu-none">還沒有歌。</div>'}</div></div>`).join('');
     root.querySelector('.ap-view[data-app="music"] .ap-vs').innerHTML = `
       <div class="ap-meta">MUSIC · ${headDate()}</div>
@@ -1184,10 +1186,14 @@
     }
   }
   const secCells = () => S().sec.bk?.cells || [];
+  // 驚喜的日子（像 3/28）跟劇情今天比：過了＝true；寫「春天」這種比不了的＝false（第 52 窗）
+  const secMD = (w) => { const m = String(w || '').match(/^\s*(\d{1,2})\s*\/\s*(\d{1,2})/); return m ? +m[1] * 100 + +m[2] : 0; };
+  const secLate = (x) => { const md = secMD(x.when), d = nowDay().match(/-(\d{2})-(\d{2})$/); return !!(x.tab === 'sur' && x.hid && md && d && md < +d[1] * 100 + +d[2]); };
   function secCard(x) {
     const done = x.done ? ' ap-done' : '', when = x.when ? `<span class="ap-sc-when">${esc(x.when)}</span>` : '';
     if (x.tab === 'sur' && x.hid) return `<div class="ap-sc-hid" data-id="${x.id}">${when || '<span class="ap-sc-when">？</span>'}<span class="ap-sc-bar"></span></div>`;
-    return `<div class="ap-sc-card${done}" data-id="${x.id}"><div class="ap-sc-it">${when}<span>${esc(x.title)}</span>${x.done ? '<span class="ap-sc-stamp">完</span>' : ''}</div>`
+    const unu = x.unused ? ' ap-unused' : ''; // 過期才打開的驚喜：上面留一截撕開的塗黑＋紅色虛線章（第 52 窗）
+    return `<div class="ap-sc-card${done}${unu}" data-id="${x.id}">${unu ? '<span class="ap-sc-tear"></span>' : ''}<div class="ap-sc-it">${when}<span>${esc(x.title)}</span>${x.done ? '<span class="ap-sc-stamp">完</span>' : ''}${unu ? '<i class="ap-sc-unu">沒用<br>上</i>' : ''}</div>`
       + (x.body ? `<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(x.body)}</div>` : '') + '</div>';
   }
   function paintSecret() {
@@ -1232,6 +1238,13 @@
     const empty = ['place', 'sweet', 'wed', 'sur', 'prop'].filter((k) => !C.items.some((x) => x.tab === k));
     const seeded = new Set();
     (Array.isArray(o.seed) ? o.seed : []).forEach((x) => { if (x && typeof x === 'object' && empty.includes(String(x.tab)) && !seeded.has(String(x.tab))) { seeded.add(String(x.tab)); add(x); } });
+    // 過期的驚喜：他這次處理 1 個（改期或打開變成沒用上），不算在 op 的 1 處裡
+    const lt = o.late;
+    if (lt && typeof lt === 'object') {
+      const x = C.items.find((it) => it.id === lt.id && secLate(it));
+      if (x && lt.act === 'move') { const w = clean(lt.when, 10), md = secMD(w), d = nowDay().match(/-(\d{2})-(\d{2})$/); if (md && d && md > +d[1] * 100 + +d[2]) { x.when = w; C.nseq++; } }
+      else if (x && lt.act === 'unused') { x.hid = false; x.unused = true; C.nseq++; }
+    }
     const op = o.op; if (!op || typeof op !== 'object') return;
     const act = String(op.act || '');
     if (act === 'add') add(op);
@@ -1455,7 +1468,7 @@
     const thMine = TH.posts.flatMap((p) => p.cm.filter((c) => c.mine && !c.seen).map((c) => `${p.id} 的 ${c.id}「${c.t}」`));
     const SC = s.sec, scCells = SC.bk?.cells || [], scLast = (t) => String(t || '').split('\n').filter(Boolean).pop() || '';
     const scEmpty = ['place', 'sweet', 'wed', 'sur', 'prop'].filter((k) => !SC.items.some((x) => x.tab === k));
-    const scNow = { pages: Object.fromEntries(['place', 'sweet', 'wed', 'sur', 'prop'].map((k) => [k, SC.items.filter((x) => x.tab === k).map((x) => ({ id: x.id, title: x.title, done: x.done || undefined, hidden: x.hid || undefined, when: x.when || undefined, lastNote: scLast(x.body) || undefined }))])),
+    const scNow = { pages: Object.fromEntries(['place', 'sweet', 'wed', 'sur', 'prop'].map((k) => [k, SC.items.filter((x) => x.tab === k).map((x) => ({ id: x.id, title: x.title, done: x.done || undefined, hidden: x.hid || undefined, when: x.when || undefined, late: secLate(x) || undefined, unused: x.unused || undefined, lastNote: scLast(x.body) || undefined }))])),
       bingoLeft: scCells.filter((x) => !x.done).map((x) => ({ letter: x.L, title: x.t, lastNote: scLast(SC.bingo[x.L]) || undefined })) };
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
       web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow, threads: thNow, secret: scNow };
@@ -1553,14 +1566,15 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
      {"act":"note","id":"s3","t":""}，或 {"act":"note","bingo":"H","t":""}：在某一條、或某個還沒完成的賓果格子補一句準備筆記（40 字內），寫他真的在準備的進度；不要跟 lastNote 重複。
      {"act":"done","id":"s3"}：某一條在劇情裡真的完成了才標。
      {"act":"reveal","id":"s5"}：某個驚喜在劇情裡已經揭曉了，才打開。
-   - 賓果格子只能寫準備筆記，不能標完成（完成要看劇情）。${scCells.length ? '' : '這次讀不到賓果格子，不要寫 bingo。'}
+${SC.items.some(secLate) ? `   - late：有驚喜標了 late（打算揭曉的日子過了，劇情裡卻沒發生）。這次挑 1 個，照他會怎麼想決定：{"id":"s5","act":"move","when":"4/12"} 改到之後的新日子（可以順便用 op 的 note 寫為什麼延）；或 {"id":"s5","act":"unused"} 打開它，變成「原本偷偷準備、結果沒用上」的（${me} 會看到標題和準備筆記）。late 不算在 op 的 1 處裡。unused 標著的是已經沒用上的，不要再動。
+` : '   - late 給 null。\n'}   - 賓果格子只能寫準備筆記，不能標完成（完成要看劇情）。${scCells.length ? '' : '這次讀不到賓果格子，不要寫 bingo。'}
    - 某一頁已經 20 條、又沒有做完的可以清掉時，那一頁不能再加。
 ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}。這次可以替每個空的頁各補 1 條，寫成跟 add 一樣的格式（不用寫 act），放進 seed 陣列；照他的角色設定和最近的劇情寫他真的會準備的事，不要編造重大劇情；已經發生過的事（像已經發生的求婚）加 "done":true。seed 不算在 op 的 1 處裡。不想補的頁可以不補。
 ` : '   - seed 給 []。\n'}${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知道她看了哪一頁、看了多少）。他會知道。要不要有反應、在哪裡反應（下面的紙條、Threads、手記…）由他決定，大多時候是默默知道。slip：想的話寫一句夾在企劃最上面的小紙條（20 字內，用他的口吻），不寫就給空字串。` : '   - slip 給空字串。'}
 18. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"seed":[],"slip":""}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"late":null,"seed":[],"slip":""}}`;
     return { sys, prompt };
   }
 
@@ -1692,7 +1706,7 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     });
     if (murLeft && w.mur && typeof w.mur === 'object') {
       const it = W.items.find((x) => x.id === w.mur.id), m = clean(w.mur.t, 30);
-      if (it && m && !it.mur) it.mur = m;
+      if (it && m && !it.mur) { it.mur = m; delete it.seen; }
     }
     W.items = W.items.slice(-40); // 留最近 40 筆，太舊的自己消失
   }
