@@ -2466,7 +2466,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
 
   // ===== LINE（第 53 窗）=====
   const LN_CAT = [['fam', '家人'], ['fri', '朋友'], ['work', '工作']];
-  const LN_MAX_ROS = 10; // 名單最多 10 位（加上你們的、爸的＝12 個聊天室）
+  const LN_MAX_ROS = 14; // 名單最多 14 位（加上你們的、爸的＝16 個聊天室）
   const LN_MAX_STK = 40;
   const lnSrc = (u) => (u ? albSrc({ path: u }) : '');
   const lnInit = (n) => String(n || '').replace(/^[^\p{L}\p{N}]+/u, '').slice(0, 1) || '？'; // 頭像沒放照片：名字第一個字
