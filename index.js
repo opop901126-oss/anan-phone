@@ -1023,7 +1023,7 @@
       html += lnTail();
     } else {
       const M = (dad ? L.dadMsgs : lnChat(r.id).msgs).slice().sort((a, b) => (lnSortKey(a) < lnSortKey(b) ? -1 : 1));
-      const group = !dad && new Set(M.filter((m) => m.from !== 'him').map((m) => m.from)).size > 1;
+      const group = !dad && M.some((m) => m.from !== 'him' && m.from !== r.name); // 說話的人不是聊天室名字＝群組
       let lastDay = '', prev = null;
       M.forEach((m) => {
         if ((m.day || '') !== lastDay) { html += `<div class="ap-ln-day">${esc(slash(m.day) || m.day || '')}</div>`; lastDay = m.day || ''; prev = null; }
@@ -1036,7 +1036,7 @@
         const side = `<span class="ap-ln-sm${his ? '' : ' ap-ln-sml'}">${esc(m.time || '')}</span>`;
         if (his) html += `<div class="ap-ln-m ap-ln-me" data-id="${m.id}">${side}${body}</div>`;
         else { const first = !prev || prev.from !== m.from;
-          html += `<div class="ap-ln-m" data-id="${m.id}">${first ? lnAv(r.av && !group ? r.av : '', m.from) : '<span class="ap-ln-avsp"></span>'}<span class="ap-ln-col">${group && first ? `<span class="ap-ln-who">${esc(m.from)}</span>` : ''}${body}</span>${side}</div>`; }
+          html += `<div class="ap-ln-m" data-id="${m.id}">${first ? lnAv(group ? (L.roster.find((x) => x.name === m.from)?.av || '') : r.av, m.from) : '<span class="ap-ln-avsp"></span>'}<span class="ap-ln-col">${group && first ? `<span class="ap-ln-who">${esc(m.from)}</span>` : ''}${body}</span>${side}</div>`; }
         prev = m;
       });
       if (!M.length) html = `<div class="ap-ln-day">${dad ? '' : '還沒有訊息'}</div>`;
@@ -2466,7 +2466,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
 
   // ===== LINE（第 53 窗）=====
   const LN_CAT = [['fam', '家人'], ['fri', '朋友'], ['work', '工作']];
-  const LN_MAX_ROS = 14; // 名單最多 14 位（加上你們的、爸的＝16 個聊天室）
+  const LN_MAX_ROS = 14; // 名單最多 14 位（加上你們的、爸的＝16 個聊天室；第 53 窗他的小抄就有 11 位）
   const LN_MAX_STK = 40;
   const lnSrc = (u) => (u ? albSrc({ path: u }) : '');
   const lnInit = (n) => String(n || '').replace(/^[^\p{L}\p{N}]+/u, '').slice(0, 1) || '？'; // 頭像沒放照片：名字第一個字
