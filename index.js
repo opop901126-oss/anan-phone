@@ -1,4 +1,4 @@
-// 安安的小手機 v0.15.2：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點（照安安自己說的規則排版）
+// 安安的小手機 v0.16.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點＋LINE（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -38,6 +38,8 @@
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     back: '<path d="M14.5 6l-6 6 6 6"/>',
     folder: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.2h7a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+    smile: '<circle cx="12" cy="12" r="8.5"/><path d="M8.6 14.2a4.2 4.2 0 0 0 6.8 0"/><circle cx="9.3" cy="10" r=".7"/><circle cx="14.7" cy="10" r=".7"/>',
+    send: '<path d="M4.5 12.2L19.5 5l-4.6 14.5-3.4-5.8z"/><path d="M11.5 13.7l8-8.7"/>',
     lockon: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><circle cx="12" cy="15.5" r="1.1"/>',
     lockoff: '<rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.8-1.2"/><circle cx="12" cy="15.5" r="1.1"/>',
     pin: '<path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z"/>', // 跟主畫面那顆圖釘同一個樣子
@@ -124,6 +126,9 @@
     if (!s.th) s.th = { seq: 0, cseq: 0, rseq: 0, him: '', me: '', posts: [] }; // Threads：他的脆（新的在前面，留 100 篇；圖存 Railway，第 50 窗）
     if (!s.sec) s.sec = { pw: '', book: '', seq: 0, nseq: 0, peek: false, slip: '', items: [], bingo: {}, bk: null }; // 機密企劃：密碼、他寫的計畫、賓果準備筆記；賓果格子從世界書讀（bk＝上次讀到的，第 51 窗）
     if (!s.hdot) s.hdot = {}; // 主畫面 App 小點：有新東西的 App（點進去再出來就消失，第 50 窗）
+    if (!s.line) s.line = { seq: 0, me: { name: '', av: '' }, him: { av: '' }, dad: { bday: '', gone: '' }, roster: [], stk: [], ours: { msgs: [], unread: 0 }, chats: {}, dadMsgs: [], peek: [] }; // LINE：名單＋貼圖（果果在設定填，名字只存在酒館）、你們的聊天室、別人的聊天室、爸（第 53 窗）
+    if (!s.line.peek) s.line.peek = [];
+    if (s.line.wiSkip == null) s.line.wiSkip = '狀態欄、好感'; // LINE 不讀的世界書條目（標題有這些字就跳過）
     if (s.start == null) s.start = ''; // 開始的日子（拾光手記算第 N 天用；果果在設定裡自己填）
     return s;
   }
@@ -189,6 +194,7 @@
           <div class="ap-view" data-app="food" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="cam" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="phone" hidden><div class="ap-vs"></div></div>
+          <div class="ap-view ap-lnv" data-app="line" hidden><div class="ap-ln-hd" hidden></div><div class="ap-vs"></div><div class="ap-ln-foot" hidden></div></div>
           <div class="ap-view" data-app="music" hidden><div class="ap-vs"></div></div>
           <div class="ap-view" data-app="album" hidden><div class="ap-vs"></div></div>
           <div class="ap-view ap-th" data-app="threads" hidden><div class="ap-vs"></div><input type="file" accept="image/*" class="ap-th-file" hidden></div>
@@ -236,7 +242,7 @@
       if (!nt || Date.now() - swAt < 350) return;
       const k = +nt.dataset.k; if (S().notes[k]) { S().notes.splice(k, 1); save(); paint(); } // 點了就不見（nt 已經拿下來了，下面還讀得到它的 app、id）
       unlock();
-      if (['memo', 'trivia', 'music'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone', 'album', 'threads'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
+      if (['memo', 'trivia', 'music'].includes(nt.dataset.app) || (['cal', 'shop', 'food', 'diary', 'phone', 'album', 'threads', 'line'].includes(nt.dataset.app) && nt.dataset.id)) openApp(nt.dataset.app, nt.dataset.id); // 點通知：直接打開那個 App，那則亮一下
     });
 
     // 鎖定畫面：往上滑翻開。主畫面：左右滑換頁、往下滑回鎖定（在通知清單裡滑不算）
@@ -330,6 +336,9 @@
       const r = e.target.closest('.ap-tel-vm');
       if (r) r.classList.toggle('ap-open');
     });
+    // LINE：列表點進聊天室、分頁、返回、灰卡語音展開、小鎖、貼圖面板（第 53 窗）
+    const lnV = root.querySelector('.ap-view[data-app="line"]');
+    lnV.addEventListener('click', lnClick); lnV.addEventListener('keydown', lnKeys); lnV.addEventListener('input', lnKeys);
     // 相簿：點照片打開；打開後左右滑換同一夾的上一張／下一張，到頭輕輕晃一下
     const alV = root.querySelector('.ap-view[data-app="album"]');
     let alSw = null, alSwAt = 0;
@@ -389,7 +398,7 @@
     fab.id = 'ap-fab';
     fab.type = 'button';
     fab.setAttribute('aria-label', '安安的小手機');
-    fab.innerHTML = ic('mob', 20) + '<span class="ap-badge"></span>';
+    fab.innerHTML = ic('mob', 20) + '<span class="ap-badge"></span><span class="ap-badge ap-badge-ln"></span>';
     document.documentElement.appendChild(fab);
     let drag = null;
     fab.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY, moved: false }; fab.setPointerCapture(e.pointerId); });
@@ -446,7 +455,7 @@
   }
 
   // ===== App =====
-  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music', 'album', 'threads', 'secret']; // 已經做好、點得開的 App
+  const READY = ['memo', 'trivia', 'web', 'cal', 'shop', 'food', 'diary', 'cam', 'phone', 'music', 'album', 'threads', 'secret', 'line']; // 已經做好、點得開的 App
   const VIEW = { trivia: 'memo' }; // 拾穗小集住在備忘錄裡（第一頁是捷徑）
   let tab = 'memo';
   const inApp = () => !!root.querySelector('.ap-view:not([hidden])');
@@ -464,6 +473,13 @@
     if (id === 'album') { albOpen = focus && S().alb.photos.some((p) => p.id === focus) ? { id: focus } : null; paintAlbum(); focus = null; } // 從通知點進來：直接打開那張
     if (id === 'threads') { thIn = null; paintThreads(); }
     if (id === 'secret') { secPin = ''; paintSecret(); secDoor(); secLoad().then(() => { if (!root.hidden && !root.querySelector('.ap-view[data-app="secret"]').hidden) keepScroll('secret', paintSecret); }); } // 機密企劃：重新整理酒館前輸入一次密碼就好
+    if (id === 'line') { // 每次打開都先在列表、家人分頁；從通知點進來＝直接進那個聊天室、那則亮一下
+      const L = S().line, rid = focus && Object.keys(L.chats).find((k) => L.chats[k].msgs.some((m) => m.id === focus));
+      lnIn = rid || null; lnTab = (rid && L.roster.find((r) => r.id === rid)?.cat) || 'fam'; lnStkOpen = false; lnFocus = !!rid;
+      v.querySelector('.ap-ln-foot').innerHTML = '';
+      if (rid) { lnChat(rid).unread = 0; save(); }
+      paintLine();
+    }
     if (id === 'phone') { telTab = 'call'; paintPhone(); } // 每次打開都先在「通話」分頁（從通知點進來也是）
     v.querySelector('.ap-vs').scrollTop = 0;
     v.hidden = false;
@@ -944,6 +960,270 @@
       ${tabs}${body}`;
   }
 
+  // ===== LINE 畫面（第 53 窗草圖；霧藍紙那一家）=====
+  let lnIn = null, lnTab = 'fam', lnStkOpen = false, lnFocus = false; // lnIn：null＝列表、'ours'＝你們的、'dad'＝爸、其他＝名單 id
+  const p2 = (n) => String(n).padStart(2, '0');
+  const lnHM = (t) => { const d = new Date(t); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+  const lnDayKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
+  const lnRealDay = (t) => { // 現實日期：今天／昨天／11/2
+    const k = lnDayKey(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+    if (k === lnDayKey(now)) return '今天';
+    if (k === lnDayKey(y)) return '昨天';
+    const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`;
+  };
+  const lnListTime = (t) => { const r = lnRealDay(t); return r === '今天' ? lnHM(t) : r; };
+  const lnAv = (av, name, cls = '') => `<span class="ap-ln-av${cls}"${av ? ` style="background-image:url(&quot;${esc(lnSrc(av))}&quot;)"` : ''}>${av ? '' : esc(lnInit(name))}</span>`;
+  const lnStk = (name) => S().line.stk.find((x) => x.name === name);
+  const lnStkHtml = (name) => { const k = lnStk(name); return k ? `<span class="ap-ln-stk" style="background-image:url(&quot;${esc(lnSrc(k.img))}&quot;)" role="img" aria-label="${esc(name)}"></span>` : `<span class="ap-ln-b ap-ln-bt">〔貼圖〕${esc(name)}</span>`; };
+  const lnPrev = (m) => !m ? '' : m.lock && !m.seen ? '（上鎖的訊息）' : m.t === 'stk' ? `〔貼圖〕${m.v}` : m.t === 'photo' ? `〔照片〕${m.v}` : m.t === 'voice' ? `〔語音${m.dur ? ' ' + m.dur : ''}〕${m.v}` : m.v;
+  const lnDadName = () => String(S().tel.last || '').trim();
+  const lnSortKey = (m) => `${m.day || ''} ${m.time || ''} ${String(m.seq || 0).padStart(6, '0')}`;
+  const lnChat = (id) => { const L = S().line; if (!L.chats[id]) L.chats[id] = { msgs: [], unread: 0 }; return L.chats[id]; };
+  function paintLine() {
+    const v = root.querySelector('.ap-view[data-app="line"]');
+    if (!v) return;
+    if (lnIn) return paintLineRoom(v);
+    v.classList.remove('ap-ln-room', 'ap-ln-ours');
+    v.querySelector('.ap-ln-hd').hidden = true; v.querySelector('.ap-ln-foot').hidden = true;
+    const L = S().line, O = L.ours.msgs, last = O[O.length - 1], me = L.me.name || '小果';
+    const pin = `<div class="ap-ln-pin" data-room="ours">${lnAv(L.me.av, me, ' ap-ln-avme')}<div class="ap-ln-rb"><div class="ap-ln-nm">${esc(me)}</div><div class="ap-ln-pv">${esc(lnPrev(last))}</div></div>`
+      + `<div class="ap-ln-rt">${last ? `<span class="ap-mw">${esc(lnListTime(last.time))}</span>` : ''}${L.ours.unread ? `<span class="ap-ln-ur">${L.ours.unread}</span>` : ''}</div></div>`;
+    const tabs = `<div class="ap-tabs ap-ln-tabs">${LN_CAT.map(([k, n]) => `<button type="button" class="ap-tab${lnTab === k ? ' ap-on' : ''}" data-lt="${k}">${n}</button>`).join('')}</div>`;
+    const rows = L.roster.filter((r) => r.cat === lnTab && r.name).map((r) => { const M = (L.chats[r.id]?.msgs || []).slice().sort((a, b) => (lnSortKey(a) < lnSortKey(b) ? -1 : 1)); return { r, m: M[M.length - 1] }; })
+      .sort((a, b) => (!a.m ? 1 : !b.m ? -1 : lnSortKey(a.m) < lnSortKey(b.m) ? 1 : -1));
+    let body = rows.map(({ r, m }) => { const u = L.chats[r.id]?.unread || 0;
+      return `<div class="ap-ln-row" data-room="${r.id}">${lnAv(r.av, r.name)}<div class="ap-ln-rb"><div class="ap-ln-nm">${esc(r.name)}</div><div class="ap-ln-pv">${esc(lnPrev(m))}</div></div>`
+        + `<div class="ap-ln-rt">${m ? `<span class="ap-mw">${esc(slash(m.day))}</span>` : ''}${u ? `<span class="ap-ln-ur">${u}</span>` : ''}</div></div>`; }).join('');
+    const dad = lnDadName();
+    if (lnTab === 'fam' && dad) { const D = L.dadMsgs, dm = D[D.length - 1];
+      body += `<div class="ap-ln-row ap-ln-dad" data-room="dad">${lnAv('', dad)}<div class="ap-ln-rb"><div class="ap-ln-nm">${esc(dad)}</div><div class="ap-ln-pv">${esc(dm ? dm.v : '')}</div></div></div>`; }
+    if (!body) body = `<div class="ap-tel-empty">${L.roster.length ? '這一頁還沒有人。' : '到酒館設定「💬 LINE」填聊天名單。'}</div>`;
+    v.querySelector('.ap-vs').innerHTML = `<div class="ap-meta">LINE</div><div class="ap-mtitle"><span class="ap-mdot ap-ln-dot"></span>LINE</div>${pin}${tabs}<div class="ap-ln-list">${body}</div>`;
+  }
+  function paintLineRoom(v) {
+    const L = S().line, ours = lnIn === 'ours', dad = lnIn === 'dad', r = !ours && !dad ? L.roster.find((x) => x.id === lnIn) : null;
+    if (!ours && !dad && !r) { lnIn = null; return paintLine(); }
+    v.classList.add('ap-ln-room'); v.classList.toggle('ap-ln-ours', ours);
+    const title = ours ? (L.me.name || '小果') : dad ? lnDadName() : r.name;
+    const hd = v.querySelector('.ap-ln-hd'); hd.hidden = false;
+    hd.innerHTML = `<button type="button" class="ap-ln-back" aria-label="回列表">${ic('back', 18)}</button><span class="ap-ln-hn${dad ? ' ap-ln-hdad' : ''}">${esc(title)}</span>`;
+    let html = '';
+    if (ours) {
+      let lastDay = '', prev = null;
+      L.ours.msgs.forEach((m) => {
+        const dk = lnDayKey(m.time); if (dk !== lastDay) { html += `<div class="ap-ln-day">${esc(lnRealDay(m.time))}</div>`; lastDay = dk; prev = null; }
+        const mine = m.from === 'me', first = !mine && (!prev || prev.from !== 'him');
+        const body = m.t === 'stk' ? lnStkHtml(m.v) : `<span class="ap-ln-b ${mine ? 'ap-ln-bme' : 'ap-ln-bhis'}">${esc(m.v)}</span>`;
+        const side = mine ? `<span class="ap-ln-sm">${m.read ? '已讀<br>' : ''}${lnHM(m.time)}</span>` : `<span class="ap-ln-sm ap-ln-sml">${lnHM(m.time)}</span>`;
+        html += mine ? `<div class="ap-ln-m ap-ln-me" data-id="${m.id}">${side}${body}</div>`
+          : `<div class="ap-ln-m" data-id="${m.id}">${first ? lnAv(L.him.av, '安') : '<span class="ap-ln-avsp"></span>'}${body}${side}</div>`;
+        prev = m;
+      });
+      if (!L.ours.msgs.length) html = '<div class="ap-ln-day">傳第一則訊息給他吧</div>';
+      html += lnTail();
+    } else {
+      const M = (dad ? L.dadMsgs : lnChat(r.id).msgs).slice().sort((a, b) => (lnSortKey(a) < lnSortKey(b) ? -1 : 1));
+      const group = !dad && new Set(M.filter((m) => m.from !== 'him').map((m) => m.from)).size > 1;
+      let lastDay = '', prev = null;
+      M.forEach((m) => {
+        if ((m.day || '') !== lastDay) { html += `<div class="ap-ln-day">${esc(slash(m.day) || m.day || '')}</div>`; lastDay = m.day || ''; prev = null; }
+        const his = dad || m.from === 'him';
+        let body;
+        if (m.lock && !m.seen) body = `<span class="ap-ln-b ap-ln-lk${his ? ' ap-ln-lkme' : ''}" data-lk="${m.id}">${ic('lockon', 15)}</span>`;
+        else if (m.t === 'photo' || m.t === 'voice') body = `<span class="ap-ln-card${m.t === 'voice' ? ' ap-ln-vc' : ''}"><span class="ap-ln-ck">〔${m.t === 'photo' ? '照片' : '語音' + (m.dur ? ' ' + esc(m.dur) : '')}〕</span><span class="ap-ln-cv">${esc(m.v)}</span></span>`;
+        else if (m.t === 'stk') body = `<span class="ap-ln-card"><span class="ap-ln-ck">〔貼圖〕</span><span class="ap-ln-cv">${esc(m.v)}</span></span>`;
+        else body = `<span class="ap-ln-b ${his ? 'ap-ln-bhm' : 'ap-ln-bhis'}">${esc(m.v)}</span>`;
+        const side = `<span class="ap-ln-sm${his ? '' : ' ap-ln-sml'}">${esc(m.time || '')}</span>`;
+        if (his) html += `<div class="ap-ln-m ap-ln-me" data-id="${m.id}">${side}${body}</div>`;
+        else { const first = !prev || prev.from !== m.from;
+          html += `<div class="ap-ln-m" data-id="${m.id}">${first ? lnAv(r.av && !group ? r.av : '', m.from) : '<span class="ap-ln-avsp"></span>'}<span class="ap-ln-col">${group && first ? `<span class="ap-ln-who">${esc(m.from)}</span>` : ''}${body}</span>${side}</div>`; }
+        prev = m;
+      });
+      if (!M.length) html = `<div class="ap-ln-day">${dad ? '' : '還沒有訊息'}</div>`;
+    }
+    const vs = v.querySelector('.ap-vs'); vs.innerHTML = `<div class="ap-ln-msgs">${html}</div>`;
+    const foot = v.querySelector('.ap-ln-foot'); foot.hidden = !ours;
+    if (ours && !foot.querySelector('.ap-ln-in')) foot.innerHTML = lnFoot(); // 已經有輸入框就不重畫（打到一半的字、鍵盤不會不見）
+    if (lnFocus) lnFocus = false; else requestAnimationFrame(() => { vs.scrollTop = vs.scrollHeight; }); // 聊天室打開停在最下面（從通知進來的交給 focusIn）
+  }
+  function lnFoot() {
+    const K = S().line.stk;
+    const panel = lnStkOpen ? `<div class="ap-ln-pan">${K.length ? K.map((k) => `<button type="button" class="ap-ln-pk" data-stk="${esc(k.name)}"><span class="ap-ln-pki" style="background-image:url(&quot;${esc(lnSrc(k.img))}&quot;)"></span><span class="ap-ln-pkn">${esc(k.name)}</span></button>`).join('') : '<div class="ap-ln-pan0">到酒館設定「💬 LINE」放貼圖。</div>'}</div>` : '';
+    return `<div class="ap-ln-bar"><button type="button" class="ap-ln-smile${lnStkOpen ? ' ap-on' : ''}" aria-label="貼圖">${ic('smile', 19)}</button><input type="text" class="ap-ln-in" maxlength="300" placeholder="輸入訊息…" enterkeyhint="send"><button type="button" class="ap-ln-send" aria-label="傳送">${ic('send', 18)}</button></div>${panel}`;
+  }
+  function lnClick(e) {
+    const t = e.target;
+    const room = t.closest('[data-room]'); if (room) { lnIn = room.dataset.room; lnStkOpen = false; lnOpenRoom(); return; }
+    const lt = t.closest('[data-lt]'); if (lt) { lnTab = lt.dataset.lt; paintLine(); root.querySelector('.ap-view[data-app="line"] .ap-vs').scrollTop = 0; return; }
+    if (t.closest('.ap-ln-back')) { root.querySelector('.ap-ln-foot').innerHTML = ''; lnIn = null; lnStkOpen = false; paintLine(); root.querySelector('.ap-view[data-app="line"] .ap-vs').scrollTop = 0; return; }
+    const vc = t.closest('.ap-ln-vc'); if (vc) { vc.classList.toggle('ap-open'); return; }
+    const lk = t.closest('[data-lk]'); if (lk) { lnPeek(lk.dataset.lk); return; }
+    if (t.closest('.ap-ln-smile')) { lnStkOpen = !lnStkOpen; const f = root.querySelector('.ap-ln-foot'), tx = f.querySelector('.ap-ln-in')?.value || ''; f.innerHTML = lnFoot(); f.querySelector('.ap-ln-in').value = tx; return; }
+    lnClickMore(e);
+  }
+  let lnClickMore = () => {};
+  // ===== LINE 你們的對話（第 3 段）=====
+  const LN_WAIT = 10000; // 妳停下來 10 秒，他開始讀
+  let lnTimer = null, lnArmAt = 0, lnBusy = false, lnErr = '';
+  const lnPend = () => S().line.ours.msgs.some((m) => m.from === 'me' && !m.read); // 有他還沒讀的
+  const lnInOurs = () => root && !root.hidden && lnIn === 'ours' && !root.querySelector('.ap-view[data-app="line"]').hidden;
+  function lnTail() { // 最後一則下面：對方輸入中／換你膠囊／出錯
+    const L = S().line;
+    if (lnBusy) return `<div class="ap-ln-m">${lnAv(L.him.av, '安')}<span class="ap-ln-b ap-ln-bhis ap-ln-typ">對方輸入中…</span></div>`;
+    let h = '';
+    if (lnErr) h += `<div class="ap-ln-err">${esc(lnErr)}<button type="button" class="ap-ln-retry">重新回一次</button></div>`;
+    else if (lnPend()) {
+      const el = lnArmAt ? Math.min(LN_WAIT, Date.now() - lnArmAt) : 0;
+      h += `<button type="button" class="ap-ln-cap"><svg class="ap-ln-ring" viewBox="0 0 104 26" aria-hidden="true"><rect x=".5" y=".5" width="103" height="25" rx="12.5" class="ap-ln-trk"/>`
+        + (lnArmAt ? `<rect x=".5" y=".5" width="103" height="25" rx="12.5" pathLength="100" class="ap-ln-run" style="animation-delay:-${(el / 1000).toFixed(2)}s"/>` : '')
+        + `</svg><span class="ap-ln-cdot"></span>好了，換你</button>`;
+    }
+    return h;
+  }
+  function lnRoomRefresh() { // 只重畫訊息那塊（輸入列不動）
+    if (!lnInOurs()) return;
+    paintLineRoom(root.querySelector('.ap-view[data-app="line"]'));
+  }
+  function lnArm() { // 開始（或重新）數 10 秒
+    clearTimeout(lnTimer); lnArmAt = Date.now(); lnErr = '';
+    lnTimer = setTimeout(() => { lnTimer = null; lnArmAt = 0; lnAsk(); }, LN_WAIT);
+    lnRoomRefresh();
+  }
+  function lnSend(t, v) {
+    v = String(v || '').trim(); if (!v) return;
+    const L = S().line;
+    L.ours.msgs.push({ id: 'm' + (++L.seq), from: 'me', t, v: v.slice(0, 300), time: Date.now(), read: false });
+    while (L.ours.msgs.length > 300) L.ours.msgs.shift(); // 留最近 300 則（舊的可以先匯出）
+    save();
+    if (lnBusy) lnRoomRefresh(); else lnArm(); // 他輸入中：照傳，下一輪再讀
+    lnSettingsShow();
+  }
+  lnClickMore = (e) => {
+    const t = e.target;
+    if (t.closest('.ap-ln-send')) { const i = root.querySelector('.ap-ln-in'); lnSend('text', i.value); i.value = ''; i.focus(); return; }
+    const k = t.closest('[data-stk]'); if (k) { lnSend('stk', k.dataset.stk); return; }
+    if (t.closest('.ap-ln-cap')) { clearTimeout(lnTimer); lnTimer = null; lnArmAt = 0; lnAsk(); return; }
+    if (t.closest('.ap-ln-retry')) { lnErr = ''; lnAsk(true); }
+  };
+  function lnKeys(e) { // Enter 送出；還在打字＝膠囊重新數
+    if (!e.target.classList?.contains('ap-ln-in')) return;
+    if (e.type === 'keydown' && e.key === 'Enter' && !e.isComposing) { e.preventDefault(); lnSend('text', e.target.value); e.target.value = ''; return; }
+    if (e.type === 'input' && lnTimer) lnArm();
+  }
+  const lnNow = () => { const d = new Date(), h = d.getHours(), W = '日一二三四五六';
+    const part = h < 5 ? '凌晨' : h < 11 ? '早上' : h < 13 ? '中午' : h < 18 ? '下午' : '晚上';
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（星期${W[d.getDay()]}）${part} ${h % 12 || 12}:${p2(d.getMinutes())}`; };
+  async function lnWorld(text) { // 世界書：藍燈常駐全給＋其他照關鍵字翻（最多 6 條），標題有「不讀」字的跳過
+    const c = ctx(), L = S().line, books = new Set();
+    const ch = curChar(); if (ch?.data?.extensions?.world) books.add(ch.data.extensions.world);
+    if (c.chatMetadata?.world_info) books.add(c.chatMetadata.world_info);
+    const pl = c.powerUserSettings?.persona_description_lorebook; if (pl) books.add(pl);
+    let load = c.loadWorldInfo;
+    if (typeof load !== 'function') { try { load = (await import('/scripts/world-info.js')).loadWorldInfo; } catch (e) { load = null; } }
+    if (typeof load !== 'function' || !books.size) return '';
+    const skip = String(L.wiSkip || '').split(/[,，、\n]/).map((x) => x.trim()).filter(Boolean);
+    const con = [], hit = [];
+    for (const b of books) {
+      let data = null; try { data = await load(b); } catch (e) { data = null; }
+      Object.values(data?.entries || {}).forEach((e) => {
+        if (!e || e.disable || !String(e.content || '').trim()) return;
+        const title = String(e.comment || '');
+        if (skip.some((k) => title.includes(k))) return;
+        if (e.constant) { con.push(e); return; }
+        const keys = [].concat(e.key || []).map((k) => String(k).trim()).filter((k) => k && !/^\/.*\/[a-z]*$/.test(k));
+        if (keys.some((k) => text.includes(k))) hit.push(e);
+      });
+    }
+    const ord = (a, b) => (a.order || 0) - (b.order || 0);
+    const pick = con.sort(ord).concat(hit.sort(ord).slice(0, 6));
+    let out = '', n = 0;
+    for (const e of pick) { const t = `【${e.comment || '設定'}】\n${String(e.content).trim()}\n`; if (n + t.length > 9000) break; out += t; n += t.length; }
+    return out.trim();
+  }
+  async function lnPrompt(newIds) {
+    const c = ctx(), L = S().line, ch = curChar() || {}, him = ch.name || c.name2 || '他', her = c.name1 || '小果';
+    const card = [ch.description, ch.personality].filter(Boolean).join('\n').slice(0, 6000);
+    const persona = String(c.powerUserSettings?.persona_description || '').slice(0, 2000);
+    const M = L.ours.msgs.slice(-50), N = new Set(newIds);
+    const fmt = (m) => { const d = new Date(m.time); return `${N.has(m.id) ? '★' : ''}[${d.getMonth() + 1}/${d.getDate()} ${lnHM(m.time)}] ${m.from === 'me' ? her : him}：${m.t === 'stk' ? `〔貼圖：${m.v}〕` : m.v}`; };
+    const recent = M.filter((m) => N.has(m.id)).concat(M.slice(-4)).map((m) => m.v).join('\n'); // 翻世界書用：這輪要回的＋最後幾則
+    const world = await lnWorld(recent);
+    const names = L.stk.map((k) => k.name);
+    const sys = `你是${him}。現在你正在用手機 LINE 跟${her}聊天。這是你們兩個人的 LINE 聊天室，跟你們平常的故事分開：照現在的真實時間生活，不知道、也不要提故事裡正在發生的特定場景。只輸出 JSON。`;
+    const prompt = `【現在的真實時間】${lnNow()}
+
+【你是誰（角色卡）】
+${card || '（沒有角色卡）'}
+${persona ? `\n【${her}是誰】\n${persona}\n` : ''}${world ? `\n【你們的回憶與設定（世界書）】\n${world}\n` : ''}
+【可以傳的貼圖（只能用這些名字）】
+${names.length ? names.join('、') : '（目前沒有貼圖，不要傳貼圖）'}
+
+【你們最近的 LINE】
+${M.map(fmt).join('\n') || '（還沒有訊息）'}
+
+【怎麼回】
+1. 這是 LINE 文字聊天，不是小說：只寫你打出去的訊息。不寫動作、旁白、心聲、*星號*、括號裡的動作，不寫狀態欄、好感或任何格式區塊。
+2. 回 ${her} 標了 ★ 的那幾則（這次要回的）。接得上話，不要整句重複她說的。
+3. 回 1～4 則，像真人打 LINE，想到一句送一句；則數和長短照你的個性決定（有時一則「嗯」就夠），每則 60 字以內。
+4. 照現在的真實時間：深夜可以叫她早點睡、早上可以說早安；不要編出你們故事裡的大事件。
+5. 貼圖：每次最多 1 張，可以不傳，也可以整輪只回一張貼圖；只能從上面的名字裡挑，名字要一字不差。${her}的貼圖你也可以拿來逗她。
+6. 繁體中文。
+7. 只輸出 JSON，不要其他文字：
+{"msgs":[{"t":"text","v":"訊息"},{"t":"stk","v":"貼圖名字"}]}`;
+    return { sys, prompt };
+  }
+  function lnParse(txt) {
+    const o = parse(txt), K = new Set(S().line.stk.map((k) => k.name));
+    let stk = 0;
+    const out = (Array.isArray(o.msgs) ? o.msgs : []).map((m) => ({ t: m?.t === 'stk' ? 'stk' : 'text', v: String(m?.v || '').replace(/\*[^*\n]*\*/g, '').replace(/\*/g, '').replace(/\s{2,}/g, ' ').trim() })) // 動作 *…* 拿掉
+      .filter((m) => m.v && (m.t === 'text' || (K.has(m.v) && stk++ < 1))).slice(0, 4);
+    if (!out.length) throw new Error('AI 回的東西拆不開');
+    return out;
+  }
+  async function lnAsk(retry) {
+    if (lnBusy) return;
+    const L = S().line, M = L.ours.msgs;
+    let ids = M.filter((m) => m.from === 'me' && !m.read).map((m) => m.id); // 這輪要他回的＝他還沒讀的
+    if (!ids.length && retry) { const li = M.map((m) => m.from).lastIndexOf('him'); ids = M.slice(li + 1).filter((m) => m.from === 'me').map((m) => m.id); } // 重新回一次
+    if (!ids.length) { lnRoomRefresh(); return; }
+    clearTimeout(lnTimer); lnTimer = null; lnArmAt = 0;
+    lnBusy = true; lnErr = '';
+    M.forEach((m) => { if (ids.includes(m.id)) m.read = true; }); save(); // 他開始讀＝已讀
+    lnRoomRefresh();
+    try {
+      const { sys, prompt } = await lnPrompt(ids);
+      const out = lnParse(await askAIQ(sys, prompt));
+      for (let i = 0; i < out.length; i++) { // 一則一則跳出來
+        await new Promise((r) => setTimeout(r, i ? 900 + Math.min(1200, out[i].v.length * 40) : 300));
+        L.ours.msgs.push({ id: 'm' + (++L.seq), from: 'him', t: out[i].t, v: out[i].v, time: Date.now() });
+        if (!lnInOurs()) { L.ours.unread++; S().hdot.line = true; }
+        save(); if (i < out.length - 1) lnRoomRefresh();
+      }
+      while (L.ours.msgs.length > 300) L.ours.msgs.shift();
+      lnBusy = false; save(); lnBadge();
+      if (lnPend()) lnArm(); else lnRoomRefresh(); // 他輸入中妳又傳了：膠囊再冒出來
+      if (root && !root.hidden && !lnInOurs()) { const v = root.querySelector('.ap-view[data-app="line"]'); if (!v.hidden && !lnIn) keepScroll('line', paintLine); }
+      lnSettingsShow();
+    } catch (e) {
+      console.warn('[anan_phone] LINE 回覆失敗', e);
+      lnBusy = false;
+      const off = ctx().onlineStatus === 'no_connection';
+      lnErr = off ? '酒館還沒連上：重選 argon 預設，再按一次' : /JSON|拆不開/.test(String(e.message)) ? '他回得亂七八糟，再試一次' : '這次沒成功：' + String(e.message || e).slice(0, 40);
+      lnRoomRefresh();
+    }
+  }
+  function lnOpenRoom() { // 點進聊天室＝看過了：未讀清掉
+    const L = S().line;
+    if (lnIn === 'ours') L.ours.unread = 0; else if (lnIn !== 'dad') lnChat(lnIn).unread = 0;
+    save(); paintLine(); lnBadge();
+  }
+  const lnBadge = () => { if (fab) badge(); };
+  function lnPeek(id) { // 果果解鎖他鎖起來的：記下來，下次更新告訴他
+    const L = S().line, m = Object.values(L.chats).flatMap((c) => c.msgs).find((x) => x.id === id); if (!m) return;
+    m.seen = true; if (!L.peek.includes(id)) L.peek.push(id); save();
+    keepScroll('line', () => paintLineRoom(root.querySelector('.ap-view[data-app="line"]')));
+  }
+
   let lp = null, lpAt = 0;
   const LPT = '.ap-mn, .ap-gr, .ap-wr, .ap-kr, .ap-sh-row, .ap-sh-crow, .ap-fd-row, .ap-dy-ent:not(.ap-dy-draft), .ap-cm-row, .ap-tel-call, .ap-tel-vm, .ap-mu-song, .ap-mu-ph[data-own], .ap-th-ph, .ap-sc-card[data-id], .ap-sc-hid';
   function lpStart(e) {
@@ -1362,6 +1642,8 @@
     const b = fab.querySelector('.ap-badge');
     b.hidden = !s.unseen;
     b.classList.toggle('ap-mine', !!s.unseenMine);
+    const g = fab.querySelector('.ap-badge-ln'); // 他回妳 LINE：淺綠點（跟鵝黃／紅點並排）
+    g.hidden = !s.line.ours.unread; g.classList.toggle('ap-two', !b.hidden);
   }
 
   function open() {
@@ -1373,15 +1655,15 @@
   }
   function close() { root.hidden = true; clearInterval(timer); }
 
-  function shrink(file) {
+  function shrink(file, max = 900, png = false) {
     return new Promise((res, rej) => {
       const img = new Image();
       img.onload = () => {
-        const w = Math.min(900, img.width), h = Math.round(img.height * (w / img.width));
+        const w = Math.min(max, img.width), h = Math.round(img.height * (w / img.width));
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(img.src);
-        res(c.toDataURL('image/jpeg', 0.82));
+        res(png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.82)); // 貼圖用 png：去背的透明不會變白底
       };
       img.onerror = rej;
       img.src = URL.createObjectURL(file);
@@ -1471,7 +1753,7 @@
     const scNow = { pages: Object.fromEntries(['place', 'sweet', 'wed', 'sur', 'prop'].map((k) => [k, SC.items.filter((x) => x.tab === k).map((x) => ({ id: x.id, title: x.title, done: x.done || undefined, hidden: x.hid || undefined, when: x.when || undefined, late: secLate(x) || undefined, unused: x.unused || undefined, lastNote: scLast(x.body) || undefined }))])),
       bingoLeft: scCells.filter((x) => !x.done).map((x) => ({ letter: x.L, title: x.t, lastNote: scLast(SC.bingo[x.L]) || undefined })) };
     const now = { weather: L.weather, cal: calNow, battery: L.battery, quote: L.quote, notes: s.notes, memoDay: s.memo.day, memo: memoNow, grains: grainsNow,
-      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow, threads: thNow, secret: scNow };
+      web: { draft: s.web.draft, tabs: s.web.tabs, history: webNow }, shop: shopNow, food: foodNow, diary: diaryNow, cam: camNow, phone: telNow, music: musNow, album: albNow, threads: thNow, secret: scNow, line: lineNow() };
     const peekShop = [...s.shop.items, ...s.shop.card].filter((x) => s.shop.peek.includes(x.id)).map((x) => x.name || `${x.k}：${x.v}`);
     const peekFood = s.food.items.filter((x) => s.food.peek.includes(x.id)).map((x) => x.name);
     const memo = String(s.auto.memo || '').trim().slice(0, 4000);
@@ -1498,7 +1780,7 @@ ${JSON.stringify(now)}
    - 不要重複 cal 裡已經有的事（同一天、意思一樣都不行）。
 3. battery：phone 和 buds 是 0～100 的整數，跟著他的一天自然變化：用手機、出門在外會慢慢往下掉，可以掉到 50 以下；他回到家會插上充電，電量往上；睡一覺起來是 100。charging：他的手機現在是不是插著在充電（true／false），在家、在充電時才是 true。
 4. quote：今日摘句，由他自己決定換不換。不換就回傳原本那句，一字不改；要換的話，是他親手打的一句話，30 字以內，用他的語氣。
-5. notes：3～5 則通知。app 只能是 line、web 其中一個（行事曆、備忘錄和拾穗小集的通知程式會自己拿，你不用寫）；from 10 字以內（聯絡人、行程名或 App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的：傳給她的、在聊她的、跟她的約會或計畫；只是順便提到的不算。每次至少 1～2 則跟 ${me} 無關（工作、朋友、家人的日常）。聯絡人名字要照小抄裡存的名字寫。小抄裡的個性和習慣是參考，不要照抄裡面的句子，每次用新的說法。這次的通知要是新的：不要重複「他手機現在的內容」裡的通知，也不用每次都出現同樣的人，挑這段劇情裡最可能傳訊息來的人。通知都是「別人傳給他」或「他的 App 提醒他」的，不要寫他自己傳出去的訊息。${mute.length ? `這些人不會傳訊息來，from 絕對不能是他們：${mute.join('、')}。` : ''}內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
+5. notes：0～2 則通知。app 只能是 web（LINE、行事曆、備忘錄和拾穗小集的通知程式會從真的內容自己拿，你不用寫；LINE 的訊息寫在第 18 條 line 裡）；from 10 字以內（App 標題）；text 40 字以內；when 用阿拉伯數字，像「現在」「5分鐘前」「2小時前」「昨天」；mine 只給真的跟 ${me} 有關的。沒有適合的就給 []。這次的通知要是新的，不要重複「他手機現在的內容」裡的通知。內容要跟劇情和他的生活對得上，不要編出劇情裡沒有的大事件。
 6. memo：他自己記給自己看的備忘錄。用他的口吻，記他自己會想記下的事；記什麼由他決定。有約定時間的事寫在行事曆（cal），這裡記沒有時間的待辦和想法。
    - add：這次新增的 0～2 則，沒有想記的就給空陣列 []。每則的 kind 是 text 或 list：
      text＝一段話：title 15 字內、body 80 字內。
@@ -1571,10 +1853,11 @@ ${SC.items.some(secLate) ? `   - late：有驚喜標了 late（打算揭曉的�
    - 某一頁已經 20 條、又沒有做完的可以清掉時，那一頁不能再加。
 ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}。這次可以替每個空的頁各補 1 條，寫成跟 add 一樣的格式（不用寫 act），放進 seed 陣列；照他的角色設定和最近的劇情寫他真的會準備的事，不要編造重大劇情；已經發生過的事（像已經發生的求婚）加 "done":true。seed 不算在 op 的 1 處裡。不想補的頁可以不補。
 ` : '   - seed 給 []。\n'}${SC.peek ? `   - ${me} 剛剛輸入密碼、打開過這個資料夾（不知道她看了哪一頁、看了多少）。他會知道。要不要有反應、在哪裡反應（下面的紙條、Threads、手記…）由他決定，大多時候是默默知道。slip：想的話寫一句夾在企劃最上面的小紙條（20 字內，用他的口吻），不寫就給空字串。` : '   - slip 給空字串。'}
-18. 全部用繁體中文、台灣用語。
+${lineRule(me)}
+19. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"late":null,"seed":[],"slip":""}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"web","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]},"secret":{"op":null,"late":null,"seed":[],"slip":""},"line":{"chats":[{"to":"","msgs":[{"from":"him","t":"text","v":"","time":""}]}],"add":null,"dad":[]}}`;
     return { sys, prompt };
   }
 
@@ -1587,6 +1870,9 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     return String(out || '');
   }
 
+  // 排隊：小手機更新和 LINE 不同時叫 AI（argon 擠爆會 429，第 53 窗）
+  let aiQ = Promise.resolve();
+  function askAIQ(sys, prompt) { const p = aiQ.then(() => askAI(sys, prompt)); aiQ = p.catch(() => {}); return p; }
   function parse(txt) {
     const m = txt.replace(/```(json)?/gi, '').match(/\{[\s\S]*\}/);
     if (!m) throw new Error('AI 沒有回 JSON');
@@ -1595,7 +1881,7 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
 
   // 只收合格的欄位，不合格的保留原本內容（不會把手機弄壞）
   // 主畫面小點：更新前後比一比，誰長了新東西（用各 App 的編號計數，不用每個 apply 各自記）
-  const HSIG = {
+  const HSIG = { line: (s) => Object.values(s.line.chats).reduce((n, c) => n + c.msgs.length, 0) + ':' + s.line.dadMsgs.length + ':' + s.line.roster.length,
     memo: (s) => s.memo.seq, trivia: (s) => s.grains.seq, web: (s) => s.web.seq, cal: (s) => s.cal.seq,
     shop: (s) => `${s.shop.seq}/${s.shop.cseq}`, food: (s) => s.food.seq, diary: (s) => s.diary.seq, cam: (s) => s.cam.seq,
     phone: (s) => s.tel.seq, music: (s) => s.mus.seq,
@@ -1611,9 +1897,9 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     const pct = (v, old) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.max(1, Math.min(100, n)) : old; };
     if (o.battery) L.battery = { phone: pct(o.battery.phone, L.battery?.phone ?? 76), buds: pct(o.battery.buds, L.battery?.buds ?? 88), charging: o.battery.charging === true };
     if (typeof o.quote === 'string' && o.quote.trim()) L.quote = clean(o.quote, 40);
-    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && ['line', 'web'].includes(x.app) && x.text && !muted(x)).slice(0, 5) : [];
+    const N = Array.isArray(o.notes) ? o.notes.filter((x) => x && x.app === 'web' && x.text && !muted(x)).slice(0, 2) : []; // LINE 的通知改成從聊天室真的拿（第 53 窗）
     if (N.length) s.notes = N.map((x) => ({ app: x.app, from: clean(x.from, 12), text: clean(x.text, 50), when: numWhen(clean(x.when, 8)), mine: !!x.mine }));
-    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone', 'music', 'album', 'threads'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
+    else s.notes = s.notes.filter((x) => !['memo', 'trivia', 'cal', 'shop', 'food', 'diary', 'phone', 'music', 'album', 'threads', 'line'].includes(x.app)); // 舊的行事曆／備忘錄／拾穗通知拿掉，下面重新拿
     // 日期時間跟著劇情，停在更新那一刻；AI 看不出來就維持原本的
     const sd = storyDate(o.date), st = String(o.time || '').match(/(\d{1,2})[:：](\d{2})/);
     if (sd && st) { L.date = sd; L.time = st[1].padStart(2, '0') + ':' + st[2]; }
@@ -1630,6 +1916,7 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     putNote(applyMusic(o.music), 2); // 音樂：正在播放換歌才跳一則
     putNote(applyAlbum(o.album, isoDate(o.date)), 1); // 相簿：他留了一句話才跳一則；換桌布不跳（一打開就看到）
     putNote(telNotice(applyPhone(o.phone, isoDate(o.date))), 2); // 電話：每次最多 1 則（新語音優先，其次未接）
+    applyLine(o.line, isoDate(o.date), hm(o.time)).reverse().forEach((x) => putNote(x, x.mine ? 0 : 1)); // LINE：從他跟別人的新訊息拿，最多 2 則（爸的、上鎖的不跳）
     applySecret(o.secret); // 機密企劃：不跳鎖定畫面通知（加密資料夾不會把內容秀在外面），只有主畫面小點
     applyThreads(o.threads).reverse().forEach((x) => putNote(x, x.mine ? 0 : 1)); // Threads：新貼文跳一則；回了果果的留言再跳一則（鵝黃線）
     s.unseen = true;
@@ -1637,6 +1924,66 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     const sig1 = hsig(s); Object.keys(sig1).forEach((k) => { if (sig1[k] !== sig0[k]) s.hdot[k] = true; });
   }
 
+  // ===== LINE：小手機更新那邊（他跟別人的聊天、爸、小鎖被偷看、通知；第 53 窗）=====
+  function lnSpecial(dayIso) { // 爸的特別日子（照劇情的年份）：父親節、清明、過年（農曆初一）、設定裡的生日／離開的日子
+    const y = +String(dayIso || nowDay()).slice(0, 4) || new Date().getFullYear(), D = S().line.dad, out = [['8/8', '父親節'], ['4/4', '清明'], ['4/5', '清明']];
+    try { const f = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { month: 'numeric', day: 'numeric' });
+      for (let d = new Date(y, 0, 15); d <= new Date(y, 1, 25); d.setDate(d.getDate() + 1)) { const P = Object.fromEntries(f.formatToParts(d).map((x) => [x.type, x.value])); if (P.month === '1' && P.day === '1') { out.push([`${d.getMonth() + 1}/${d.getDate()}`, '過年（農曆初一）']); break; } } } catch (e) { /* 沒有農曆就算了 */ }
+    if (D.bday) out.push([D.bday, '爸爸的生日']);
+    if (D.gone) out.push([D.gone, '爸爸離開的日子']);
+    return out;
+  }
+  function lineNow() {
+    const L = S().line, short = (m) => ({ from: m.from, t: m.t, v: m.v, day: m.day, time: m.time, lock: m.lock || undefined });
+    return { contacts: L.roster.filter((r) => r.name).map((r) => ({ name: r.name, cat: r.cat, recent: (L.chats[r.id]?.msgs || []).slice(-4).map(short) })),
+      dad: lnDadName() ? L.dadMsgs.slice(-3).map((m) => ({ v: m.v, day: m.day })) : undefined };
+  }
+  function lineRule(me) {
+    const L = S().line, dad = lnDadName(), full = L.roster.length >= LN_MAX_ROS;
+    const peeked = L.peek.map((id) => { for (const r of L.roster) { const m = (L.chats[r.id]?.msgs || []).find((x) => x.id === id); if (m) return `「${r.name}」裡的「${m.v}」`; } return ''; }).filter(Boolean);
+    const sp = lnSpecial().map(([d, n]) => `${d} ${n}`).join('、');
+    return `18. line：他的 LINE。聊天名單在 line.contacts（recent 是最近幾則）。他跟 ${me} 兩個人的聊天室是另外一個地方，這裡不要寫。
+   - chats：這次 1～3 個聊天室有新訊息，挑最近劇情裡最可能在聊的人（不用每次都是同樣的人）。to 要一字不差照 contacts 的 name。每個聊天室這次 1～6 則：{"from":"him 或對方的名字","t":"text","v":"","time":"15:40"}。from 是 him＝他傳的；群組要寫說話的人的名字。time 照劇情，不能晚於最新那一刻。
+   - 他的習慣：跟朋友、工作傳訊息像公文，只有文字跟句號，幾乎不用貼圖；照角色設定和小抄。對方的語氣照小抄裡他們的個性。
+   - t 可以是 text、photo（v 寫照片裡有什麼）、voice（v 寫語音內容，像語音轉文字；多寫 "dur":"0:12"）、stk（v 寫貼圖是什麼）。每則 v 60 字以內。
+   - lock：他不想讓 ${me} 看到的那一則（像跟朋友商量給她的驚喜）加 "lock":true，這次最多 1 則，少用。
+   - 不要重複 recent 裡已經有的內容，接得上之前聊的。
+   - add：劇情裡有新認識、真的會互加 LINE 的人（婚禮廠商、新作者……）才寫 {"name":"","cat":"fam 或 fri 或 work"}，這次最多 1 個${full ? '；名單已經滿了，給 null' : '；沒有就給 null'}。新加的人這次也可以在 chats 裡聊。
+${dad ? `   - dad：他傳給「${dad}」的話（爸爸已經不在了，聊天室留著，想他的時候會傳，永遠不會已讀）。字串陣列，1～2 則，每則 40 字以內，短短的，像對著不會回的人說話。最新劇情的日期如果是這幾天之一，一定要寫：${sp}；其他時候只有劇情裡真的有讓他想起爸爸的事（求婚、婚禮、想念、難過、讀到爸爸教過的東西）才寫，沒有就給 []。不要重複 line.dad 裡寫過的。` : '   - dad 給 []。'}
+${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${peeked.join('；')}。他會知道。要不要反應、在哪裡反應（例如在跟朋友的聊天室裡慌張一下）由他決定。` : ''}`;
+  }
+  function applyLine(o, day, time) {
+    const s = S(), L = s.line, me = ctx().name1 || '', notes = [];
+    if (!o || typeof o !== 'object') return notes;
+    day = day || nowDay(); time = time || hm(s.lock.time);
+    const a = o.add; // 他加的新朋友
+    if (a && a.name && L.roster.length < LN_MAX_ROS) { const nm = clean(a.name, 16); if (nm && !L.roster.some((r) => r.name === nm) && nm !== lnDadName()) L.roster.push({ id: 'r' + (++L.seq), name: nm, cat: ['fam', 'fri', 'work'].includes(a.cat) ? a.cat : 'fri', av: '', byHim: true }); }
+    let locks = 0;
+    (Array.isArray(o.chats) ? o.chats : []).slice(0, 3).forEach((c) => {
+      const r = L.roster.find((x) => x.name && x.name === String(c?.to || '').trim()); if (!r) return;
+      const C = lnChat(r.id), old = new Set(C.msgs.slice(-10).map((m) => m.v)), add = [];
+      (Array.isArray(c.msgs) ? c.msgs : []).slice(0, 6).forEach((m) => {
+        const v = clean(String(m?.v || '').replace(/\*[^*\n]*\*/g, ''), 80); if (!v || old.has(v)) return;
+        const from = m.from === 'him' ? 'him' : clean(m.from || r.name, 12) || r.name;
+        const t = ['text', 'photo', 'voice', 'stk'].includes(m.t) ? m.t : 'text';
+        const x = { id: 'l' + (++L.seq), from, t, v, day, time: hm(m.time) || time, seq: L.seq };
+        if (t === 'voice' && m.dur) x.dur = clean(m.dur, 6);
+        if (m.lock === true && locks < 1) { x.lock = true; locks++; }
+        add.push(x); old.add(v);
+      });
+      if (!add.length) return;
+      C.msgs.push(...add);
+      C.msgs.sort((p, q) => (lnSortKey(p) < lnSortKey(q) ? -1 : 1)); while (C.msgs.length > 30) C.msgs.shift();
+      const inc = add.filter((x) => x.from !== 'him'); C.unread += inc.length;
+      const n = inc.find((x) => !x.lock); // 通知：對方傳來的第一則（上鎖的不跳）
+      if (n) notes.push({ app: 'line', id: n.id, from: clean(r.name, 12), text: clean(lnPrev(n), 50), when: lnWhen(n.time, time), mine: !!(me && n.v.includes(me)) });
+    });
+    if (lnDadName() && Array.isArray(o.dad)) o.dad.slice(0, 2).forEach((v) => { v = clean(v, 60); if (v && !L.dadMsgs.slice(-5).some((m) => m.v === v)) L.dadMsgs.push({ id: 'd' + (++L.seq), v, day, time, seq: L.seq }); });
+    L.peek = []; // 偷看過的已經告訴他了
+    if (root && !root.hidden && !root.querySelector('.ap-view[data-app="line"]').hidden && lnIn !== 'ours') keepScroll('line', paintLine);
+    return notes.slice(0, 2);
+  }
+  const lnWhen = (a, b) => { a = hm(a); b = hm(b); if (!a || !b) return '現在'; const d = (+b.slice(0, 2) * 60 + +b.slice(3)) - (+a.slice(0, 2) * 60 + +a.slice(3)); return d >= 1 ? (d < 60 ? `${d}分鐘前` : `${Math.floor(d / 60)}小時前`) : '現在'; };
   const isoDate = (t) => { const m = String(t || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : ''; };
   const hm = (t) => { const m = String(t || '').match(/(\d{1,2})[:：](\d{2})/); return m ? m[1].padStart(2, '0') + ':' + m[2] : ''; };
   const cleanBody = (t, max) => String(t ?? '').replace(/<[^>]*>/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, max);
@@ -1955,7 +2302,7 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     try {
       try { await secLoad(); } catch (e) { /* 讀不到就用上次存的 */ }
       const { sys, prompt } = buildPrompt();
-      apply(parse(await askAI(sys, prompt)));
+      apply(parse(await askAIQ(sys, prompt)));
       const s = S(); s.auto.last = Date.now(); save();
       const md = ctx().chatMetadata; if (md) { md[MKEY] = msgCount(); saveMeta(); }
       badge();
@@ -2027,9 +2374,9 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
   }
 
   // 照片存進酒館自己的伺服器（聊天傳圖用的那個資料夾，Railway 硬碟上）；回傳路徑
-  async function albUpload(dataUrl) {
+  async function albUpload(dataUrl, fmt = 'jpg') {
     const c = ctx(), headers = (typeof c.getRequestHeaders === 'function' ? c.getRequestHeaders() : null) || { 'Content-Type': 'application/json' };
-    const r = await fetch('/api/images/upload', { method: 'POST', headers, body: JSON.stringify({ image: String(dataUrl).split(',')[1], format: 'jpg', ch_name: 'anan_phone', filename: 'p' + Date.now() }) });
+    const r = await fetch('/api/images/upload', { method: 'POST', headers, body: JSON.stringify({ image: String(dataUrl).split(',')[1], format: fmt, ch_name: 'anan_phone', filename: 'p' + Date.now() }) });
     if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 80); throw new Error(`伺服器回 ${r.status}${tx ? '：' + tx : ''}`); }
     const j = await r.json().catch(() => ({}));
     if (!j.path) throw new Error('伺服器沒有回照片路徑');
@@ -2117,6 +2464,125 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     reset(); alShow();
   }
 
+  // ===== LINE（第 53 窗）=====
+  const LN_CAT = [['fam', '家人'], ['fri', '朋友'], ['work', '工作']];
+  const LN_MAX_ROS = 10; // 名單最多 10 位（加上你們的、爸的＝12 個聊天室）
+  const LN_MAX_STK = 40;
+  const lnSrc = (u) => (u ? albSrc({ path: u }) : '');
+  const lnInit = (n) => String(n || '').replace(/^[^\p{L}\p{N}]+/u, '').slice(0, 1) || '？'; // 頭像沒放照片：名字第一個字
+  const lnRepaint = () => { if (root && !root.hidden && !root.querySelector('.ap-view[data-app="line"]')?.hidden) keepScroll('line', paintLine); }; // 設定改了，小手機開著就重畫
+  function bindLineSettings(box, sumEl) {
+    const q = (c) => box.querySelector(c), L = () => S().line;
+    const file = q('.ap-ln-file');
+    let pick = null; // 現在要放照片的是誰：{ kind:'av', who } 或 { kind:'ros', id } 或 { kind:'stk' }
+    const stkMsg = (t) => { q('.ap-ln-stkmsg').textContent = t || ''; };
+    const show = () => {
+      const l = L();
+      q('.ap-ln-mename').value = l.me.name || '';
+      box.querySelectorAll('.ap-ln-avr').forEach((r) => {
+        const o = l[r.dataset.who], th = r.querySelector('.ap-ln-th');
+        th.style.backgroundImage = o.av ? `url("${lnSrc(o.av)}")` : '';
+        th.textContent = o.av ? '' : (r.dataset.who === 'me' ? lnInit(l.me.name || '果') : '安');
+        r.querySelector('.ap-ln-avdel').hidden = !o.av;
+      });
+      q('.ap-ln-ros').innerHTML = l.roster.map((x) => `
+        <div class="ap-ln-rr" data-id="${x.id}">
+          <span class="ap-ln-th ap-ln-thb" style="${x.av ? `background-image:url(&quot;${esc(lnSrc(x.av))}&quot;)` : ''}">${x.av ? '' : esc(lnInit(x.name))}</span>
+          <input type="text" class="text_pole ap-ln-rn" maxlength="16" value="${esc(x.name)}" placeholder="名字">
+          <select class="text_pole ap-ln-rc">${LN_CAT.map(([k, n]) => `<option value="${k}"${x.cat === k ? ' selected' : ''}>${n}</option>`).join('')}</select>
+          <span class="ap-ln-rx">${x.av ? '<i class="fa-solid fa-image-portrait ap-ln-ravdel" title="移除頭像"></i>' : ''}${x.byHim ? '<small>他加的</small>' : ''}<i class="fa-solid fa-xmark ap-ln-rdel" title="刪掉"></i></span>
+        </div>`).join('') || '<div class="ap-row"><small>還沒有人，按「＋ 新增一位」</small></div>';
+      q('.ap-ln-rosn').textContent = `${l.roster.length} / ${LN_MAX_ROS} 位`;
+      q('.ap-ln-add').hidden = l.roster.length >= LN_MAX_ROS;
+      q('.ap-ln-skip').value = l.wiSkip || '';
+      q('.ap-ln-dadb').value = l.dad.bday || ''; q('.ap-ln-dadg').value = l.dad.gone || '';
+      q('.ap-ln-stk').innerHTML = l.stk.map((x) => `
+        <div class="ap-ln-st" data-id="${x.id}"><span class="ap-ln-sti" style="background-image:url(&quot;${esc(lnSrc(x.img))}&quot;)"></span>
+          <input type="text" class="text_pole ap-ln-stn" maxlength="16" value="${esc(x.name)}"><i class="fa-solid fa-xmark ap-ln-sdel" title="刪掉"></i></div>`).join('');
+      q('.ap-ln-expn').textContent = `你們的聊天室 ${l.ours.msgs.length} 則`;
+      sumEl.textContent = `${l.roster.length} 位 · 貼圖 ${l.stk.length} / ${LN_MAX_STK}`;
+    };
+    const done = () => { save(); show(); lnRepaint(); };
+    show();
+    q('.ap-ln-mename').addEventListener('input', (e) => { L().me.name = e.target.value.trim(); save(); lnRepaint(); });
+    // 頭像：妳的、他的
+    box.querySelectorAll('.ap-ln-avr').forEach((r) => {
+      r.querySelector('.ap-ln-avpick').addEventListener('click', () => { pick = { kind: 'av', who: r.dataset.who }; file.click(); });
+      r.querySelector('.ap-ln-avdel').addEventListener('click', () => { const o = L()[r.dataset.who]; if (!o.av) return; albUnlink(o.av); o.av = ''; done(); });
+    });
+    // 名單
+    q('.ap-ln-add').addEventListener('click', () => { const l = L(); if (l.roster.length >= LN_MAX_ROS) return; l.roster.push({ id: 'r' + (++l.seq), name: '', cat: 'fam', av: '' }); done(); const ins = box.querySelectorAll('.ap-ln-rn'); ins[ins.length - 1]?.focus(); });
+    const ros = q('.ap-ln-ros');
+    const rOf = (el) => L().roster.find((x) => x.id === el.closest('.ap-ln-rr')?.dataset.id);
+    ros.addEventListener('input', (e) => { if (!e.target.classList.contains('ap-ln-rn')) return; const r = rOf(e.target); if (!r) return; r.name = e.target.value.trim(); save(); const th = e.target.parentElement.querySelector('.ap-ln-thb'); if (!r.av) th.textContent = lnInit(r.name); lnRepaint(); });
+    ros.addEventListener('change', (e) => { if (!e.target.classList.contains('ap-ln-rc')) return; const r = rOf(e.target); if (r) { r.cat = e.target.value; save(); lnRepaint(); } });
+    ros.addEventListener('click', (e) => {
+      const r = rOf(e.target); if (!r) return;
+      if (e.target.closest('.ap-ln-thb')) { pick = { kind: 'ros', id: r.id }; file.click(); return; }
+      if (e.target.closest('.ap-ln-ravdel')) { albUnlink(r.av); r.av = ''; done(); return; }
+      if (e.target.closest('.ap-ln-rdel')) {
+        if (!confirm(`把「${r.name || '這位'}」從名單拿掉？跟他的聊天紀錄也會一起刪掉。`)) return;
+        const l = L(); albUnlink(r.av); l.roster = l.roster.filter((x) => x !== r); delete l.chats[r.id]; done();
+      }
+    });
+    q('.ap-ln-skip').addEventListener('input', (e) => { L().wiSkip = e.target.value; save(); });
+    // 爸的日子：月/日
+    const md = (v) => { const m = String(v || '').trim().replace(/[－—.月]/g, '/').replace(/日$/, '').match(/^(\d{1,2})\/(\d{1,2})$/); return m && +m[1] >= 1 && +m[1] <= 12 && +m[2] >= 1 && +m[2] <= 31 ? `${+m[1]}/${+m[2]}` : ''; };
+    ['dadb', 'dadg'].forEach((k) => q('.ap-ln-' + k).addEventListener('change', (e) => { const v = md(e.target.value); L().dad[k === 'dadb' ? 'bday' : 'gone'] = v; e.target.value = v; save(); }));
+    // 貼圖
+    q('.ap-ln-stkpick').addEventListener('click', () => {
+      const l = L(), nm = q('.ap-ln-stkname').value.trim();
+      if (l.stk.length >= LN_MAX_STK) return stkMsg(`已經 ${LN_MAX_STK} 張了，先刪掉一張再放`);
+      if (!nm) return stkMsg('先在左邊取名字，再選圖片');
+      if (l.stk.some((x) => x.name === nm)) return stkMsg(`已經有一張叫「${nm}」了，換個名字`);
+      stkMsg(''); pick = { kind: 'stk', name: nm }; file.click();
+    });
+    const stk = q('.ap-ln-stk');
+    stk.addEventListener('change', (e) => {
+      if (!e.target.classList.contains('ap-ln-stn')) return;
+      const l = L(), x = l.stk.find((t) => t.id === e.target.closest('.ap-ln-st').dataset.id), nm = e.target.value.trim(); if (!x) return;
+      if (!nm || l.stk.some((t) => t !== x && t.name === nm)) { e.target.value = x.name; return stkMsg(nm ? `已經有一張叫「${nm}」了` : '名字不能空白'); }
+      x.name = nm; stkMsg(''); done();
+    });
+    stk.addEventListener('click', (e) => {
+      if (!e.target.closest('.ap-ln-sdel')) return;
+      const l = L(), x = l.stk.find((t) => t.id === e.target.closest('.ap-ln-st').dataset.id); if (!x) return;
+      if (!confirm(`刪掉貼圖「${x.name}」？`)) return;
+      albUnlink(x.img); l.stk = l.stk.filter((t) => t !== x); done();
+    });
+    // 選好照片／圖片
+    file.addEventListener('change', async () => {
+      const f = file.files && file.files[0]; file.value = ''; const p = pick; pick = null; if (!f || !p) return;
+      const l = L();
+      try {
+        if (p.kind === 'stk') {
+          stkMsg('放上去中…');
+          const path = await albUpload(await shrink(f, 360, true), 'png');
+          l.stk.push({ id: 's' + (++l.seq), name: p.name, img: path }); q('.ap-ln-stkname').value = ''; stkMsg(`放好了：「${p.name}」`);
+        } else {
+          const path = await albUpload(await shrink(f, 300));
+          const o = p.kind === 'av' ? l[p.who] : l.roster.find((x) => x.id === p.id); if (!o) return;
+          if (o.av && o.av !== path) albUnlink(o.av); o.av = path;
+        }
+        done();
+      } catch (err) { if (p.kind === 'stk') stkMsg('圖片放不上去：' + (err.message || err) + '（請截圖給小克）'); else alert('頭像放不上去：' + (err.message || err)); }
+    });
+    // 匯出你們的聊天室（下載成文字檔，收進酒館備份資料夾）
+    q('.ap-ln-exp').addEventListener('click', () => {
+      const l = L(), M = l.ours.msgs;
+      if (!M.length) return alert('你們的聊天室還沒有訊息');
+      const p2 = (n) => String(n).padStart(2, '0');
+      const fmt = (t) => { const d = new Date(t); return `${d.getFullYear()}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+      const me = l.me.name || '我', txt = [`LINE｜${me} ↔ 安安（${M.length} 則）`, ''].concat(M.map((m) => `${fmt(m.time)}　${m.from === 'me' ? me : '安安'}：${m.t === 'stk' ? `〔貼圖〕${m.v}` : m.v}`)).join('\n');
+      const a = document.createElement('a'), d = new Date();
+      a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
+      a.download = `LINE紀錄_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}.txt`;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    });
+    lnSettingsShow = show;
+  }
+  let lnSettingsShow = () => {};
+
   function settingsPanel() {
     const box = document.createElement('div');
     box.className = 'ap-settings';
@@ -2154,6 +2620,24 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
           <input type="text" class="text_pole ap-tel-favs" maxlength="200" placeholder="例：示範聯絡人、示範聯絡人">
           <div class="ap-row">最下面那一位（安靜地放在最愛下面，不能撥）</div>
           <input type="text" class="text_pole ap-tel-last" maxlength="12" placeholder="例：示範聯絡人">
+          <div class="ap-row ap-sub">💬 LINE<small class="ap-subsum" data-s="line"></small></div>
+          <div class="ap-row">他 LINE 裡存妳的名字（聊天室最上面、置頂那張卡）</div>
+          <input type="text" class="text_pole ap-ln-mename" maxlength="30" placeholder="例：示範名字">
+          <div class="ap-row ap-ln-avr" data-who="me"><span class="ap-ln-th"></span>妳的頭像<div class="menu_button ap-ln-avpick">選擇照片</div><div class="menu_button ap-ln-avdel">移除</div></div>
+          <div class="ap-row ap-ln-avr" data-who="him"><span class="ap-ln-th"></span>他的頭像<div class="menu_button ap-ln-avpick">選擇照片</div><div class="menu_button ap-ln-avdel">移除</div></div>
+          <div class="ap-row">聊天名單（名字＋分類；他在劇情裡加的朋友也會出現在這裡）</div>
+          <div class="ap-ln-ros"></div>
+          <div class="ap-row"><div class="menu_button ap-ln-add">＋ 新增一位</div><small class="ap-ln-rosn"></small></div>
+          <div class="ap-row">爸的日子（月/日，可以空著；爸的名字用上面電話「最下面那一位」）</div>
+          <div class="ap-row"><span>生日</span><input type="text" class="text_pole ap-ln-dadb ap-ln-md" maxlength="5" placeholder="例：3/21"><span>離開的日子</span><input type="text" class="text_pole ap-ln-dadg ap-ln-md" maxlength="5" placeholder="例：12/30"></div>
+          <div class="ap-row">🧸 貼圖（最多 40 張；名字＝誰＋在幹嘛，他靠名字看懂、靠名字挑）</div>
+          <div class="ap-ln-stk"></div>
+          <div class="ap-row"><input type="text" class="text_pole ap-ln-stkname" maxlength="16" placeholder="先取名字，例：庭安抱抱"><div class="menu_button ap-ln-stkpick">選擇圖片</div></div>
+          <div class="ap-row ap-ln-stkmsg"></div>
+          <div class="ap-row">他回妳時不讀的世界書條目（標題裡有這些字就跳過，用、分開）</div>
+          <input type="text" class="text_pole ap-ln-skip" maxlength="200" placeholder="例：狀態欄、好感">
+          <div class="ap-row"><div class="menu_button ap-ln-exp">匯出 LINE 紀錄</div><small class="ap-ln-expn"></small></div>
+          <input type="file" accept="image/*" class="ap-ln-file" hidden>
           <div class="ap-row ap-sub">🧵 Threads<small class="ap-subsum" data-s="th"></small></div>
           <div class="ap-row">他的帳號（不用打 @）</div>
           <input type="text" class="text_pole ap-th-him" maxlength="30" placeholder="例：demo.account">
@@ -2269,6 +2753,9 @@ ${scEmpty.length ? `   - seed：這幾頁還是空的：${scEmpty.join('、')}�
     showTel();
     const telIn = () => { S().tel.favs = favIn.value; S().tel.last = lastIn.value.trim(); save(); showTel(); if (root && !root.hidden && inApp()) paintPhone(); };
     favIn.addEventListener('input', telIn); lastIn.addEventListener('input', telIn);
+
+    // LINE：名字、頭像、名單、爸的日子、貼圖、匯出（名字和圖只存在酒館，第 53 窗）
+    bindLineSettings(box, sub('line'));
 
     // Threads：兩個帳號（名字只存在酒館）
     const thHim = box.querySelector('.ap-th-him'), thMe = box.querySelector('.ap-th-mein'), thTag = box.querySelector('.ap-th-tagin');
