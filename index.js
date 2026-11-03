@@ -1,4 +1,4 @@
-// 安安的小手機 v0.14.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋主畫面小點（照安安自己說的規則排版）
+// 安安的小手機 v0.14.1：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋主畫面小點（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -978,26 +978,27 @@
 
   // ===== Threads（第 50 窗：鵝黃心意專區；照果果的脆模板排）=====
   let thIn = null; // 正在打的留言：{ post, re }（re 空＝新留言）
-  // 英文字母變花體（Mathematical Bold Italic），中文和符號不變；自動加 @
-  const fancy = (t) => '@' + [...String(t || '').trim().replace(/^@+/, '')].map((ch) => { const c = ch.codePointAt(0); return c >= 97 && c <= 122 ? String.fromCodePoint(0x1D482 + c - 97) : c >= 65 && c <= 90 ? String.fromCodePoint(0x1D468 + c - 65) : ch; }).join('');
-  const TH_DECO = '┈┈ ⟢ ' + fancy('Threads').slice(1) + ' ⟢ ┈┈';
-  const TH_HEART = (on) => `<svg viewBox="0 0 24 24" width="${on ? 14 : 13}" height="${on ? 14 : 13}" fill="${on ? '#F7DFA8' : 'none'}" stroke="${on ? '#B8893A' : '#8E8B84'}" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
-  const TH_BUB = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#8E8B84" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z"/></svg>';
+  const thName = (t) => String(t || '').trim().replace(/^@+/, ''); // 帳號：一般字、不加 @（像真的脆）
+  const TH_HEART = (on) => `<svg viewBox="0 0 24 24" width="19" height="19" fill="${on ? '#F7DFA8' : 'none'}" stroke="${on ? '#B8893A' : '#8E8B84'}" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`;
+  const TH_BUB = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#8E8B84" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.1A8 8 0 1 1 20 12z"/></svg>';
+  const TH_FOLD = (fold) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#B39A68" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${fold ? 'M6 9l6 6 6-6' : 'M6 15l6-6 6 6'}"/></svg>`;
   const thMin = (t) => { const m = String(t || '').match(/(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
-  // 「── 25 分鐘前 ──」：用故事裡的時間算；不是今天就寫日期
+  const thDay = (d) => { const m = String(d || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 : null; };
+  // 時間（照真的脆）：剛剛 → N 分鐘 → N 小時 → N 天（7 天內）→ 超過 7 天寫日期；用故事裡的時間算
   function thWhen(p) {
-    const n = storyNow();
-    if (p.day && p.day === n.day) {
-      const a = thMin(p.time), b = thMin(n.time);
-      if (a != null && b != null) { const d = b - a; return d <= 0 ? '剛剛' : d < 60 ? `${d} 分鐘前` : `${Math.floor(d / 60)} 小時前`; }
-      return '今天';
-    }
-    return [slash(p.day), p.time].filter(Boolean).join(' ');
+    const n = storyNow(), d0 = thDay(p.day), d1 = thDay(n.day);
+    if (d0 == null || d1 == null) return slash(p.day);
+    const a = thMin(p.time), b = thMin(n.time);
+    const mins = (d1 - d0) * 1440 + (a != null && b != null ? b - a : 0);
+    if (d1 - d0 > 7) return slash(p.day);
+    if (a == null || b == null) return d1 === d0 ? '今天' : `${d1 - d0} 天`;
+    return mins <= 0 ? '剛剛' : mins < 60 ? `${mins} 分鐘` : mins < 1440 ? `${Math.floor(mins / 60)} 小時` : `${Math.floor(mins / 1440)} 天`;
   }
-  const thWho = (c, T) => (c.mine ? `${ME}<i class="ap-th-me">${esc(fancy(T.me || 'me'))}</i>` : c.self ? `<i class="ap-th-hn">${esc(fancy(T.him || 'me'))}</i>` : `<i>${esc(c.who.startsWith('@') ? c.who : '@' + c.who)}</i>`);
+  const thWho = (c, T) => (c.mine ? `<i class="ap-th-me">${esc(thName(T.me) || '我')}</i>` : c.self ? `<i>${esc(thName(T.him) || '他')}</i>` : `<i>${esc(thName(c.who))}</i>`);
+  const thAv = (T) => (T.av ? `<span class="ap-th-av" style="background-image:url(&quot;${esc(albSrc({ path: T.av }))}&quot;)"></span>` : '<span class="ap-th-av ap-th-av0"></span>');
   function thInput(p, re) {
     const to = re ? p.cm.find((c) => c.id === re) : null;
-    const ph = to ? `回覆 ${to.mine ? fancy(S().th.me || 'me') : to.self ? fancy(S().th.him || 'me') : (to.who.startsWith('@') ? to.who : '@' + to.who)}…` : '留言…';
+    const T = S().th, ph = to ? `回覆 ${to.mine ? thName(T.me) || '我' : to.self ? thName(T.him) || '他' : thName(to.who)}…` : '留言…';
     return `<div class="ap-th-in${re ? ' ap-th-re' : ''}"><input type="text" maxlength="60" placeholder="${esc(ph)}" enterkeyhint="send"><button type="button" class="ap-th-send">送出</button></div>`;
   }
   function thPost(p, T) {
@@ -1009,12 +1010,11 @@
       ? `<div class="ap-th-ph" style="background-image:url(&quot;${esc(albSrc({ path: p.img }))}&quot;)"></div>`
       : `<div class="ap-th-ph0"><span><b>照片說明</b>${esc(p.cap || '（他沒寫）')}</span></div>`;
     return `<div class="ap-th-post" data-id="${p.id}">
-      <div class="ap-th-deco">${TH_DECO}</div><div class="ap-th-acc">${esc(fancy(T.him || 'me'))}</div>
+      <div class="ap-th-hd">${thAv(T)}<span class="ap-th-acc">${esc(thName(T.him) || '他')}</span>${(p.tag || T.tag) ? `<span class="ap-th-gt">›</span><span class="ap-th-tag">${esc(p.tag || T.tag)}</span>` : ''}<span class="ap-th-time">${esc(thWhen(p))}</span></div>
       <div class="ap-th-tx">${esc(p.text)}</div>${p.note ? `<div class="ap-th-note">[註解 ${esc(p.note)}]</div>` : ''}
       ${ph}
-      <div class="ap-th-act"><button type="button" class="ap-th-like${p.liked ? ' ap-on' : ''}" aria-label="愛心">${TH_HEART(p.liked)}<span>${p.like}</span></button><span>${TH_BUB}<span>${p.cm.length}</span></span></div>
-      <div class="ap-th-when">── ${esc(thWhen(p))} ──</div>
-      <div class="ap-th-cm"><div class="ap-th-cl">${TH_BUB}：</div>${cms}${open('') ? thInput(p, '') : '<div class="ap-th-add">＋ 留言</div>'}</div>
+      <div class="ap-th-act"><button type="button" class="ap-th-like${p.liked ? ' ap-on' : ''}" aria-label="愛心">${TH_HEART(p.liked)}<span>${p.like}</span></button><span>${TH_BUB}<span>${p.cm.length}</span></span><button type="button" class="ap-th-fold" aria-label="${p.fold ? '打開留言' : '收合留言'}">${TH_FOLD(p.fold)}</button></div>
+      <div class="ap-th-cm"${p.fold ? ' hidden' : ''}>${cms}${open('') ? thInput(p, '') : '<div class="ap-th-add">＋ 留言</div>'}</div>
     </div>`;
   }
   function paintThreads() {
@@ -1053,6 +1053,7 @@
         if (p.liked) thBurst(b);
         return;
       }
+      if (e.target.closest('.ap-th-fold')) { p.fold = !p.fold; if (p.fold && thIn && thIn.post === p.id) thIn = null; save(); keepScroll('threads', paintThreads); return; }
       const re = e.target.closest('u[data-re]');
       if (re) { thIn = { post: p.id, re: re.dataset.re }; keepScroll('threads', paintThreads); return; }
       if (e.target.closest('.ap-th-add')) { thIn = { post: p.id, re: '' }; keepScroll('threads', paintThreads); return; }
@@ -1083,7 +1084,7 @@
         .filter((c) => c.self || c.who);
       cm.forEach((c) => { const top = c.re && cm.find((x) => x.id === c.re); if (top && top.re) c.re = top.re; }); // 只有一層
       const lk = Math.round(Number(P.like));
-      T.posts.unshift({ id, day: n.day, time: n.time || hm(P.time), text: clean(P.text, 200), note: clean(P.note, 40).replace(/^\[?註解\s*/, '').replace(/\]$/, ''), cap: clean(P.cap, 80), img: '', like: Number.isFinite(lk) ? Math.max(0, Math.min(99999, lk)) : 0, liked: false, likeSeen: true, cm });
+      T.posts.unshift({ id, day: n.day, time: n.time || hm(P.time), text: clean(P.text, 200), note: clean(P.note, 40).replace(/^\[?註解\s*/, '').replace(/\]$/, ''), tag: clean(P.tag, 16).replace(/^[#＃›>\s]+/, ''), cap: clean(P.cap, 80), img: '', like: Number.isFinite(lk) ? Math.max(0, Math.min(99999, lk)) : 0, liked: false, likeSeen: true, cm });
       notes.push({ app: 'threads', id, from: 'Threads', text: clean(P.text, 50), when: '現在', mine: false });
     }
     let mineNote = null;
@@ -1393,13 +1394,13 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
    - newFolder：他想開的新資料夾名字（12 字內），想把照片分類時才開，很少開；沒有就給空字串。
    - move：要搬去別的資料夾的照片，寫成 [{"id":"p2","folder":"資料夾名字"}]，folder 只能是 album.folders 裡的、或這次 newFolder 的名字；沒有就給 []。
 ` : ''}16. threads：他的 Threads（脆）。想發的時候就發，每篇都像只有 ${me} 看得懂的暗號；生活紀錄，文字簡短、留白，不直接宣告感情。吵架、或 ${me} 真的需要他專心陪著的時候，他會先放下手機。
-   - post：這次發的一篇，最多 1 篇，不一定每次都有，沒有就給 null。${thToday >= 3 ? '今天已經發了 3 篇，這次 post 給 null。' : `今天已經發了 ${thToday} 篇（故事裡一天最多 3 篇）。`}text 80 字內；note 是文末註解（只寫註解裡的字，不用寫「註解」和括號），25 字內；cap 是這篇配的照片，用文字寫畫面（40 字內）；like 是愛心數（整數，像真的貼文）；cm 是留言 1～3 則：who 是留言的人（照小抄裡會留言的人，寫名字或帳號），t 30 字內，可以加顏文字；他自己回某則留言就多寫一則，who 寫「我」，re 寫那則在 cm 裡的位置（從 0 開始的數字）。
+   - post：這次發的一篇，最多 1 篇，不一定每次都有，沒有就給 null。${thToday >= 3 ? '今天已經發了 3 篇，這次 post 給 null。' : `今天已經發了 ${thToday} 篇（故事裡一天最多 3 篇）。`}text 80 字內；note 是文末註解（只寫註解裡的字，不用寫「註解」和括號），25 字內；cap 是這篇配的照片，用文字寫畫面（40 字內）；tag 平常留空（會用固定的標籤${TH.tag ? `「${TH.tag}」` : ''}），想寫特別的標籤才寫，10 字內；like 是愛心數（整數，像真的貼文）；cm 是留言 1～3 則：who 是留言的人（照小抄裡會留言的人，寫名字或帳號），t 30 字內，可以加顏文字；他自己回某則留言就多寫一則，who 寫「我」，re 寫那則在 cm 裡的位置（從 0 開始的數字）。
    - reply：回 threads.recent 裡已經有的留言，0～3 則，沒有就給 []。寫成 {"post":"h3","re":"c5","who":"我","t":"…"}：who 寫「我」＝他自己回，也可以是配角回；t 30 字內；不要回自己的留言，不要重複已經有的留言。${thMine.length ? `\n   - ${me} 剛剛在他的脆留言了：${thMine.join('、')}。他會看到，要不要回、怎麼回由他決定（有時他回、有時配角回、有時不回）。` : ''}${thLikes.length ? `\n   - ${me} 剛剛按了這幾篇的愛心：「${thLikes.join('」「')}」。他會知道，要不要有反應（手記、下一篇、回留言時提）由他決定，大多時候是默默知道。` : ''}
    - 不要重複 threads.recent 裡已經發過的內容。
 17. 全部用繁體中文、台灣用語。
 
 只輸出這個格式：
-{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]}}`;
+{"date":"","time":"","weather":[{"place":"","temp":"","extra":""},{"place":"","temp":"","extra":""}],"cal":{"add":[{"day":"","time":"","title":"","body":"","cat":"work"}]},"battery":{"phone":0,"buds":0,"charging":false},"quote":"","notes":[{"app":"line","from":"","text":"","when":"","mine":false}],"memo":{"add":[{"kind":"text","title":"","body":"","items":[],"pin":false,"time":"","mine":false}],"check":[]},"grains":{"add":null,"told":[]},"web":{"add":[{"q":"","time":"","secret":false,"mur":""}],"draft":"","tabs":2,"unhide":[],"mur":null},"shop":{"add":[{"tab":"buy","name":"","price":"","time":"","secret":false,"kind":""}],"stamp":[],"card":[],"unhide":[]},"food":{"add":[{"area":"","name":"","mark":"star","note":"","lock":"","open":""}],"heart":[]},"diary":{"add":null,"draft":""},"cam":{"add":null},"music":{"now":{"title":"","artist":""},"add":[{"list":"","title":"","artist":"","mur":""}],"newList":""},"album":{"wall":"","note":null,"newFolder":"","move":[]},"phone":{"calls":[{"name":"","type":"in","time":"","dur":"","mine":false}],"vm":{"add":[{"from":"","time":"","text":"","keep":false,"mine":false,"day":""}],"keep":[]}},"threads":{"post":{"text":"","note":"","tag":"","cap":"","like":0,"cm":[{"who":"","t":"","re":null}]},"reply":[]}}`;
     return { sys, prompt };
   }
 
@@ -1976,10 +1977,14 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
           <div class="ap-row">最下面那一位（安靜地放在最愛下面，不能撥）</div>
           <input type="text" class="text_pole ap-tel-last" maxlength="12" placeholder="例：示範聯絡人">
           <div class="ap-row ap-sub">🧵 Threads<small class="ap-subsum" data-s="th"></small></div>
-          <div class="ap-row">他的帳號（只填英文，會自動變成花體字）</div>
+          <div class="ap-row">他的帳號（不用打 @）</div>
           <input type="text" class="text_pole ap-th-him" maxlength="30" placeholder="例：demo.account">
           <div class="ap-row">妳的帳號（妳留言時顯示的名字）</div>
-          <input type="text" class="text_pole ap-th-mein" maxlength="30" placeholder="例：demo.me">`)}
+          <input type="text" class="text_pole ap-th-mein" maxlength="30" placeholder="例：demo.me">
+          <div class="ap-row">標籤（每篇帳號後面那個，平常固定用這個）</div>
+          <input type="text" class="text_pole ap-th-tagin" maxlength="16" placeholder="例：示範標籤">
+          <div class="ap-row">他的頭貼<span class="ap-th-avs"></span></div>
+          <div class="ap-row"><div class="menu_button ap-th-avpick">選擇照片</div><div class="menu_button ap-th-avdel">移除</div><input type="file" accept="image/*" class="ap-th-avfile" hidden></div>`)}
           ${drawer('alb', '📷 相簿', `
           <div class="ap-al-list"></div>
           <div class="ap-al-ed">
@@ -2082,11 +2087,20 @@ ${albNow ? `15. album：「相簿」，存著 ${me} 傳給他的照片。你看�
     favIn.addEventListener('input', telIn); lastIn.addEventListener('input', telIn);
 
     // Threads：兩個帳號（名字只存在酒館）
-    const thHim = box.querySelector('.ap-th-him'), thMe = box.querySelector('.ap-th-mein');
-    const showTh = () => { const T = S().th; thHim.value = T.him || ''; thMe.value = T.me || ''; sub('th').textContent = `${T.posts.length} / 100 篇`; };
+    const thHim = box.querySelector('.ap-th-him'), thMe = box.querySelector('.ap-th-mein'), thTag = box.querySelector('.ap-th-tagin');
+    const thAvS = box.querySelector('.ap-th-avs'), thAvF = box.querySelector('.ap-th-avfile'), thAvDel = box.querySelector('.ap-th-avdel');
+    const showTh = () => { const T = S().th; thHim.value = T.him || ''; thMe.value = T.me || ''; thTag.value = T.tag || ''; thAvS.textContent = T.av ? '（已放）' : '（還沒放）'; thAvDel.hidden = !T.av; sub('th').textContent = `${T.posts.length} / 100 篇`; };
     showTh();
-    const thSet = () => { S().th.him = thHim.value.trim().replace(/^@+/, ''); S().th.me = thMe.value.trim().replace(/^@+/, ''); save(); sub('th').textContent = `${S().th.posts.length} / 100 篇`; if (root && !root.hidden && inApp()) keepScroll('threads', paintThreads); };
-    thHim.addEventListener('input', thSet); thMe.addEventListener('input', thSet);
+    const thSet = () => { S().th.him = thHim.value.trim().replace(/^@+/, ''); S().th.me = thMe.value.trim().replace(/^@+/, ''); S().th.tag = thTag.value.trim().replace(/^[#＃›>\s]+/, ''); save(); sub('th').textContent = `${S().th.posts.length} / 100 篇`; if (root && !root.hidden && inApp()) keepScroll('threads', paintThreads); };
+    thHim.addEventListener('input', thSet); thMe.addEventListener('input', thSet); thTag.addEventListener('input', thSet);
+    // 他的頭貼：縮小後存 Railway（跟相簿同一個門）
+    box.querySelector('.ap-th-avpick').addEventListener('click', () => thAvF.click());
+    thAvF.addEventListener('change', async () => {
+      const f = thAvF.files && thAvF.files[0]; thAvF.value = ''; if (!f) return;
+      try { const path = await albUpload(await shrink(f)); const T = S().th; if (T.av && T.av !== path) albUnlink(T.av); T.av = path; save(); showTh(); if (root && !root.hidden && inApp()) keepScroll('threads', paintThreads); }
+      catch (err) { alert('頭貼放不上去：' + (err.message || err)); }
+    });
+    thAvDel.addEventListener('click', () => { const T = S().th; if (!T.av) return; albUnlink(T.av); T.av = ''; save(); showTh(); if (root && !root.hidden && inApp()) keepScroll('threads', paintThreads); });
 
     bindAlbum(D('alb'), sum('alb'), box);
 

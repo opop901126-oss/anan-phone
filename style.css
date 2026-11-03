@@ -516,16 +516,21 @@
 /* 換回我的桌布：他挑了相簿桌布時才出現的淡底小塊 */
 .ap-settings .ap-alwall{background:rgba(128,128,128,.12);border-radius:8px;padding:8px 10px}
 .ap-settings .ap-alwall-t{flex-basis:100%}
-/* ===== Threads（第 50 窗草圖 2＋3）：鵝黃心意專區第一張紙＝奶油；照果果的脆模板排 ===== */
+/* ===== Threads（第 50 窗草圖 2＋3，11/04 微調成草圖 v4）：鵝黃心意專區第一張紙＝奶油；開頭像真的脆：頭貼｜帳號 › 標籤 時間 ===== */
 #ap-root .ap-view.ap-th{background:#F7F1E2;color:#2E2E2C}
 #ap-root .ap-view.ap-th::before{background:linear-gradient(#F7F1E2 72%,rgba(247,241,226,0))}
 #ap-root .ap-view.ap-th::after{background:linear-gradient(rgba(247,241,226,0),#F7F1E2 65%)}
 #ap-root .ap-th .ap-mtitle{border-bottom-color:#DCCFB2}
 #ap-root .ap-th-empty{font-family:"Noto Serif TC",serif;font-size:12.5px;color:#8E8B84;text-align:center;margin:40px 0}
 #ap-root .ap-th-post{background:#FFFBF2;border-radius:4px;outline:.5px solid #E6D9BC;margin:12px 0;padding:12px 14px 10px}
-#ap-root .ap-th-deco{text-align:center;font-family:"Noto Serif TC",serif;font-size:12px;letter-spacing:.5px;color:#B39A68;margin:2px 0 6px}
-#ap-root .ap-th-acc{font-family:"Noto Serif TC","DejaVu Math TeX Gyre","Latin Modern Math","STIX Two Math","Cambria Math",serif;font-size:14px;font-weight:600;letter-spacing:.3px;color:#6E5222}
-#ap-root .ap-th-tx{font-family:"Noto Serif TC",serif;font-size:12.5px;line-height:1.8;color:#45423E;margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
+#ap-root .ap-th-hd{display:flex;align-items:center;gap:8px;min-width:0}
+#ap-root .ap-th-av{width:34px;height:34px;border-radius:50%;flex:none;background:#EFE6D6 center/cover no-repeat}
+#ap-root .ap-th-av0{border:1px dashed #D9C79E;box-sizing:border-box}
+#ap-root .ap-th-acc{font-family:"Noto Serif TC",serif;font-size:13.5px;color:#6E5222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#ap-root .ap-th-gt{font-family:"Noto Serif TC",serif;font-size:12px;color:#B39A68;flex:none}
+#ap-root .ap-th-tag{font-family:"Noto Serif TC",serif;font-size:13px;color:#45423E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#ap-root .ap-th-time{font-family:"Noto Sans TC",sans-serif;font-size:12px;color:#8E8B84;flex:none;margin-left:2px}
+#ap-root .ap-th-tx{font-family:"Noto Serif TC",serif;font-size:12.5px;line-height:1.8;color:#45423E;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
 #ap-root .ap-th-note{font-family:"Noto Serif TC",serif;font-size:11.5px;color:#8E8B84;margin-top:2px}
 #ap-root .ap-th-ph{position:relative;margin:8px 0 0;border-radius:2px;aspect-ratio:4/3;background:#EFE6D6 center/cover no-repeat;-webkit-touch-callout:none;user-select:none}
 #ap-root .ap-th-ph0{margin:8px 0 0;border-radius:2px;aspect-ratio:4/3;border:1px dashed #D9C79E;background:#FBF4E4;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;cursor:pointer}
@@ -536,23 +541,21 @@
 #ap-root .ap-th-lp button{border-radius:14px;padding:3px 12px;font-family:"Noto Sans TC",sans-serif;font-size:12px;letter-spacing:.1em;cursor:pointer;box-shadow:0 2px 8px rgba(46,46,44,.12)}
 #ap-root .ap-th-swap{border:.5px solid #9A6A2C;background:#FFFBF2;color:#9A6A2C}
 #ap-root .ap-th-del{border:.5px solid #B5533C;background:#F6F4F0;color:#B5533C}
-#ap-root .ap-th-act{display:flex;gap:14px;align-items:center;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:#8E8B84;margin:8px 0 0}
-#ap-root .ap-th-act>span,#ap-root .ap-th-like{display:flex;align-items:center;gap:4px}
+#ap-root .ap-th-act{display:flex;gap:16px;align-items:center;font-family:"Noto Sans TC",sans-serif;font-size:13px;color:#8E8B84;margin:10px 0 0}
+#ap-root .ap-th-fold{margin-left:auto;border:0;background:none;padding:2px;display:flex;cursor:pointer}
+#ap-root .ap-th-act>span,#ap-root .ap-th-like{display:flex;align-items:center;gap:5px}
 #ap-root .ap-th-like{position:relative;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer}
 #ap-root .ap-th-like.ap-on{color:#9A7A3E}
 #ap-root .ap-th-like svg{overflow:visible}
 #ap-root .ap-th-pop{animation:ap-thpop .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes ap-thpop{0%{transform:scale(1)}35%{transform:scale(1.35)}65%{transform:scale(.9)}100%{transform:scale(1)}}
-#ap-root .ap-th-burst{position:absolute;left:7px;top:50%;width:0;height:0;pointer-events:none}
+#ap-root .ap-th-burst{position:absolute;left:9.5px;top:50%;width:0;height:0;pointer-events:none}
 #ap-root .ap-th-burst i{position:absolute;left:-2.5px;top:-2.5px;width:5px;height:5px;border-radius:50%;animation:ap-thdot .5s ease-out forwards}
 @keyframes ap-thdot{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(.4);opacity:0}}
-#ap-root .ap-th-when{text-align:center;font-family:"Noto Serif TC",serif;font-size:11px;letter-spacing:.5px;color:#8E8B84;margin:6px 0 0}
 #ap-root .ap-th-cm{margin:8px 0 0;border-top:.5px dashed #E6D9BC;padding-top:6px}
-#ap-root .ap-th-cl{display:flex;align-items:center;font-size:11px;color:#8E8B84;margin-bottom:2px}
 #ap-root .ap-th-c{font-family:"Noto Serif TC",serif;font-size:12.5px;line-height:1.8;color:#45423E;padding:3px 0;word-break:break-word}
-#ap-root .ap-th-c i{font-style:normal;font-family:"Noto Sans TC","DejaVu Math TeX Gyre",sans-serif;font-size:11.5px;color:#6E5222;margin-right:6px}
+#ap-root .ap-th-c i{font-style:normal;font-family:"Noto Serif TC",serif;font-size:12px;color:#6E5222;margin-right:6px}
 #ap-root .ap-th-c i.ap-th-me{color:#9A7A3E}
-#ap-root .ap-th-c .ap-me{margin-right:6px;vertical-align:1px}
 #ap-root .ap-th-c u{text-decoration:none;font-family:"Noto Sans TC",sans-serif;font-size:10.5px;color:#B39A68;margin-left:8px;cursor:pointer;white-space:nowrap}
 #ap-root .ap-th-re{margin-left:12px;padding-left:9px;border-left:1px solid #DCCFB2}
 #ap-root .ap-th-add{font-family:"Noto Sans TC",sans-serif;font-size:11px;letter-spacing:.1em;color:#B39A68;margin:6px 0 2px;cursor:pointer}
