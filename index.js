@@ -2526,9 +2526,9 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
       q('.ap-ln-add').hidden = l.roster.length >= LN_MAX_ROS;
       q('.ap-ln-skip').value = l.wiSkip || '';
       q('.ap-ln-dadb').value = l.dad.bday || ''; q('.ap-ln-dadg').value = l.dad.gone || '';
-      q('.ap-ln-stk').innerHTML = l.stk.map((x) => `
+      q('.ap-ln-stkset').innerHTML = l.stk.map((x) => `
         <div class="ap-ln-st" data-id="${x.id}"><span class="ap-ln-sti" style="background-image:url(&quot;${esc(lnSrc(x.img))}&quot;)"></span>
-          <input type="text" class="text_pole ap-ln-stn" maxlength="16" value="${esc(x.name)}"><i class="fa-solid fa-xmark ap-ln-sdel" title="刪掉"></i></div>`).join('');
+          <input type="text" class="text_pole ap-ln-stn" maxlength="16" value="${esc(x.name)}"><i class="fa-solid fa-xmark ap-ln-sdel" title="刪掉"></i></div>`).join(''); // 一行一張（第 53 窗：真酒館的輸入框很胖，格子會擠爆）
       q('.ap-ln-expn').textContent = `你們的聊天室 ${l.ours.msgs.length} 則`;
       sumEl.textContent = `${l.roster.length} 位 · 貼圖 ${l.stk.length} / ${LN_MAX_STK}`;
     };
@@ -2567,7 +2567,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
       if (l.stk.some((x) => x.name === nm)) return stkMsg(`已經有一張叫「${nm}」了，換個名字`);
       stkMsg(''); pick = { kind: 'stk', name: nm }; file.click();
     });
-    const stk = q('.ap-ln-stk');
+    const stk = q('.ap-ln-stkset');
     stk.addEventListener('change', (e) => {
       if (!e.target.classList.contains('ap-ln-stn')) return;
       const l = L(), x = l.stk.find((t) => t.id === e.target.closest('.ap-ln-st').dataset.id), nm = e.target.value.trim(); if (!x) return;
@@ -2662,7 +2662,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
           <div class="ap-row">爸的日子（月/日，可以空著；爸的名字用上面電話「最下面那一位」）</div>
           <div class="ap-row"><span>生日</span><input type="text" class="text_pole ap-ln-dadb ap-ln-md" maxlength="5" placeholder="例：3/21"><span>離開的日子</span><input type="text" class="text_pole ap-ln-dadg ap-ln-md" maxlength="5" placeholder="例：12/30"></div>
           <div class="ap-row">🧸 貼圖（最多 40 張；名字＝誰＋在幹嘛，他靠名字看懂、靠名字挑）</div>
-          <div class="ap-ln-stk"></div>
+          <div class="ap-ln-stkset"></div>
           <div class="ap-row"><input type="text" class="text_pole ap-ln-stkname" maxlength="16" placeholder="先取名字，例：庭安抱抱"><div class="menu_button ap-ln-stkpick">選擇圖片</div></div>
           <div class="ap-row ap-ln-stkmsg"></div>
           <div class="ap-row">他回妳時不讀的世界書條目（標題裡有這些字就跳過，用、分開）</div>
@@ -2726,6 +2726,15 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
           <div class="ap-row"><div class="menu_button ap-now">現在更新</div></div>`)}
         </div>
       </div>`;
+    // 📱 App 設定：每區（拾光手記、音樂、電話、LINE…）點標題才打開，預設收著（第 53 窗）
+    box.querySelectorAll('details[data-dr="apps"] > .ap-dc').forEach((dc) => {
+      let cur = null;
+      [...dc.children].forEach((el) => {
+        if (el.classList.contains('ap-sub')) { el.classList.add('ap-fold'); cur = document.createElement('div'); cur.className = 'ap-foldb'; cur.hidden = true; el.after(cur); return; }
+        if (cur) cur.appendChild(el);
+      });
+      dc.addEventListener('click', (e) => { const h = e.target.closest('.ap-fold'); if (!h || e.target.closest('input,select,.menu_button')) return; const b = h.nextElementSibling; b.hidden = !b.hidden; h.classList.toggle('ap-unf', !b.hidden); });
+    });
     const target = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
     if (target) target.appendChild(box);
     const D = (key) => box.querySelector(`[data-dr="${key}"]`);

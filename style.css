@@ -628,11 +628,11 @@
 .ap-settings .ap-ln-rc{width:5.2em;flex:none;margin:0!important}
 .ap-settings .ap-ln-rx{display:flex;align-items:center;gap:8px;flex:none;opacity:.8}
 .ap-settings .ap-ln-rx i{cursor:pointer;padding:4px}
-.ap-settings .ap-ln-stk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0}
-.ap-settings .ap-ln-st{position:relative;display:flex;flex-direction:column;gap:3px}
-.ap-settings .ap-ln-sti{width:100%;aspect-ratio:1;border-radius:8px;background:rgba(128,128,128,.12) center/contain no-repeat}
-.ap-settings .ap-ln-stn{margin:0!important;font-size:.85em;padding:2px 4px!important;text-align:center}
-.ap-settings .ap-ln-sdel{position:absolute;top:2px;right:2px;cursor:pointer;padding:3px 5px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-size:11px}
+.ap-settings .ap-ln-stkset{display:flex;flex-direction:column;gap:6px;margin:6px 0;width:100%;flex:0 0 100%;box-sizing:border-box} /* 一行一張（第 53 窗）；酒館抽屜是 flex 換行：要寫滿寬 */
+.ap-settings .ap-ln-st{display:flex;align-items:center;gap:8px;width:100%}
+.ap-settings .ap-ln-sti{display:block;width:48px;height:48px;flex:none;border-radius:8px;background:rgba(128,128,128,.12) center/contain no-repeat}
+.ap-settings .ap-ln-stn{flex:1;min-width:0;width:auto!important;margin:0!important}
+.ap-settings .ap-ln-sdel{flex:none;cursor:pointer;padding:6px;opacity:.75}
 .ap-settings .ap-ln-stkname{flex:1;min-width:0;margin:0!important}
 .ap-settings .ap-ln-stkmsg{font-size:.88em;opacity:.85;margin:0}
 .ap-settings .ap-ln-stkmsg:empty{display:none}
@@ -714,3 +714,10 @@
 @media (prefers-reduced-motion:reduce){.ap-ln-run{animation-duration:10s}}
 .ap-ln-m.ap-flash{animation:ap-kflash 1.8s ease;border-radius:6px}
 .ap-ln-rd{font-size:9.5px;letter-spacing:.5px;margin-bottom:1px}
+
+.ap-settings .ap-ln-ros,.ap-settings .ap-ln-stkmsg{width:100%;flex:0 0 100%;box-sizing:border-box}
+.ap-settings .ap-fold{cursor:pointer;margin:0!important;padding:10px 2px;border-bottom:1px solid rgba(128,128,128,.25);align-items:center;gap:6px;opacity:.9!important;font-size:1em!important;width:100%;flex:0 0 100%;box-sizing:border-box}
+.ap-settings .ap-fold::before{content:"▸";display:inline-block;width:1em;opacity:.6;font-size:.8em}
+.ap-settings .ap-fold.ap-unf::before{content:"▾"}
+.ap-settings .ap-foldb{padding:4px 0 10px 14px;border-bottom:1px solid rgba(128,128,128,.25);width:100%;flex:0 0 100%;box-sizing:border-box}
+.ap-settings .ap-foldb[hidden]{display:none}
