@@ -721,3 +721,4 @@
 .ap-settings .ap-fold.ap-unf::before{content:"▾"}
 .ap-settings .ap-foldb{padding:4px 0 10px 14px;border-bottom:1px solid rgba(128,128,128,.25);width:100%;flex:0 0 100%;box-sizing:border-box}
 .ap-settings .ap-foldb[hidden]{display:none}
+.ap-settings .ap-ln-tone{width:100%;flex:0 0 100%;box-sizing:border-box;resize:vertical}

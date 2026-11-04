@@ -1044,8 +1044,23 @@
     const vs = v.querySelector('.ap-vs'); vs.innerHTML = `<div class="ap-ln-msgs">${html}</div>`;
     const foot = v.querySelector('.ap-ln-foot'); foot.hidden = !ours;
     if (ours && !foot.querySelector('.ap-ln-in')) foot.innerHTML = lnFoot(); // 已經有輸入框就不重畫（打到一半的字、鍵盤不會不見）
+    lnFit(v);
     if (lnFocus) lnFocus = false; else requestAnimationFrame(() => { vs.scrollTop = vs.scrollHeight; }); // 聊天室打開停在最下面（從通知進來的交給 focusIn）
   }
+  // 輸入列會變高（貼圖面板）、鍵盤會把畫面變矮 → 訊息區下面留的空間跟著輸入列，停在最下面的就繼續停在最下面（第 53 窗果果實機）
+  let lnRO = null;
+  function lnFit(v) {
+    const vs = v.querySelector('.ap-vs'), foot = v.querySelector('.ap-ln-foot');
+    const fit = () => {
+      if (!v.classList.contains('ap-ln-ours')) { vs.style.paddingBottom = ''; return; }
+      const atEnd = vs.scrollHeight - vs.scrollTop - vs.clientHeight < 120;
+      vs.style.paddingBottom = (foot.offsetHeight + 46) + 'px';
+      if (atEnd) vs.scrollTop = vs.scrollHeight;
+    };
+    if (!lnRO && window.ResizeObserver) { lnRO = new ResizeObserver(() => fit()); lnRO.observe(foot); lnRO.observe(vs); }
+    fit();
+  }
+  const lnToEnd = () => { const vs = root.querySelector('.ap-view[data-app="line"] .ap-vs'); if (vs) requestAnimationFrame(() => { vs.scrollTop = vs.scrollHeight; }); };
   function lnFoot() {
     const K = S().line.stk;
     const panel = lnStkOpen ? `<div class="ap-ln-pan">${K.length ? K.map((k) => `<button type="button" class="ap-ln-pk" data-stk="${esc(k.name)}"><span class="ap-ln-pki" style="background-image:url(&quot;${esc(lnSrc(k.img))}&quot;)"></span><span class="ap-ln-pkn">${esc(k.name)}</span></button>`).join('') : '<div class="ap-ln-pan0">到酒館設定「💬 LINE」放貼圖。</div>'}</div>` : '';
@@ -1058,7 +1073,7 @@
     if (t.closest('.ap-ln-back')) { root.querySelector('.ap-ln-foot').innerHTML = ''; lnIn = null; lnStkOpen = false; paintLine(); root.querySelector('.ap-view[data-app="line"] .ap-vs').scrollTop = 0; return; }
     const vc = t.closest('.ap-ln-vc'); if (vc) { vc.classList.toggle('ap-open'); return; }
     const lk = t.closest('[data-lk]'); if (lk) { lnPeek(lk.dataset.lk); return; }
-    if (t.closest('.ap-ln-smile')) { lnStkOpen = !lnStkOpen; const f = root.querySelector('.ap-ln-foot'), tx = f.querySelector('.ap-ln-in')?.value || ''; f.innerHTML = lnFoot(); f.querySelector('.ap-ln-in').value = tx; return; }
+    if (t.closest('.ap-ln-smile')) { lnStkOpen = !lnStkOpen; if (lnTimer) lnArm(); const f = root.querySelector('.ap-ln-foot'), tx = f.querySelector('.ap-ln-in')?.value || ''; f.innerHTML = lnFoot(); f.querySelector('.ap-ln-in').value = tx; return; }
     lnClickMore(e);
   }
   let lnClickMore = () => {};
@@ -1086,7 +1101,12 @@
   }
   function lnArm() { // 開始（或重新）數 10 秒
     clearTimeout(lnTimer); lnArmAt = Date.now(); lnErr = '';
-    lnTimer = setTimeout(() => { lnTimer = null; lnArmAt = 0; lnAsk(); }, LN_WAIT);
+    lnTimer = setTimeout(() => {
+      lnTimer = null; lnArmAt = 0;
+      const i = root.querySelector('.ap-ln-in');
+      if (lnInOurs() && (lnStkOpen || (i && i.value.trim()))) { lnArm(); return; } // 妳還在挑貼圖或打字：再等妳
+      lnAsk();
+    }, LN_WAIT);
     lnRoomRefresh();
   }
   function lnSend(t, v) {
@@ -1096,6 +1116,7 @@
     while (L.ours.msgs.length > 300) L.ours.msgs.shift(); // 留最近 300 則（舊的可以先匯出）
     save();
     if (lnBusy) lnRoomRefresh(); else lnArm(); // 他輸入中：照傳，下一輪再讀
+    lnToEnd(); // 自己傳的一定捲到最下面
     lnSettingsShow();
   }
   lnClickMore = (e) => {
@@ -1154,7 +1175,7 @@
 
 【你是誰（角色卡）】
 ${card || '（沒有角色卡）'}
-${persona ? `\n【${her}是誰】\n${persona}\n` : ''}${world ? `\n【你們的回憶與設定（世界書）】\n${world}\n` : ''}
+${persona ? `\n【${her}是誰】\n${persona}\n` : ''}${String(L.tone || '').trim() ? `\n【你傳 LINE 給${her}的習慣（你自己說的，照這個口氣）】\n${String(L.tone).trim().slice(0, 1500)}\n（這是你的習慣和例句，不是台詞：不要照抄例句，不要每則都加顏文字或「～」，看心情自然地用，每次換自己的說法。）\n` : ''}${world ? `\n【你們的回憶與設定（世界書）】\n${world}\n` : ''}
 【可以傳的貼圖（只能用這些名字）】
 ${names.length ? names.join('、') : '（目前沒有貼圖，不要傳貼圖）'}
 
@@ -1162,7 +1183,7 @@ ${names.length ? names.join('、') : '（目前沒有貼圖，不要傳貼圖）
 ${M.map(fmt).join('\n') || '（還沒有訊息）'}
 
 【怎麼回】
-1. 這是 LINE 文字聊天，不是小說：只寫你打出去的訊息。不寫動作、旁白、心聲、*星號*、括號裡的動作，不寫狀態欄、好感或任何格式區塊。
+1. 這是 LINE 文字聊天，不是小說：只寫你打出去的訊息。不寫動作、旁白、心聲、*星號*、括號裡的動作，不寫狀態欄、好感或任何格式區塊。語氣詞、～、顏文字照上面「你傳 LINE 的習慣」用（有寫才用）。
 2. 回 ${her} 標了 ★ 的那幾則（這次要回的）。接得上話，不要整句重複她說的。
 3. 回 1～4 則，像真人打 LINE，想到一句送一句。則數要跟著情境變，不要每次都一樣多：簡單的話、你在忙、或她該睡了，一兩則就好（有時一則「嗯」就夠）；聊得開心、真的有很多想說的，才三四則。每則 60 字以內。${lnRhythm(M)}
 4. 照現在的真實時間：深夜可以叫她早點睡、早上可以說早安；不要編出你們故事裡的大事件。
@@ -2525,6 +2546,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
       q('.ap-ln-rosn').textContent = `${l.roster.length} / ${LN_MAX_ROS} 位`;
       q('.ap-ln-add').hidden = l.roster.length >= LN_MAX_ROS;
       q('.ap-ln-skip').value = l.wiSkip || '';
+      q('.ap-ln-tone').value = l.tone || '';
       q('.ap-ln-dadb').value = l.dad.bday || ''; q('.ap-ln-dadg').value = l.dad.gone || '';
       q('.ap-ln-stkset').innerHTML = l.stk.map((x) => `
         <div class="ap-ln-st" data-id="${x.id}"><span class="ap-ln-sti" style="background-image:url(&quot;${esc(lnSrc(x.img))}&quot;)"></span>
@@ -2556,6 +2578,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
       }
     });
     q('.ap-ln-skip').addEventListener('input', (e) => { L().wiSkip = e.target.value; save(); });
+    q('.ap-ln-tone').addEventListener('input', (e) => { L().tone = e.target.value; save(); }); // 他自己說的 LINE 口氣（第 53 窗）
     // 爸的日子：月/日
     const md = (v) => { const m = String(v || '').trim().replace(/[－—.月]/g, '/').replace(/日$/, '').match(/^(\d{1,2})\/(\d{1,2})$/); return m && +m[1] >= 1 && +m[1] <= 12 && +m[2] >= 1 && +m[2] <= 31 ? `${+m[1]}/${+m[2]}` : ''; };
     ['dadb', 'dadg'].forEach((k) => q('.ap-ln-' + k).addEventListener('change', (e) => { const v = md(e.target.value); L().dad[k === 'dadb' ? 'bday' : 'gone'] = v; e.target.value = v; save(); }));
@@ -2665,6 +2688,8 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
           <div class="ap-ln-stkset"></div>
           <div class="ap-row"><input type="text" class="text_pole ap-ln-stkname" maxlength="16" placeholder="先取名字，例：庭安抱抱"><div class="menu_button ap-ln-stkpick">選擇圖片</div></div>
           <div class="ap-row ap-ln-stkmsg"></div>
+          <div class="ap-row">他傳 LINE 給妳的口氣（貼他自己說的：語氣詞、表情符號、忙／想妳／擔心時會怎麼傳）</div>
+          <textarea class="text_pole ap-ln-tone" rows="5" maxlength="1500" placeholder="例：跟妳會一句一句傳，會用～和顏文字……"></textarea>
           <div class="ap-row">他回妳時不讀的世界書條目（標題裡有這些字就跳過，用、分開）</div>
           <input type="text" class="text_pole ap-ln-skip" maxlength="200" placeholder="例：狀態欄、好感">
           <div class="ap-row"><div class="menu_button ap-ln-exp">匯出 LINE 紀錄</div><small class="ap-ln-expn"></small></div>
