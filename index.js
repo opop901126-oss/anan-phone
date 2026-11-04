@@ -1,4 +1,4 @@
-// 安安的小手機 v0.16.0：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點＋LINE（照安安自己說的規則排版）
+// 安安的小手機 v0.17.0（主畫面圖示美化：亮面＋柔影＋細內框＋✦）：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點＋LINE（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -64,7 +64,7 @@
   const ME = '<span class="ap-me"></span>'; // 果果的鵝黃小點：鵝黃底＋蜂蜜金細框＋淡淡光暈
 
   // 綠色小圖釘：整根都是綠色（安安說的）
-  const PIN = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4F8A5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z" stroke="#4F8A5E" fill="rgba(79,138,94,.15)"/></svg>';
+  const PIN = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#4F8A5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v6.5"/><path d="M9 3.5h6l-1 5 3 3.5H7l3-3.5z" stroke="#4F8A5E"/></svg>';
 
   // 主畫面（照安安說的排；名字是中性的，真正的名字在設定裡填，存在酒館）
   const HOME = {
@@ -437,18 +437,23 @@
 
   // ===== 主畫面 =====
   const nm = (a, s) => (s.names[a.id] || '').trim() || a.n;
-  const tile = (a) => (a.k === 'pin' ? PIN : ic(a.k, 26));
+  // 第 54 窗：主畫面圖示的小 ✦（四角星、統一左上、顏色＝那一排的線條色 currentColor；右上留給更新小點）
+  const HSTAR_D = 'M12 2C12.7 9 15 11.3 22 12C15 12.7 12.7 15 12 22C11.3 15 9 12.7 2 12C9 11.3 11.3 9 12 2Z';
+  const withStar = (svg) => svg.replace('</svg>', `<path class="ap-hstar" transform="translate(-.8 -1.4) scale(.25)" d="${HSTAR_D}" fill="currentColor" stroke="none"/></svg>`);
+  const icS = (k, s) => withStar(ic(k, s));
+  const FSTAR = `<svg class="ap-fstar" viewBox="0 0 24 24" aria-hidden="true"><path d="${HSTAR_D}"/></svg>`; // 資料夾：米白小 ✦（玻璃上的用米白）
+  const tile = (a) => (a.k === 'pin' ? withStar(PIN) : icS(a.k, 26));
   // 主畫面 App 小點（第 50 窗 A 版）：右上角、App 內層色、沒有框
   const hdot = (id, s) => (s.hdot[id] && APP[id] ? `<i class="ap-hdot" style="background:${APP[id][1]}"></i>` : '');
   const appBtn = (a, s) => `<button class="ap-app" type="button" data-id="${a.id}"><span class="ap-tile">${tile(a)}${hdot(a.id, s)}</span><span class="ap-name">${esc(nm(a, s))}</span></button>`;
   function paintHome() {
     const s = S();
     root.querySelector('.ap-p1').innerHTML = '<div class="ap-grid">'
-      + HOME.folders.map((f) => `<button class="ap-app" type="button"><span class="ap-tile ap-fold">${f.mini.map((k) => `<i>${ic(k, 11)}</i>`).join('')}</span><span class="ap-name">${esc(f.n)}</span></button>`).join('')
+      + HOME.folders.map((f) => `<button class="ap-app" type="button"><span class="ap-tile ap-fold">${f.mini.map((k) => `<i>${ic(k, 11)}</i>`).join('')}${FSTAR}</span><span class="ap-name">${esc(f.n)}</span></button>`).join('')
       + HOME.p1.map((a) => appBtn(a, s)).join('') + '</div>';
     root.querySelector('.ap-p2').innerHTML = HOME.boxes.map((b) => `<div class="ap-box ap-glass ap-${b.tone}">${b.apps.map((a) => appBtn(a, s)).join('')}</div>`).join('');
-    root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button" data-id="diary"><span class="ap-book">${ic('book', 24)}${hdot('diary', s)}</span><span class="ap-name">拾光手記</span></button>`;
-    root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" data-id="${a.k}" aria-label="${a.n}"><span class="ap-tile">${ic(a.k, 26)}${hdot(a.k, s)}</span></button>`).join('');
+    root.querySelector('.ap-p3').innerHTML = `<button class="ap-app ap-diary" type="button" data-id="diary"><span class="ap-book">${icS('book', 24)}${hdot('diary', s)}</span><span class="ap-name">拾光手記</span></button>`;
+    root.querySelector('.ap-dock').innerHTML = HOME.dock.map((a) => `<button class="ap-app" type="button" data-id="${a.k}" aria-label="${a.n}"><span class="ap-tile">${icS(a.k, 26)}${hdot(a.k, s)}</span></button>`).join('');
     root.querySelector('.ap-home').classList.toggle('ap-nowall', !s.homeWall);
     root.querySelector('.ap-home .ap-htint').style.opacity = s.homeTint / 100;
     wallTo(root, s, 'home');

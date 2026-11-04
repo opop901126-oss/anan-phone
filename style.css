@@ -91,7 +91,10 @@
 .ap-track{display:flex;width:100%;height:100%;transition:transform .32s cubic-bezier(.25,.8,.3,1)}
 .ap-page{flex:0 0 100%;height:100%;box-sizing:border-box;padding:14px 16px 0;position:relative}
 #ap-root .ap-app{background:none;border:0;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;min-width:0;-webkit-tap-highlight-color:transparent}
-.ap-tile{width:56px;height:56px;border-radius:15px;background:#EDE9E1;color:var(--c,#4F7A6B);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.ap-tile{width:56px;height:56px;border-radius:15px;background:linear-gradient(160deg,#F8F5EF 0%,#E3DED3 100%);color:var(--c,#4F7A6B);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(0,0,0,.06),0 3px 8px rgba(0,0,0,.22)}
+/* 第 54 窗：小瓷磚的細內框（線條色 38%）＋ ✦ 可以畫到圖示外面一點 */
+.ap-tile::after{content:"";position:absolute;inset:4px;border-radius:11px;border:.8px solid color-mix(in srgb,currentColor 38%,transparent);pointer-events:none}
+.ap-tile svg,.ap-book svg{overflow:visible}
 .ap-name{font-family:"Noto Serif TC",serif;font-size:11.5px;font-weight:500;letter-spacing:.5px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ap-boing{animation:ap-boing .38s ease}
 @keyframes ap-boing{0%{transform:scale(1)}35%{transform:scale(.86)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
@@ -99,17 +102,23 @@
 .ap-p1{--c:#3F5570}
 .ap-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:18px}
 .ap-tile.ap-fold{background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.4);display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;box-sizing:border-box;box-shadow:none}
-.ap-fold i{background:#EDE9E1;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#3F5570}
+.ap-tile.ap-fold i{background:linear-gradient(160deg,#F8F5EF,#E3DED3);box-shadow:inset 0 .5px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.2);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#3F5570}
+/* 第 54 窗：資料夾（玻璃）＝米白細內框＋米白小 ✦ */
+.ap-tile.ap-fold::after{inset:3px;border-radius:12px;border-color:rgba(255,255,255,.55)}
+.ap-fstar{position:absolute;top:-2px;left:-2px;width:9px;height:9px;fill:#FBF7EF;pointer-events:none}
 /* 第二頁：三個淡色毛玻璃方框，線條跟著框的顏色 */
 .ap-p2{display:flex;flex-direction:column;gap:12px}
 .ap-box{border-radius:18px;padding:12px 4px 10px;display:flex;justify-content:center}
 .ap-box .ap-app{width:33.33%}
-.ap-box.ap-oat{--c:#8A6E50;background:rgba(232,222,204,.30);border-color:rgba(240,232,216,.65)}
+.ap-box.ap-oat{--c:#8A6E50;background:rgba(250,248,243,.34);border-color:rgba(255,253,249,.8)} /* 第 54 窗：米白往白走，跟鵝黃分開 */
 .ap-box.ap-sage{--c:#4F7A6B;background:rgba(143,184,164,.30);border-color:rgba(180,214,196,.65)}
 .ap-box.ap-honey{--c:#B8893A;background:rgba(247,223,168,.30);border-color:rgba(250,232,190,.7)}
 /* 第三頁：正中間只有拾光手記 */
 .ap-p3{display:flex;align-items:center;justify-content:center;padding-bottom:40px}
-.ap-book{width:62px;height:78px;border-radius:5px 12px 12px 5px;background:#24324A;color:#E9E4D8;border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.3),inset 5px 0 0 rgba(0,0,0,.18)}
+.ap-book{width:62px;height:78px;border-radius:5px 12px 12px 5px;background:linear-gradient(160deg,#2F3E5A 0%,#1F2B40 100%);color:#E9E4D8;border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.3),inset 5px 0 0 rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.18)}
+/* 第 54 窗：拾光手記＝燙印細框（避開書脊）＋米色 ✦ */
+.ap-book::after{content:"";position:absolute;top:5px;bottom:5px;left:10px;right:5px;border-radius:2px 8px 8px 2px;border:.8px solid rgba(233,228,216,.35);pointer-events:none}
+.ap-book svg{transform:translateX(2px)}
 #ap-root .ap-diary .ap-name{font-family:"Noto Serif TC",serif;font-size:13px;letter-spacing:2px}
 /* 頁數小圓點＋常駐四格（深灰線） */
 .ap-dots{position:absolute;left:0;right:0;bottom:114px;display:flex;justify-content:center;gap:7px}
