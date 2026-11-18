@@ -613,6 +613,11 @@
 .ap-sc-bar{display:inline-block;width:8.5em;height:1em;background:#3E3A35;border-radius:1px}
 .ap-sc-hid:nth-of-type(even) .ap-sc-bar{width:6.5em}
 .ap-sc-hid.ap-nope,.ap-sc-pins.ap-nope{animation:ap-nope .36s ease}
+#ap-root .ap-sc-tabs .ap-tab{position:relative}
+.ap-sc-new{position:absolute;top:0;right:-7px;width:6px;height:6px;border-radius:50%;background:#B5574B}
+.ap-sc-card.ap-sc-fresh,.ap-sc-hid.ap-sc-fresh{box-shadow:inset 2px 0 0 #B5574B}
+.ap-sc-fn{border-left:2px solid #B5574B;padding-left:9px;margin-left:-11px}
+.ap-sc-fn .ap-sc-nl{margin-top:7px}
 .ap-sc-empty{font-family:"Noto Serif TC",serif;font-size:12.5px;color:#8E8B84;text-align:center;margin:40px 0}
 /* 大門：密碼鍵盤（蓋在紙上，解開後淡掉） */
 .ap-sc-door{position:absolute;inset:0;z-index:3;background:#F7F1E2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:30px;box-sizing:border-box;transition:opacity .3s}

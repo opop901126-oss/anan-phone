@@ -1,4 +1,4 @@
-// 安安的小手機 v0.17.0（主畫面圖示美化：亮面＋柔影＋細內框＋✦）：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點＋LINE（照安安自己說的規則排版）
+// 安安的小手機 v0.17.1（機密企劃：新內容標記＝分頁封蠟紅小點＋這次動到的卡片／準備筆記封蠟紅直條）：鎖定畫面＋主畫面三頁＋每 N 則自動更新＋備忘錄＋拾穗小集＋瀏覽器＋行事曆＋日常物事＋餵食指南＋拾光手記＋相機＋電話＋音樂＋相簿＋Threads＋2026機密企劃＋主畫面小點＋LINE（照安安自己說的規則排版）
 // 照片和內容都存在酒館的設定裡（妳自己的伺服器），不會出現在這個公開倉庫
 (function () {
   const MOD = 'anan_phone';
@@ -374,7 +374,7 @@
       if (e.target.closest('.ap-sc-door')) return;
       if (lpEat(e)) return;
       const t = e.target.closest('.ap-tab');
-      if (t) { secTab = t.dataset.t; keepScroll('secret', paintSecret); root.querySelector('.ap-view[data-app="secret"] .ap-vs').scrollTop = 0; return; }
+      if (t) { secTab = t.dataset.t; const F = S().sec.fresh; if (F?.tabs?.includes(secTab)) { F.tabs = F.tabs.filter((k) => k !== secTab); save(); } keepScroll('secret', paintSecret); root.querySelector('.ap-view[data-app="secret"] .ap-vs').scrollTop = 0; return; }
       const hid = e.target.closest('.ap-sc-hid');
       if (hid) { hid.classList.remove('ap-nope'); void hid.offsetWidth; hid.classList.add('ap-nope'); return; } // 還沒揭曉：輕輕晃一下
       const c = e.target.closest('.ap-sc-card');
@@ -477,7 +477,7 @@
     if (id === 'music') paintMusic();
     if (id === 'album') { albOpen = focus && S().alb.photos.some((p) => p.id === focus) ? { id: focus } : null; paintAlbum(); focus = null; } // 從通知點進來：直接打開那張
     if (id === 'threads') { thIn = null; paintThreads(); }
-    if (id === 'secret') { secPin = ''; paintSecret(); secDoor(); secLoad().then(() => { if (!root.hidden && !root.querySelector('.ap-view[data-app="secret"]').hidden) keepScroll('secret', paintSecret); }); } // 機密企劃：重新整理酒館前輸入一次密碼就好
+    if (id === 'secret') { secPin = ''; secSeen(); paintSecret(); secDoor(); secLoad().then(() => { if (!root.hidden && !root.querySelector('.ap-view[data-app="secret"]').hidden) keepScroll('secret', paintSecret); }); } // 機密企劃：重新整理酒館前輸入一次密碼就好
     if (id === 'line') { // 每次打開都先在列表、家人分頁；從通知點進來＝直接進那個聊天室、那則亮一下
       const L = S().line, rid = focus && Object.keys(L.chats).find((k) => L.chats[k].msgs.some((m) => m.id === focus));
       lnIn = rid || null; lnTab = (rid && L.roster.find((r) => r.id === rid)?.cat) || 'fam'; lnStkOpen = false; lnFocus = !!rid;
@@ -1489,7 +1489,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
     if (secPin === pw) {
       setTimeout(() => {
         secOpen = true; secBusy = false; secPin = '';
-        const C = S().sec; C.peek = true; save(); // 他下次更新會知道「她打開過」（不知道看了哪一頁）
+        const C = S().sec; C.peek = true; secSeen(); save(); keepScroll('secret', paintSecret); // 他下次更新會知道「她打開過」（不知道看了哪一頁）
         const L = root.querySelector('.ap-sc-door'); L.classList.add('ap-gone');
         setTimeout(() => { L.hidden = true; L.classList.remove('ap-gone'); }, 300);
       }, 180);
@@ -1501,16 +1501,23 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
   // 驚喜的日子（像 3/28）跟劇情今天比：過了＝true；寫「春天」這種比不了的＝false（第 52 窗）
   const secMD = (w) => { const m = String(w || '').match(/^\s*(\d{1,2})\s*\/\s*(\d{1,2})/); return m ? +m[1] * 100 + +m[2] : 0; };
   const secLate = (x) => { const md = secMD(x.when), d = nowDay().match(/-(\d{2})-(\d{2})$/); return !!(x.tab === 'sur' && x.hid && md && d && md < +d[1] * 100 + +d[2]); };
+  // 新內容標記（v0.17.1）：fresh＝最新一次更新動到的地方；card＝整張卡左邊直條、note＝只在準備筆記旁邊
+  const secFresh = () => S().sec.fresh || { items: {}, bingo: {}, tabs: [] };
+  // 打開時停在的那一頁＝已經看到了 → 那一頁的分頁小點拿掉（門還鎖著不算）
+  const secSeen = () => { const F = S().sec.fresh; if (secOpen && F?.tabs?.includes(secTab)) { F.tabs = F.tabs.filter((k) => k !== secTab); save(); } };
+  const secNote = (body, on) => `${on ? '<div class="ap-sc-fn">' : ''}<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(body)}</div>${on ? '</div>' : ''}`;
   function secCard(x) {
     const done = x.done ? ' ap-done' : '', when = x.when ? `<span class="ap-sc-when">${esc(x.when)}</span>` : '';
-    if (x.tab === 'sur' && x.hid) return `<div class="ap-sc-hid" data-id="${x.id}">${when || '<span class="ap-sc-when">？</span>'}<span class="ap-sc-bar"></span></div>`;
+    const fr = secFresh().items[x.id], fc = fr === 'card' ? ' ap-sc-fresh' : '';
+    if (x.tab === 'sur' && x.hid) return `<div class="ap-sc-hid${fc}" data-id="${x.id}">${when || '<span class="ap-sc-when">？</span>'}<span class="ap-sc-bar"></span></div>`;
     const unu = x.unused ? ' ap-unused' : ''; // 過期才打開的驚喜：上面留一截撕開的塗黑＋紅色虛線章（第 52 窗）
-    return `<div class="ap-sc-card${done}${unu}" data-id="${x.id}">${unu ? '<span class="ap-sc-tear"></span>' : ''}<div class="ap-sc-it">${when}<span>${esc(x.title)}</span>${x.done ? '<span class="ap-sc-stamp">完</span>' : ''}${unu ? '<i class="ap-sc-unu">沒用<br>上</i>' : ''}</div>`
-      + (x.body ? `<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(x.body)}</div>` : '') + '</div>';
+    return `<div class="ap-sc-card${done}${unu}${fc}" data-id="${x.id}">${unu ? '<span class="ap-sc-tear"></span>' : ''}<div class="ap-sc-it">${when}<span>${esc(x.title)}</span>${x.done ? '<span class="ap-sc-stamp">完</span>' : ''}${unu ? '<i class="ap-sc-unu">沒用<br>上</i>' : ''}</div>`
+      + (x.body ? secNote(x.body, fr === 'note') : '') + '</div>';
   }
   function paintSecret() {
     const C = S().sec, v = root.querySelector('.ap-view[data-app="secret"] .ap-vs');
-    const tabs = `<div class="ap-tabs ap-sc-tabs">${SEC_TABS.map(([k, n]) => `<button type="button" class="ap-tab${k === secTab ? ' ap-on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>`;
+    const FT = secFresh().tabs || [];
+    const tabs = `<div class="ap-tabs ap-sc-tabs">${SEC_TABS.map(([k, n]) => `<button type="button" class="ap-tab${k === secTab ? ' ap-on' : ''}" data-t="${k}">${n}${FT.includes(k) && k !== secTab ? '<i class="ap-sc-new"></i>' : ''}</button>`).join('')}</div>`;
     let body = '';
     if (secTab === 'bingo') {
       const cells = secCells(), H = C.bk?.heart || {};
@@ -1519,7 +1526,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
         const grid = 'ABCDEFGHIJKLMNOPQRSTUVWXY'.split('').map((L) => `<i class="${cells.find((x) => x.L === L)?.done ? 'ap-on' : ''}"></i>`).join('');
         const left = cells.filter((x) => !x.done), noted = left.filter((x) => C.bingo[x.L]), rest = left.filter((x) => !C.bingo[x.L]);
         body = `<div class="ap-sc-grid">${grid}</div>` + [...noted, ...rest].map((x) => `<div class="ap-sc-card"><div class="ap-sc-it"><span>${x.L}｜${esc(x.t)}</span></div>`
-          + (H[x.L] ? `<div class="ap-sc-hx">${esc(H[x.L])}</div>` : '') + (C.bingo[x.L] ? `<div class="ap-sc-nl">準備筆記</div><div class="ap-sc-tx">${esc(C.bingo[x.L])}</div>` : '') + '</div>').join('')
+          + (H[x.L] ? `<div class="ap-sc-hx">${esc(H[x.L])}</div>` : '') + (C.bingo[x.L] ? secNote(C.bingo[x.L], !!secFresh().bingo[x.L]) : '') + '</div>').join('')
           + (left.length ? '' : '<div class="ap-sc-empty">全部完成了</div>');
       }
     } else {
@@ -1531,7 +1538,17 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
   }
   // 他寫的準備筆記：一句一行，太長就丟掉最舊的
   const secAppend = (old, t) => { let lines = String(old || '').split('\n').filter(Boolean); lines.push(t); while (lines.join('\n').length > 400 && lines.length > 1) lines.shift(); return lines.join('\n'); };
+  // 新內容標記（v0.17.1）：這次有動到東西才換成新的標記；沒動到就留著上一次的
   function applySecret(o) {
+    const nf = { items: {}, bingo: {} };
+    applySecretOps(o, nf);
+    const C = S().sec, ids = Object.keys(nf.items), Ls = Object.keys(nf.bingo);
+    if (!ids.length && !Ls.length) return;
+    const tabs = new Set(ids.map((id) => C.items.find((x) => x.id === id)?.tab).filter(Boolean));
+    if (Ls.length) tabs.add('bingo');
+    C.fresh = { items: nf.items, bingo: nf.bingo, tabs: [...tabs] };
+  }
+  function applySecretOps(o, nf) {
     const C = S().sec, peek = C.peek;
     C.peek = false; // 這次已經告訴他了
     if (!o || typeof o !== 'object') return;
@@ -1545,6 +1562,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
       let mine = C.items.filter((x) => x.tab === tab);
       if (mine.length >= SEC_MAX) { const old = mine.filter((x) => x.done).sort((a, b) => +a.id.slice(1) - +b.id.slice(1))[0]; if (!old) return; C.items = C.items.filter((x) => x !== old); }
       C.items.push({ id: 's' + (++C.seq), tab, title, body: clean(op.note, 120), day, when: tab === 'sur' || tab === 'prop' ? clean(op.when, 10) : '', done: tab !== 'sur' && op.done === true, hid: tab === 'sur' });
+      nf.items['s' + C.seq] = 'card';
     };
     // 空的頁：這次可以各補 1 條（像音樂空歌單一次放好幾首；第 51 窗果果要的），之後回到每次最多 1 處
     const empty = ['place', 'sweet', 'wed', 'sur', 'prop'].filter((k) => !C.items.some((x) => x.tab === k));
@@ -1554,8 +1572,8 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
     const lt = o.late;
     if (lt && typeof lt === 'object') {
       const x = C.items.find((it) => it.id === lt.id && secLate(it));
-      if (x && lt.act === 'move') { const w = clean(lt.when, 10), md = secMD(w), d = nowDay().match(/-(\d{2})-(\d{2})$/); if (md && d && md > +d[1] * 100 + +d[2]) { x.when = w; C.nseq++; } }
-      else if (x && lt.act === 'unused') { x.hid = false; x.unused = true; C.nseq++; }
+      if (x && lt.act === 'move') { const w = clean(lt.when, 10), md = secMD(w), d = nowDay().match(/-(\d{2})-(\d{2})$/); if (md && d && md > +d[1] * 100 + +d[2]) { x.when = w; C.nseq++; nf.items[x.id] = 'card'; } }
+      else if (x && lt.act === 'unused') { x.hid = false; x.unused = true; C.nseq++; nf.items[x.id] = 'card'; }
     }
     const op = o.op; if (!op || typeof op !== 'object') return;
     const act = String(op.act || '');
@@ -1563,13 +1581,13 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
     else if (act === 'note') {
       const t = clean(op.t || op.note, 80); if (!t) return;
       const L = String(op.bingo || '').toUpperCase(), cell = L && secCells().find((x) => x.L === L);
-      if (cell) { if (cell.done) return; C.bingo[L] = secAppend(C.bingo[L], t); C.nseq++; return; } // 賓果：只寫準備筆記，不能打 ✨
+      if (cell) { if (cell.done) return; C.bingo[L] = secAppend(C.bingo[L], t); C.nseq++; nf.bingo[L] = 1; return; } // 賓果：只寫準備筆記，不能打 ✨
       const x = C.items.find((it) => it.id === op.id); if (!x || x.hid) return;
-      x.body = secAppend(x.body, t); C.nseq++;
+      x.body = secAppend(x.body, t); C.nseq++; if (!nf.items[x.id]) nf.items[x.id] = 'note';
     } else if (act === 'done') {
-      const x = C.items.find((it) => it.id === op.id); if (x && !x.hid && !x.done) { x.done = true; C.nseq++; }
+      const x = C.items.find((it) => it.id === op.id); if (x && !x.hid && !x.done) { x.done = true; C.nseq++; nf.items[x.id] = 'card'; }
     } else if (act === 'reveal') {
-      const x = C.items.find((it) => it.id === op.id && it.hid); if (x) { x.hid = false; C.nseq++; }
+      const x = C.items.find((it) => it.id === op.id && it.hid); if (x) { x.hid = false; C.nseq++; nf.items[x.id] = 'card'; }
     }
   }
 
