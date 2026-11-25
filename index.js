@@ -1331,7 +1331,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
   function thInput(p, re) {
     const to = re ? p.cm.find((c) => c.id === re) : null;
     const T = S().th, ph = to ? `回覆 ${to.mine ? thName(T.me) || '我' : to.self ? thName(T.him) || '他' : thName(to.who)}…` : '留言…';
-    return `<div class="ap-th-in${re ? ' ap-th-re' : ''}"><input type="text" maxlength="60" placeholder="${esc(ph)}" enterkeyhint="send"><button type="button" class="ap-th-send">送出</button></div>`;
+    return `<div class="ap-th-in${re ? ' ap-th-re' : ''}"><input type="text" maxlength="200" placeholder="${esc(ph)}" enterkeyhint="send"><button type="button" class="ap-th-send">送出</button></div>`;
   }
   function thPost(p, T) {
     const tops = p.cm.filter((c) => !c.re), kids = (id) => p.cm.filter((c) => c.re === id);
@@ -1366,7 +1366,7 @@ ${M.map(fmt).join('\n') || '（還沒有訊息）'}
   }
   function thSend(postEl) {
     const T = S().th, p = T.posts.find((x) => x.id === postEl.dataset.id), inp = postEl.querySelector('.ap-th-in input');
-    const t = clean(inp?.value, 60);
+    const t = clean(inp?.value, 200);
     if (!p || !thIn || !t) { inp?.focus(); return; }
     p.cm.push({ id: 'c' + (++T.cseq), who: '', t, re: thIn.re || '', mine: true, seen: false });
     thIn = null; save(); keepScroll('threads', paintThreads);
@@ -2337,7 +2337,7 @@ ${peeked.length ? `   - ${me} 剛剛解鎖、偷看了他鎖起來的訊息：${
     if (!o || typeof o !== 'object') return null;
     const a = Array.isArray(o.add) ? o.add[0] : o.add;
     if (!a || typeof a !== 'object') return null;
-    const title = clean(a.title, 16), body = cleanBody(a.body, 34);
+    const title = clean(a.title, 16), body = cleanBody(a.body, 50);
     if (!title || !body || C.items.some((x) => x.title === title)) return null;
     const it = { id: 'c' + (++C.seq), seq: C.seq, title, body, time: hm(a.time) || S().lock.time || '' };
     C.items.push(it);
